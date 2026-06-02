@@ -9,12 +9,92 @@
 import { isValidSHA256, isValidStellarAddress } from "./validation";
 
 // ---------------------------------------------------------------------------
+// Constants
+// ---------------------------------------------------------------------------
+
+const MAX_FIELD_LENGTH = 256;
+
+// ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
 export interface ManifestValidationResult {
   valid: boolean;
   errors: string[];
+}
+
+// ---------------------------------------------------------------------------
+// Sanitization
+// ---------------------------------------------------------------------------
+
+/**
+ * Escapes HTML entities to prevent XSS attacks.
+ */
+export function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+/**
+ * Checks if a string contains script tags or HTML elements.
+ */
+export function containsScriptOrHtml(value: string): boolean {
+  const scriptPattern = /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi;
+  const htmlTagPattern = /<\/?[a-z][\s\S]*?>/i;
+  return scriptPattern.test(value) || htmlTagPattern.test(value);
+}
+
+/**
+ * Sanitizes a manifest string field, rejecting HTML/script content.
+ * Returns an error message if invalid, or null if valid.
+ */
+export function validateAndSanitizeField(
+  value: string,
+  fieldName: string
+): string | null {
+  if (value.length > MAX_FIELD_LENGTH) {
+    return `${fieldName} must be at most ${MAX_FIELD_LENGTH} characters (got ${value.length}).`;
+  }
+  if (containsScriptOrHtml(value)) {
+    return `${fieldName} contains disallowed HTML or script content.`;
+  }
+  return null;
+}
+
+/**
+ * Result of the sanitizeManifest function.
+ */
+export interface SanitizedManifest {
+  contentHash: string;
+  creator: string;
+  timestamp: string;
+  metadata?: {
+    device?: string;
+    location?: string;
+    aiModel?: string;
+  };
+}
+
+/**
+ * Sanitizes all string fields in a manifest and returns the cleaned object.
+ */
+export function sanitizeManifest(m: SanitizedManifest): SanitizedManifest {
+  return {
+    contentHash: escapeHtml(m.contentHash),
+    creator: escapeHtml(m.creator),
+    timestamp: m.timestamp,
+    ...(m.metadata && {
+      metadata: {
+        ...(m.metadata.device && { device: escapeHtml(m.metadata.device) }),
+        ...(m.metadata.location && { location: escapeHtml(m.metadata.location) }),
+        ...(m.metadata.aiModel && { aiModel: escapeHtml(m.metadata.aiModel) }),
+      },
+    }),
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -30,8 +110,6 @@ export interface ManifestValidationResult {
  *  2. Produces a finite Date when passed to `new Date()`.
  */
 function isValidISO8601(value: string): boolean {
-  // Covers: YYYY-MM-DD, YYYY-MM-DDTHH:mm:ssZ, YYYY-MM-DDTHH:mm:ss.sssZ,
-  //         YYYY-MM-DDTHH:mm:ss±HH:mm, etc.
   const iso8601Regex =
     /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:\d{2})?)?$/;
   if (!iso8601Regex.test(value)) return false;
@@ -76,7 +154,7 @@ export function validateManifest(manifest: unknown): ManifestValidationResult {
     );
   }
 
-  // ── Required: creator ────────────────────────────────────────────────────
+  // ── Required: creator ───────────────────────────────────────────────────
   if (!("creator" in m) || m.creator === undefined || m.creator === null) {
     errors.push("creator is required.");
   } else if (typeof m.creator !== "string") {
@@ -87,7 +165,7 @@ export function validateManifest(manifest: unknown): ManifestValidationResult {
     );
   }
 
-  // ── Required: timestamp ──────────────────────────────────────────────────
+  // ── Required: timestamp ────────────────────────────────────────────────
   if (!("timestamp" in m) || m.timestamp === undefined || m.timestamp === null) {
     errors.push("timestamp is required.");
   } else if (typeof m.timestamp !== "string") {
@@ -98,7 +176,7 @@ export function validateManifest(manifest: unknown): ManifestValidationResult {
     );
   }
 
-  // ── Optional: metadata ───────────────────────────────────────────────────
+  // ── Optional: metadata ──────────────────────────────────────────────────
   if ("metadata" in m && m.metadata !== undefined && m.metadata !== null) {
     if (typeof m.metadata !== "object" || Array.isArray(m.metadata)) {
       errors.push("metadata must be an object.");
@@ -110,6 +188,10 @@ export function validateManifest(manifest: unknown): ManifestValidationResult {
           errors.push("metadata.device must be a string.");
         } else if (meta.device.trim() === "") {
           errors.push("metadata.device must not be an empty string.");
+        } else if (meta.device.length > MAX_FIELD_LENGTH) {
+          errors.push(`metadata.device must be at most ${MAX_FIELD_LENGTH} characters.`);
+        } else if (containsScriptOrHtml(meta.device)) {
+          errors.push("metadata.device contains disallowed HTML or script content.");
         }
       }
 
@@ -118,6 +200,10 @@ export function validateManifest(manifest: unknown): ManifestValidationResult {
           errors.push("metadata.location must be a string.");
         } else if (meta.location.trim() === "") {
           errors.push("metadata.location must not be an empty string.");
+        } else if (meta.location.length > MAX_FIELD_LENGTH) {
+          errors.push(`metadata.location must be at most ${MAX_FIELD_LENGTH} characters.`);
+        } else if (containsScriptOrHtml(meta.location)) {
+          errors.push("metadata.location contains disallowed HTML or script content.");
         }
       }
 
@@ -126,6 +212,10 @@ export function validateManifest(manifest: unknown): ManifestValidationResult {
           errors.push("metadata.aiModel must be a string.");
         } else if (meta.aiModel.trim() === "") {
           errors.push("metadata.aiModel must not be an empty string.");
+        } else if (meta.aiModel.length > MAX_FIELD_LENGTH) {
+          errors.push(`metadata.aiModel must be at most ${MAX_FIELD_LENGTH} characters.`);
+        } else if (containsScriptOrHtml(meta.aiModel)) {
+          errors.push("metadata.aiModel contains disallowed HTML or script content.");
         }
       }
     }
