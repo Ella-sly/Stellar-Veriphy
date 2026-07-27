@@ -1,10 +1,9 @@
 #![no_std]
 use soroban_sdk::{
-    contract, contractimpl, contracttype, contracterror,
-    vec, Bytes, BytesN, Env, Symbol, Address,
+    contract, contracterror, contractimpl, contracttype, vec, Address, Bytes, BytesN, Env, Symbol,
 };
 
-const REQUEST_TTL_LEDGERS: u32 = 100;
+const DEFAULT_REQUEST_TTL_LEDGERS: u32 = 100;
 
 // ---------------------------------------------------------------------------
 // Errors
@@ -13,12 +12,13 @@ const REQUEST_TTL_LEDGERS: u32 = 100;
 #[contracterror]
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum Error {
-    NotInitialized        = 1,
-    UnauthorizedSigner    = 2,
-    AlreadyInitialized    = 3,
+    NotInitialized = 1,
+    UnauthorizedSigner = 2,
+    AlreadyInitialized = 3,
     RegistryNotConfigured = 4,
-    TeeNotVerified        = 5,
+    TeeNotVerified = 5,
     ProviderNotRegistered = 6,
+    InvalidTTL = 7,
 }
 
 // ---------------------------------------------------------------------------
@@ -33,6 +33,7 @@ pub enum DataKey {
     Provider(Address),
     NextRequestId,
     Request(u64),
+    RequestTTL,
 }
 
 // ---------------------------------------------------------------------------
@@ -50,10 +51,18 @@ pub enum RequestState {
 #[contracttype]
 #[derive(Clone, Debug)]
 pub struct VerificationRequest {
-    pub storage_ref:   Bytes,
+    pub storage_ref: Bytes,
     pub manifest_hash: Bytes,
-    pub requester:     Address,
-    pub state:         RequestState,
+    pub requester: Address,
+    pub state: RequestState,
+}
+
+#[contracttype]
+#[derive(Clone, Debug)]
+pub struct TTLConfig {
+    pub default_ttl: u32,
+    pub high_priority_ttl: u32,
+    pub low_priority_ttl: u32,
 }
 
 // ---------------------------------------------------------------------------
@@ -66,53 +75,126 @@ pub struct OracleContract;
 #[contractimpl]
 impl OracleContract {
     pub fn init(
-        env:        Env,
-        registry:   Address,
+        env: Env,
+        registry: Address,
         provenance: Address,
-        admin:      Address,
+        admin: Address,
     ) -> Result<(), Error> {
         if env.storage().instance().has(&DataKey::Admin) {
             return Err(Error::AlreadyInitialized);
         }
-        env.storage().instance().set(&DataKey::Registry,   &registry);
-        env.storage().instance().set(&DataKey::Provenance, &provenance);
-        env.storage().instance().set(&DataKey::Admin,      &admin);
+        env.storage().instance().set(&DataKey::Registry, &registry);
+        env.storage()
+            .instance()
+            .set(&DataKey::Provenance, &provenance);
+        env.storage().instance().set(&DataKey::Admin, &admin);
+
+        let default_config = TTLConfig {
+            default_ttl: DEFAULT_REQUEST_TTL_LEDGERS,
+            high_priority_ttl: 200,
+            low_priority_ttl: 50,
+        };
+        env.storage()
+            .instance()
+            .set(&DataKey::RequestTTL, &default_config);
         Ok(())
     }
 
     pub fn add_provider(env: Env, provider: Address) -> Result<(), Error> {
-        let admin: Address = env.storage().instance()
+        let admin: Address = env
+            .storage()
+            .instance()
             .get(&DataKey::Admin)
             .ok_or(Error::NotInitialized)?;
         admin.require_auth();
-        env.storage().persistent().set(&DataKey::Provider(provider), &true);
+        env.storage()
+            .persistent()
+            .set(&DataKey::Provider(provider), &true);
         Ok(())
     }
 
     pub fn remove_provider(env: Env, provider: Address) -> Result<(), Error> {
-        let admin: Address = env.storage().instance()
+        let admin: Address = env
+            .storage()
+            .instance()
             .get(&DataKey::Admin)
             .ok_or(Error::NotInitialized)?;
         admin.require_auth();
-        env.storage().persistent().remove(&DataKey::Provider(provider));
+        env.storage()
+            .persistent()
+            .remove(&DataKey::Provider(provider));
         Ok(())
     }
 
     pub fn is_provider(env: Env, provider: Address) -> bool {
-        env.storage().persistent()
+        env.storage()
+            .persistent()
             .get(&DataKey::Provider(provider))
             .unwrap_or(false)
     }
 
+    pub fn update_ttl_config(
+        env: Env,
+        default_ttl: u32,
+        high_priority_ttl: u32,
+        low_priority_ttl: u32,
+    ) -> Result<(), Error> {
+        let admin: Address = env
+            .storage()
+            .instance()
+            .get(&DataKey::Admin)
+            .ok_or(Error::NotInitialized)?;
+        admin.require_auth();
+
+        if default_ttl == 0 || high_priority_ttl == 0 || low_priority_ttl == 0 {
+            return Err(Error::InvalidTTL);
+        }
+
+        let config = TTLConfig {
+            default_ttl,
+            high_priority_ttl,
+            low_priority_ttl,
+        };
+        env.storage().instance().set(&DataKey::RequestTTL, &config);
+        Ok(())
+    }
+
+    pub fn get_ttl_config(env: Env) -> Result<TTLConfig, Error> {
+        env.storage()
+            .instance()
+            .get(&DataKey::RequestTTL)
+            .ok_or(Error::NotInitialized)
+    }
+
     pub fn submit_request(
-        env:           Env,
-        storage_ref:   Bytes,
+        env: Env,
+        storage_ref: Bytes,
         manifest_hash: Bytes,
-        requester:     Address,
-    ) -> u64 {
+        requester: Address,
+    ) -> Result<u64, Error> {
+        Self::submit_request_with_priority(env, storage_ref, manifest_hash, requester, 1)
+    }
+
+    pub fn submit_request_with_priority(
+        env: Env,
+        storage_ref: Bytes,
+        manifest_hash: Bytes,
+        requester: Address,
+        priority: u32,
+    ) -> Result<u64, Error> {
         requester.require_auth();
 
-        let id: u64 = env.storage().instance()
+        let config = Self::get_ttl_config(env.clone())?;
+        let ttl = match priority {
+            0 => config.low_priority_ttl,
+            1 => config.default_ttl,
+            2 => config.high_priority_ttl,
+            _ => config.default_ttl,
+        };
+
+        let id: u64 = env
+            .storage()
+            .instance()
             .get(&DataKey::NextRequestId)
             .unwrap_or(0u64)
             + 1;
@@ -126,14 +208,12 @@ impl OracleContract {
         };
 
         env.storage().temporary().set(&DataKey::Request(id), &req);
-        env.storage().temporary().extend_ttl(
-            &DataKey::Request(id),
-            REQUEST_TTL_LEDGERS,
-            REQUEST_TTL_LEDGERS,
-        );
+        env.storage()
+            .temporary()
+            .extend_ttl(&DataKey::Request(id), ttl, ttl);
 
         env.events().publish((Symbol::new(&env, "submitted"),), id);
-        id
+        Ok(id)
     }
 
     pub fn get_request(env: Env, id: u64) -> Option<VerificationRequest> {
@@ -141,7 +221,9 @@ impl OracleContract {
     }
 
     pub fn verify_tee_hash(env: Env, tee_hash: BytesN<32>) -> Result<(), Error> {
-        let registry: Address = env.storage().instance()
+        let registry: Address = env
+            .storage()
+            .instance()
             .get(&DataKey::Registry)
             .ok_or(Error::RegistryNotConfigured)?;
 
@@ -158,13 +240,15 @@ impl OracleContract {
     }
 
     pub fn verify_attestation(
-        env:       Env,
-        provider:  BytesN<32>,
-        tee_hash:  BytesN<32>,
-        payload:   Bytes,
+        env: Env,
+        provider: BytesN<32>,
+        tee_hash: BytesN<32>,
+        payload: Bytes,
         signature: BytesN<64>,
     ) -> Result<(), Error> {
-        let registry: Address = env.storage().instance()
+        let registry: Address = env
+            .storage()
+            .instance()
             .get(&DataKey::Registry)
             .ok_or(Error::RegistryNotConfigured)?;
 
