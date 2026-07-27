@@ -1,6 +1,6 @@
 #![no_std]
 use soroban_sdk::{
-    contract, contractimpl, contracttype, contracterror,
+    contract, contractimpl, contracttype, contracterror, contractevent,
     vec, Bytes, BytesN, Env, Symbol, Address,
 };
 
@@ -19,6 +19,23 @@ pub enum Error {
     RegistryNotConfigured = 4,
     TeeNotVerified        = 5,
     ProviderNotRegistered = 6,
+    ContractPaused        = 7,
+}
+
+// ---------------------------------------------------------------------------
+// Events
+// ---------------------------------------------------------------------------
+
+#[contractevent]
+pub struct ContractPaused {
+    #[topic]
+    pub admin: Address,
+}
+
+#[contractevent]
+pub struct ContractUnpaused {
+    #[topic]
+    pub admin: Address,
 }
 
 // ---------------------------------------------------------------------------
@@ -33,6 +50,7 @@ pub enum DataKey {
     Provider(Address),
     NextRequestId,
     Request(u64),
+    Paused,
 }
 
 // ---------------------------------------------------------------------------
@@ -104,13 +122,45 @@ impl OracleContract {
             .unwrap_or(false)
     }
 
+    pub fn pause(env: Env) -> Result<(), Error> {
+        let admin: Address = env.storage().instance()
+            .get(&DataKey::Admin)
+            .ok_or(Error::NotInitialized)?;
+        admin.require_auth();
+
+        env.storage().instance().set(&DataKey::Paused, &true);
+        env.events().publish((Symbol::new(&env, "pause"),), admin.clone());
+        Ok(())
+    }
+
+    pub fn unpause(env: Env) -> Result<(), Error> {
+        let admin: Address = env.storage().instance()
+            .get(&DataKey::Admin)
+            .ok_or(Error::NotInitialized)?;
+        admin.require_auth();
+
+        env.storage().instance().remove(&DataKey::Paused);
+        env.events().publish((Symbol::new(&env, "unpause"),), admin.clone());
+        Ok(())
+    }
+
+    pub fn is_paused(env: Env) -> bool {
+        env.storage().instance()
+            .get(&DataKey::Paused)
+            .unwrap_or(false)
+    }
+
     pub fn submit_request(
         env:           Env,
         storage_ref:   Bytes,
         manifest_hash: Bytes,
         requester:     Address,
-    ) -> u64 {
+    ) -> Result<u64, Error> {
         requester.require_auth();
+
+        if Self::is_paused(env.clone()) {
+            return Err(Error::ContractPaused);
+        }
 
         let id: u64 = env.storage().instance()
             .get(&DataKey::NextRequestId)
@@ -133,7 +183,7 @@ impl OracleContract {
         );
 
         env.events().publish((Symbol::new(&env, "submitted"),), id);
-        id
+        Ok(id)
     }
 
     pub fn get_request(env: Env, id: u64) -> Option<VerificationRequest> {
