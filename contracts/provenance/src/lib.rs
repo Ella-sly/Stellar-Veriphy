@@ -9,6 +9,17 @@ use soroban_sdk::{
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum ProvenanceError {
     CertificateNotFound = 1,
+    UnauthorizedRevocation = 2,
+}
+
+// Revocation reason enum
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum RevocationReason {
+    FraudulentContent = 1,
+    LegalRequirement = 2,
+    CreatorRequest = 3,
+    ContractualViolation = 4,
 }
 
 // #14 — String fields (was Bytes)
@@ -19,6 +30,9 @@ pub struct ProvenanceCert {
     pub attestation_hash: String,
     pub creator:          Address,
     pub timestamp:        u64,
+    pub revoked:          bool,
+    pub revocation_reason: Option<RevocationReason>,
+    pub revocation_timestamp: Option<u64>,
 }
 
 // #15 — typed contract event
@@ -30,6 +44,15 @@ pub struct CertificateMinted {
     pub certificate_id: u64,
     #[topic]
     pub manifest_hash: String,
+}
+
+#[contractevent]
+pub struct CertificateRevoked {
+    #[topic]
+    pub certificate_id: u64,
+    #[topic]
+    pub owner: Address,
+    pub reason: String,
 }
 
 #[contract]
@@ -44,6 +67,20 @@ impl ProvenanceContract {
             panic!("Contract already initialized");
         }
         env.storage().persistent().set(&key, &oracle);
+    }
+
+    pub fn set_admin(env: Env, admin: Address) {
+        let oracle: Address = env
+            .storage()
+            .persistent()
+            .get(&symbol_short!("ORACLE"))
+            .expect("Not initialized");
+        oracle.require_auth();
+        env.storage().persistent().set(&symbol_short!("ADMIN"), &admin);
+    }
+
+    pub fn get_admin(env: Env) -> Option<Address> {
+        env.storage().persistent().get(&symbol_short!("ADMIN"))
     }
 
     /// Mint a provenance certificate. Only the oracle may call this.
@@ -82,6 +119,9 @@ impl ProvenanceContract {
             attestation_hash,
             creator: to.clone(),
             timestamp: env.ledger().timestamp(),
+            revoked: false,
+            revocation_reason: None,
+            revocation_timestamp: None,
         };
         env.storage().persistent().set(&id, &cert);
 
@@ -107,6 +147,55 @@ impl ProvenanceContract {
         env.storage()
             .persistent()
             .get(&id)
+            .ok_or(ProvenanceError::CertificateNotFound)
+    }
+
+    pub fn revoke_certificate(
+        env: Env,
+        id: u64,
+        reason: RevocationReason,
+    ) -> Result<(), ProvenanceError> {
+        let oracle: Address = env
+            .storage()
+            .persistent()
+            .get(&symbol_short!("ORACLE"))
+            .expect("Not initialized");
+
+        oracle.require_auth();
+
+        let mut cert: ProvenanceCert = env.storage()
+            .persistent()
+            .get(&id)
+            .ok_or(ProvenanceError::CertificateNotFound)?;
+
+        cert.revoked = true;
+        cert.revocation_reason = Some(reason.clone());
+        cert.revocation_timestamp = Some(env.ledger().timestamp());
+
+        env.storage().persistent().set(&id, &cert);
+
+        let reason_str = match reason {
+            RevocationReason::FraudulentContent => String::from_str(&env, "fraudulent_content"),
+            RevocationReason::LegalRequirement => String::from_str(&env, "legal_requirement"),
+            RevocationReason::CreatorRequest => String::from_str(&env, "creator_request"),
+            RevocationReason::ContractualViolation => String::from_str(&env, "contractual_violation"),
+        };
+
+        CertificateRevoked {
+            certificate_id: id,
+            owner: cert.creator,
+            reason: reason_str,
+        }
+        .emit(&env);
+
+        Ok(())
+    }
+
+    pub fn is_certificate_revoked(env: Env, id: u64) -> Result<bool, ProvenanceError> {
+        env.storage()
+            .persistent()
+            .get(&id)
+            .map(|cert: ProvenanceCert| cert.revoked)
             .ok_or(ProvenanceError::CertificateNotFound)
     }
 }
