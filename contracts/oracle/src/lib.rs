@@ -1,10 +1,13 @@
 #![no_std]
 use soroban_sdk::{
-    contract, contractimpl, contracttype, contracterror,
+    contract, contractimpl, contracttype, contracterror, contractevent,
     vec, Bytes, BytesN, Env, Symbol, Address,
 };
 
 const REQUEST_TTL_LEDGERS: u32 = 100;
+const MINIMUM_STAKE: u128 = 1_000_000_000; // 1 billion stroops (10 XLM)
+const WITHDRAWAL_COOLDOWN_LEDGERS: u32 = 7200; // ~1 hour
+const ARCHIVAL_THRESHOLD_LEDGERS: u32 = 1000; // Archive after 1000 ledgers
 
 // ---------------------------------------------------------------------------
 // Errors
@@ -104,6 +107,20 @@ pub struct AggregatedRequest {
     pub total_fee:       u128,
 }
 
+#[contracttype]
+#[derive(Clone, Debug)]
+pub struct ProviderStakeInfo {
+    pub amount: u128,
+    pub withdrawal_cooldown_until: u32,
+}
+
+#[contracttype]
+#[derive(Clone, Debug)]
+pub struct ArchivedRequest {
+    pub request: VerificationRequest,
+    pub archived_at_ledger: u32,
+}
+
 // ---------------------------------------------------------------------------
 // Contract
 // ---------------------------------------------------------------------------
@@ -152,6 +169,135 @@ impl OracleContract {
             .unwrap_or(false)
     }
 
+    pub fn pause(env: Env) -> Result<(), Error> {
+        let admin: Address = env.storage().instance()
+            .get(&DataKey::Admin)
+            .ok_or(Error::NotInitialized)?;
+        admin.require_auth();
+
+        env.storage().instance().set(&DataKey::Paused, &true);
+        env.events().publish((Symbol::new(&env, "pause"),), admin.clone());
+        Ok(())
+    }
+
+    pub fn unpause(env: Env) -> Result<(), Error> {
+        let admin: Address = env.storage().instance()
+            .get(&DataKey::Admin)
+            .ok_or(Error::NotInitialized)?;
+        admin.require_auth();
+
+        env.storage().instance().remove(&DataKey::Paused);
+        env.events().publish((Symbol::new(&env, "unpause"),), admin.clone());
+        Ok(())
+    }
+
+    pub fn is_paused(env: Env) -> bool {
+        env.storage().instance()
+            .get(&DataKey::Paused)
+            .unwrap_or(false)
+    }
+
+    pub fn deposit_stake(env: Env, provider: Address, amount: u128) -> Result<(), Error> {
+        provider.require_auth();
+
+        if amount < MINIMUM_STAKE {
+            return Err(Error::InsufficientStake);
+        }
+
+        let current_stake: u128 = env.storage().persistent()
+            .get(&DataKey::ProviderStake(provider.clone()))
+            .unwrap_or(0u128);
+
+        let new_stake = current_stake.saturating_add(amount);
+
+        let stake_info = ProviderStakeInfo {
+            amount: new_stake,
+            withdrawal_cooldown_until: 0,
+        };
+
+        env.storage().persistent().set(&DataKey::ProviderStake(provider.clone()), &stake_info);
+        env.events().publish((Symbol::new(&env, "stake_deposited"),), (provider.clone(), amount));
+
+        Ok(())
+    }
+
+    pub fn initiate_withdrawal(env: Env, provider: Address, amount: u128) -> Result<(), Error> {
+        provider.require_auth();
+
+        let stake_info: ProviderStakeInfo = env.storage().persistent()
+            .get(&DataKey::ProviderStake(provider.clone()))
+            .ok_or(Error::NoStake)?;
+
+        if stake_info.amount < amount {
+            return Err(Error::InsufficientStake);
+        }
+
+        let current_ledger = env.ledger().sequence();
+        let cooldown_until = current_ledger + WITHDRAWAL_COOLDOWN_LEDGERS;
+
+        let updated_stake = ProviderStakeInfo {
+            amount: stake_info.amount.saturating_sub(amount),
+            withdrawal_cooldown_until: cooldown_until,
+        };
+
+        env.storage().persistent().set(&DataKey::ProviderStake(provider.clone()), &updated_stake);
+        env.storage().persistent().set(&DataKey::ProviderWithdrawalCooldown(provider.clone()), &(cooldown_until, amount));
+        env.events().publish((Symbol::new(&env, "withdrawal_initiated"),), (provider.clone(), amount));
+
+        Ok(())
+    }
+
+    pub fn complete_withdrawal(env: Env, provider: Address) -> Result<u128, Error> {
+        provider.require_auth();
+
+        let (cooldown_until, amount): (u32, u128) = env.storage().persistent()
+            .get(&DataKey::ProviderWithdrawalCooldown(provider.clone()))
+            .ok_or(Error::NoStake)?;
+
+        let current_ledger = env.ledger().sequence();
+        if current_ledger < cooldown_until {
+            return Err(Error::WithdrawalCooldown);
+        }
+
+        env.storage().persistent().remove(&DataKey::ProviderWithdrawalCooldown(provider.clone()));
+
+        Ok(amount)
+    }
+
+    pub fn get_provider_stake(env: Env, provider: Address) -> u128 {
+        env.storage().persistent()
+            .get(&DataKey::ProviderStake(provider))
+            .map(|info: ProviderStakeInfo| info.amount)
+            .unwrap_or(0u128)
+    }
+
+    pub fn slash_stake(env: Env, provider: Address, amount: u128) -> Result<(), Error> {
+        let admin: Address = env.storage().instance()
+            .get(&DataKey::Admin)
+            .ok_or(Error::NotInitialized)?;
+        admin.require_auth();
+
+        let stake_info: ProviderStakeInfo = env.storage().persistent()
+            .get(&DataKey::ProviderStake(provider.clone()))
+            .ok_or(Error::NoStake)?;
+
+        let slashed_amount = if stake_info.amount >= amount {
+            amount
+        } else {
+            stake_info.amount
+        };
+
+        let updated_stake = ProviderStakeInfo {
+            amount: stake_info.amount.saturating_sub(slashed_amount),
+            withdrawal_cooldown_until: stake_info.withdrawal_cooldown_until,
+        };
+
+        env.storage().persistent().set(&DataKey::ProviderStake(provider.clone()), &updated_stake);
+        env.events().publish((Symbol::new(&env, "stake_slashed"),), (provider.clone(), slashed_amount));
+
+        Ok(())
+    }
+
     pub fn submit_request(
         env:           Env,
         storage_ref:   Bytes,
@@ -160,6 +306,10 @@ impl OracleContract {
         priority:      Priority,
     ) -> u64 {
         requester.require_auth();
+
+        if Self::is_paused(env.clone()) {
+            return Err(Error::ContractPaused);
+        }
 
         let id: u64 = env.storage().instance()
             .get(&DataKey::NextRequestId)
@@ -191,6 +341,48 @@ impl OracleContract {
 
     pub fn get_request(env: Env, id: u64) -> Option<VerificationRequest> {
         env.storage().temporary().get(&DataKey::Request(id))
+    }
+
+    pub fn archive_old_requests(env: Env) -> u32 {
+        let current_ledger = env.ledger().sequence();
+        let last_archival: u32 = env.storage().persistent()
+            .get(&DataKey::LastArchivalLedger)
+            .unwrap_or(0u32);
+
+        if current_ledger < last_archival + ARCHIVAL_THRESHOLD_LEDGERS {
+            return 0;
+        }
+
+        let mut archived_count = 0u32;
+        let next_id: u64 = env.storage().instance()
+            .get(&DataKey::NextRequestId)
+            .unwrap_or(0u64);
+
+        for i in 1..=next_id {
+            if let Some(req) = env.storage().temporary().get::<_, VerificationRequest>(&DataKey::Request(i)) {
+                let archived = ArchivedRequest {
+                    request: req,
+                    archived_at_ledger: current_ledger,
+                };
+                env.storage().persistent().set(&DataKey::ArchivedRequest(i), &archived);
+                env.storage().temporary().remove(&DataKey::Request(i));
+                env.events().publish((Symbol::new(&env, "archived"),), i);
+                archived_count += 1;
+            }
+        }
+
+        env.storage().persistent().set(&DataKey::LastArchivalLedger, &current_ledger);
+        archived_count as u32
+    }
+
+    pub fn get_archived_request(env: Env, id: u64) -> Option<ArchivedRequest> {
+        env.storage().persistent().get(&DataKey::ArchivedRequest(id))
+    }
+
+    pub fn get_last_archival_ledger(env: Env) -> u32 {
+        env.storage().persistent()
+            .get(&DataKey::LastArchivalLedger)
+            .unwrap_or(0u32)
     }
 
     pub fn verify_tee_hash(env: Env, tee_hash: BytesN<32>) -> Result<(), Error> {

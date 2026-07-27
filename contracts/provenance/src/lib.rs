@@ -22,6 +22,9 @@ pub struct ProvenanceCert {
     pub attestation_hash: String,
     pub creator:          Address,
     pub timestamp:        u64,
+    pub revoked:          bool,
+    pub revocation_reason: Option<RevocationReason>,
+    pub revocation_timestamp: Option<u64>,
 }
 
 // #173 — Certificate metadata with version tracking
@@ -96,6 +99,20 @@ impl ProvenanceContract {
         env.storage().persistent().set(&key, &oracle);
     }
 
+    pub fn set_admin(env: Env, admin: Address) {
+        let oracle: Address = env
+            .storage()
+            .persistent()
+            .get(&symbol_short!("ORACLE"))
+            .expect("Not initialized");
+        oracle.require_auth();
+        env.storage().persistent().set(&symbol_short!("ADMIN"), &admin);
+    }
+
+    pub fn get_admin(env: Env) -> Option<Address> {
+        env.storage().persistent().get(&symbol_short!("ADMIN"))
+    }
+
     /// Mint a provenance certificate. Only the oracle may call this.
     pub fn mint(
         env:              Env,
@@ -132,6 +149,9 @@ impl ProvenanceContract {
             attestation_hash,
             creator: to.clone(),
             timestamp: env.ledger().timestamp(),
+            revoked: false,
+            revocation_reason: None,
+            revocation_timestamp: None,
         };
         env.storage().persistent().set(&id, &cert);
 
