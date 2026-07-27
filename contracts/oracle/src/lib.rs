@@ -274,6 +274,91 @@ impl OracleContract {
             .get(&DataKey::BaseFee)
             .unwrap_or(0u128)
     }
+
+    pub fn calculate_dynamic_fee(env: Env, pending_requests: u64) -> u128 {
+        let base_fee = Self::get_base_fee(env.clone());
+        if pending_requests == 0 {
+            return base_fee;
+        }
+
+        let load_factor = 1 + (pending_requests as u128 / 10);
+        base_fee.saturating_mul(load_factor)
+    }
+
+    pub fn distribute_fee_to_provider(
+        env: Env,
+        provider: Address,
+        amount: u128,
+    ) -> Result<(), Error> {
+        let current_balance: u128 = env.storage().persistent()
+            .get(&DataKey::ProviderBalance(provider.clone()))
+            .unwrap_or(0u128);
+
+        let new_balance = current_balance.saturating_add(amount);
+        env.storage().persistent()
+            .set(&DataKey::ProviderBalance(provider.clone()), &new_balance);
+
+        env.events().publish(
+            (Symbol::new(&env, "fee_distributed"),),
+            (provider, amount),
+        );
+        Ok(())
+    }
+
+    pub fn get_provider_balance(env: Env, provider: Address) -> u128 {
+        env.storage().persistent()
+            .get(&DataKey::ProviderBalance(provider))
+            .unwrap_or(0u128)
+    }
+
+    pub fn withdraw_provider_earnings(env: Env, provider: Address) -> Result<u128, Error> {
+        provider.require_auth();
+
+        let balance = Self::get_provider_balance(env.clone(), provider.clone());
+        if balance == 0 {
+            return Ok(0);
+        }
+
+        env.storage().persistent()
+            .set(&DataKey::ProviderBalance(provider.clone()), &0u128);
+
+        env.events().publish(
+            (Symbol::new(&env, "earnings_withdrawn"),),
+            (provider, balance),
+        );
+        Ok(balance)
+    }
+
+    pub fn refund_request_fee(
+        env: Env,
+        requester: Address,
+        amount: u128,
+    ) -> Result<(), Error> {
+        requester.require_auth();
+
+        let current_escrow: u128 = env.storage().instance()
+            .get(&DataKey::FeeEscrow)
+            .unwrap_or(0u128);
+
+        if current_escrow < amount {
+            return Err(Error::ProviderNotRegistered);
+        }
+
+        let new_escrow = current_escrow.saturating_sub(amount);
+        env.storage().instance().set(&DataKey::FeeEscrow, &new_escrow);
+
+        env.events().publish(
+            (Symbol::new(&env, "fee_refunded"),),
+            (requester, amount),
+        );
+        Ok(())
+    }
+
+    pub fn get_escrow_balance(env: Env) -> u128 {
+        env.storage().instance()
+            .get(&DataKey::FeeEscrow)
+            .unwrap_or(0u128)
+    }
 }
 
 mod test;
