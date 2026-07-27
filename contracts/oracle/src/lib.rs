@@ -38,6 +38,9 @@ pub enum DataKey {
     BaseFee,
     FeeEscrow,
     ProviderBalance(Address),
+    ManifestRequests(Bytes),
+    AggregatedGroup(Bytes),
+    AggregationPrimary(u64),
 }
 
 // ---------------------------------------------------------------------------
@@ -68,6 +71,15 @@ pub struct AttestationData {
     pub tee_hash:   BytesN<32>,
     pub signature:  BytesN<64>,
     pub timestamp:  u64,
+}
+
+#[contracttype]
+#[derive(Clone, Debug)]
+pub struct AggregatedRequest {
+    pub primary_id:      u64,
+    pub member_ids:      vec::Vec<u64>,
+    pub manifest_hash:   Bytes,
+    pub total_fee:       u128,
 }
 
 // ---------------------------------------------------------------------------
@@ -358,6 +370,106 @@ impl OracleContract {
         env.storage().instance()
             .get(&DataKey::FeeEscrow)
             .unwrap_or(0u128)
+    }
+
+    pub fn check_and_aggregate_request(
+        env: Env,
+        manifest_hash: Bytes,
+        request_id: u64,
+        fee: u128,
+    ) -> Result<Option<u64>, Error> {
+        let key = DataKey::ManifestRequests(manifest_hash.clone());
+
+        if let Some(primary_id) = env.storage().persistent().get::<_, Option<u64>>(&key) {
+            Self::add_to_aggregation_group(
+                env.clone(),
+                primary_id,
+                request_id,
+                fee,
+            )?;
+            env.events().publish(
+                (Symbol::new(&env, "request_aggregated"),),
+                (request_id, primary_id),
+            );
+            return Ok(Some(primary_id));
+        }
+
+        env.storage().persistent()
+            .set(&key, &request_id);
+        env.storage().persistent()
+            .set(&DataKey::AggregationPrimary(request_id), &true);
+        Ok(None)
+    }
+
+    fn add_to_aggregation_group(
+        env: Env,
+        primary_id: u64,
+        member_id: u64,
+        fee: u128,
+    ) -> Result<(), Error> {
+        let req = env.storage().temporary()
+            .get::<_, Option<VerificationRequest>>(&DataKey::Request(primary_id))
+            .flatten()
+            .ok_or(Error::RequestNotFound)?;
+
+        let group_key = DataKey::AggregatedGroup(req.manifest_hash.clone());
+
+        let mut group: AggregatedRequest = env.storage().persistent()
+            .get(&group_key)
+            .unwrap_or(AggregatedRequest {
+                primary_id,
+                member_ids: vec::Vec::new(&env),
+                manifest_hash: req.manifest_hash,
+                total_fee: 0,
+            });
+
+        group.member_ids.push_back(member_id);
+        group.total_fee = group.total_fee.saturating_add(fee);
+
+        env.storage().persistent().set(&group_key, &group);
+        Ok(())
+    }
+
+    pub fn get_aggregated_group(env: Env, manifest_hash: Bytes) -> Option<AggregatedRequest> {
+        env.storage().persistent()
+            .get(&DataKey::AggregatedGroup(manifest_hash))
+    }
+
+    pub fn distribute_aggregated_cost(
+        env: Env,
+        manifest_hash: Bytes,
+        verification_cost: u128,
+    ) -> Result<(), Error> {
+        let group = Self::get_aggregated_group(env.clone(), manifest_hash)
+            .ok_or(Error::RequestNotFound)?;
+
+        if group.member_ids.is_empty() {
+            return Err(Error::RequestNotFound);
+        }
+
+        let cost_per_request = verification_cost / (group.member_ids.len() as u128);
+        let remainder = verification_cost % (group.member_ids.len() as u128);
+
+        for (idx, _member_id) in group.member_ids.iter().enumerate() {
+            let cost = cost_per_request + if idx == 0 { remainder } else { 0 };
+            let escrow: u128 = env.storage().instance()
+                .get(&DataKey::FeeEscrow)
+                .unwrap_or(0u128);
+            let new_escrow = escrow.saturating_sub(cost);
+            env.storage().instance().set(&DataKey::FeeEscrow, &new_escrow);
+        }
+
+        env.events().publish(
+            (Symbol::new(&env, "aggregated_cost_distributed"),),
+            group.member_ids.len(),
+        );
+        Ok(())
+    }
+
+    pub fn is_primary_request(env: Env, request_id: u64) -> bool {
+        env.storage().persistent()
+            .get(&DataKey::AggregationPrimary(request_id))
+            .unwrap_or(false)
     }
 }
 
