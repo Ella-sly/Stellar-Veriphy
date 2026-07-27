@@ -7,6 +7,7 @@ use soroban_sdk::{
 const REQUEST_TTL_LEDGERS: u32 = 100;
 const MINIMUM_STAKE: u128 = 1_000_000_000; // 1 billion stroops (10 XLM)
 const WITHDRAWAL_COOLDOWN_LEDGERS: u32 = 7200; // ~1 hour
+const ARCHIVAL_THRESHOLD_LEDGERS: u32 = 1000; // Archive after 1000 ledgers
 
 // ---------------------------------------------------------------------------
 // Errors
@@ -64,6 +65,12 @@ pub struct StakeWithdrawalInitiated {
     pub amount: u128,
 }
 
+#[contractevent]
+pub struct RequestArchived {
+    pub request_id: u64,
+    pub archived_at_ledger: u32,
+}
+
 // ---------------------------------------------------------------------------
 // Storage keys
 // ---------------------------------------------------------------------------
@@ -79,6 +86,8 @@ pub enum DataKey {
     Paused,
     ProviderStake(Address),
     ProviderWithdrawalCooldown(Address),
+    ArchivedRequest(u64),
+    LastArchivalLedger,
 }
 
 // ---------------------------------------------------------------------------
@@ -107,6 +116,13 @@ pub struct VerificationRequest {
 pub struct ProviderStakeInfo {
     pub amount: u128,
     pub withdrawal_cooldown_until: u32,
+}
+
+#[contracttype]
+#[derive(Clone, Debug)]
+pub struct ArchivedRequest {
+    pub request: VerificationRequest,
+    pub archived_at_ledger: u32,
 }
 
 // ---------------------------------------------------------------------------
@@ -324,6 +340,48 @@ impl OracleContract {
 
     pub fn get_request(env: Env, id: u64) -> Option<VerificationRequest> {
         env.storage().temporary().get(&DataKey::Request(id))
+    }
+
+    pub fn archive_old_requests(env: Env) -> u32 {
+        let current_ledger = env.ledger().sequence();
+        let last_archival: u32 = env.storage().persistent()
+            .get(&DataKey::LastArchivalLedger)
+            .unwrap_or(0u32);
+
+        if current_ledger < last_archival + ARCHIVAL_THRESHOLD_LEDGERS {
+            return 0;
+        }
+
+        let mut archived_count = 0u32;
+        let next_id: u64 = env.storage().instance()
+            .get(&DataKey::NextRequestId)
+            .unwrap_or(0u64);
+
+        for i in 1..=next_id {
+            if let Some(req) = env.storage().temporary().get::<_, VerificationRequest>(&DataKey::Request(i)) {
+                let archived = ArchivedRequest {
+                    request: req,
+                    archived_at_ledger: current_ledger,
+                };
+                env.storage().persistent().set(&DataKey::ArchivedRequest(i), &archived);
+                env.storage().temporary().remove(&DataKey::Request(i));
+                env.events().publish((Symbol::new(&env, "archived"),), i);
+                archived_count += 1;
+            }
+        }
+
+        env.storage().persistent().set(&DataKey::LastArchivalLedger, &current_ledger);
+        archived_count as u32
+    }
+
+    pub fn get_archived_request(env: Env, id: u64) -> Option<ArchivedRequest> {
+        env.storage().persistent().get(&DataKey::ArchivedRequest(id))
+    }
+
+    pub fn get_last_archival_ledger(env: Env) -> u32 {
+        env.storage().persistent()
+            .get(&DataKey::LastArchivalLedger)
+            .unwrap_or(0u32)
     }
 
     pub fn verify_tee_hash(env: Env, tee_hash: BytesN<32>) -> Result<(), Error> {
