@@ -133,6 +133,72 @@ Contracts emit events using the `#[contractevent]` attribute:
   env.events().publish((Symbol::new(&env, "submitted"),), id);
   ```
 
+## Certificate Management Functions
+
+### Issue #172 - Certificate Transfer
+The Provenance contract supports transferring certificate ownership:
+```rust
+pub fn transfer_certificate(
+    env: Env,
+    certificate_id: u64,
+    new_owner: Address,
+) -> Result<(), ProvenanceError>
+```
+- Only the current certificate owner can transfer
+- Emits a `CertificateTransferred` event with source and destination addresses
+- Transfer history is tracked via incremental counters
+
+### Issue #173 - Certificate Metadata
+Certificates can have mutable metadata (display name and description) without altering core verification data:
+```rust
+pub fn update_metadata(
+    env: Env,
+    certificate_id: u64,
+    display_name: String,
+    description: String,
+) -> Result<(), ProvenanceError>
+
+pub fn get_metadata(
+    env: Env,
+    certificate_id: u64,
+) -> Result<CertificateMetadata, ProvenanceError>
+```
+- Only the certificate owner can update metadata
+- Hash fields remain immutable
+- Version history tracked automatically with `MetadataVersion` entries
+- Each update increments the metadata version counter
+
+### Issue #174 - Time-Range Certificate Queries
+Retrieve certificates within a time range with pagination support:
+```rust
+pub fn get_certificates_by_time_range(
+    env: Env,
+    start_time: u64,
+    end_time: u64,
+    offset: u32,
+    limit: u32,
+) -> Vec<(u64, ProvenanceCert)>
+```
+- Returns results sorted chronologically (newest first)
+- Supports pagination via `offset` and `limit` parameters
+- Optimized for analytics and reporting use cases
+
+### Issue #175 - Batch Certificate Minting
+Mint multiple certificates in a single transaction:
+```rust
+pub fn mint_batch(
+    env: Env,
+    storage_refs: Vec<String>,
+    manifest_hashes: Vec<String>,
+    attestation_hashes: Vec<String>,
+    to: Address,
+) -> Result<Vec<u64>, ProvenanceError>
+```
+- Maximum batch size: 50 certificates
+- Prevents duplicate manifest hashes within the batch
+- Returns all minted certificate IDs
+- Emits a single `BatchMinted` event containing all IDs
+
 ## Cross-Contract Call Flow Diagram
 
 The following diagram illustrates the typical flow for a verification request from Oracle to Registry to Provenance:
@@ -159,4 +225,6 @@ sequenceDiagram
 ```
 
 Note: The actual flow may vary based on the specific function being called (e.g., `verify_attestation` in Oracle involves both TEE and provider checks before proceeding).
+
+Post-minting operations (transfer, metadata updates, queries, batch operations) are called directly on the Provenance contract and do not require Oracle or Registry involvement.
 
