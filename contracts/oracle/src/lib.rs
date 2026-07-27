@@ -4,6 +4,7 @@ use soroban_sdk::{
 };
 
 const DEFAULT_REQUEST_TTL_LEDGERS: u32 = 100;
+const DEFAULT_EXPIRATION_WARNING_LEDGERS: u32 = 10;
 
 // ---------------------------------------------------------------------------
 // Errors
@@ -34,6 +35,7 @@ pub enum DataKey {
     NextRequestId,
     Request(u64),
     RequestTTL,
+    ExpirationWarningLedgers,
 }
 
 // ---------------------------------------------------------------------------
@@ -55,6 +57,7 @@ pub struct VerificationRequest {
     pub manifest_hash: Bytes,
     pub requester: Address,
     pub state: RequestState,
+    pub expiration_ledger: u32,
 }
 
 #[contracttype]
@@ -97,6 +100,10 @@ impl OracleContract {
         env.storage()
             .instance()
             .set(&DataKey::RequestTTL, &default_config);
+        env.storage().instance().set(
+            &DataKey::ExpirationWarningLedgers,
+            &DEFAULT_EXPIRATION_WARNING_LEDGERS,
+        );
         Ok(())
     }
 
@@ -200,11 +207,15 @@ impl OracleContract {
             + 1;
         env.storage().instance().set(&DataKey::NextRequestId, &id);
 
+        let current_ledger = env.ledger().sequence();
+        let expiration_ledger = current_ledger + ttl;
+
         let req = VerificationRequest {
             storage_ref,
             manifest_hash,
             requester,
             state: RequestState::Pending,
+            expiration_ledger,
         };
 
         env.storage().temporary().set(&DataKey::Request(id), &req);
@@ -212,12 +223,56 @@ impl OracleContract {
             .temporary()
             .extend_ttl(&DataKey::Request(id), ttl, ttl);
 
-        env.events().publish((Symbol::new(&env, "submitted"),), id);
+        env.events()
+            .publish((Symbol::new(&env, "submitted"),), (id, expiration_ledger));
         Ok(id)
     }
 
     pub fn get_request(env: Env, id: u64) -> Option<VerificationRequest> {
         env.storage().temporary().get(&DataKey::Request(id))
+    }
+
+    pub fn update_warning_threshold(env: Env, warning_ledgers: u32) -> Result<(), Error> {
+        let admin: Address = env
+            .storage()
+            .instance()
+            .get(&DataKey::Admin)
+            .ok_or(Error::NotInitialized)?;
+        admin.require_auth();
+
+        if warning_ledgers == 0 {
+            return Err(Error::InvalidTTL);
+        }
+
+        env.storage()
+            .instance()
+            .set(&DataKey::ExpirationWarningLedgers, &warning_ledgers);
+        Ok(())
+    }
+
+    pub fn get_warning_threshold(env: Env) -> u32 {
+        env.storage()
+            .instance()
+            .get(&DataKey::ExpirationWarningLedgers)
+            .unwrap_or(DEFAULT_EXPIRATION_WARNING_LEDGERS)
+    }
+
+    pub fn check_expiration_warning(env: Env, request_id: u64) -> Result<(), Error> {
+        let req = Self::get_request(env.clone(), request_id).ok_or(Error::NotInitialized)?;
+        let current_ledger = env.ledger().sequence();
+        let warning_threshold = Self::get_warning_threshold(env.clone());
+
+        let expiration_ledger = req.expiration_ledger as i32;
+        let warning_start = expiration_ledger - warning_threshold as i32;
+
+        if current_ledger as i32 <= expiration_ledger && current_ledger as i32 >= warning_start {
+            env.events().publish(
+                (Symbol::new(&env, "RequestExpiring"),),
+                (request_id, req.expiration_ledger),
+            );
+        }
+
+        Ok(())
     }
 
     pub fn verify_tee_hash(env: Env, tee_hash: BytesN<32>) -> Result<(), Error> {

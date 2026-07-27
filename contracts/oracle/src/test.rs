@@ -326,3 +326,74 @@ fn test_submit_request_with_priority_uses_correct_ttl() {
     });
     assert_eq!(ttl, 200);
 }
+
+// ---------------------------------------------------------------------------
+// Issue #160 — Request Expiration Notifications
+// ---------------------------------------------------------------------------
+
+#[test]
+fn test_get_warning_threshold_returns_default() {
+    let env = make_env();
+    env.mock_all_auths();
+    let cid = register_oracle(&env);
+    let client = OracleContractClient::new(&env, &cid);
+    let registry = Address::generate(&env);
+    let provenance = Address::generate(&env);
+    let admin = Address::generate(&env);
+    client.init(&registry, &provenance, &admin);
+
+    let threshold = client.get_warning_threshold();
+    assert_eq!(threshold, 10);
+}
+
+#[test]
+fn test_update_warning_threshold_admin_only() {
+    let env = make_env();
+    env.mock_all_auths();
+    let cid = register_oracle(&env);
+    let client = OracleContractClient::new(&env, &cid);
+    let registry = Address::generate(&env);
+    let provenance = Address::generate(&env);
+    let admin = Address::generate(&env);
+    client.init(&registry, &provenance, &admin);
+
+    client.try_update_warning_threshold(&15).unwrap().unwrap();
+    let threshold = client.get_warning_threshold();
+    assert_eq!(threshold, 15);
+}
+
+#[test]
+fn test_update_warning_threshold_invalid() {
+    let env = make_env();
+    env.mock_all_auths();
+    let cid = register_oracle(&env);
+    let client = OracleContractClient::new(&env, &cid);
+    let registry = Address::generate(&env);
+    let provenance = Address::generate(&env);
+    let admin = Address::generate(&env);
+    client.init(&registry, &provenance, &admin);
+
+    let result = client.try_update_warning_threshold(&0);
+    assert!(result.is_err());
+}
+
+#[test]
+fn test_check_expiration_warning_emits_event() {
+    let env = make_env();
+    env.mock_all_auths();
+    let cid = register_oracle(&env);
+    let client = OracleContractClient::new(&env, &cid);
+    let registry = Address::generate(&env);
+    let provenance = Address::generate(&env);
+    let admin = Address::generate(&env);
+    let requester = Address::generate(&env);
+    client.init(&registry, &provenance, &admin);
+
+    let bytes = Bytes::from_slice(&env, b"data");
+    let id = client
+        .try_submit_request(&bytes, &bytes, &requester)
+        .unwrap()
+        .unwrap();
+
+    client.try_check_expiration_warning(&id).unwrap().unwrap();
+}
