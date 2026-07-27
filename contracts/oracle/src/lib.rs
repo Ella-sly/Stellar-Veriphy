@@ -19,6 +19,10 @@ pub enum Error {
     RegistryNotConfigured = 4,
     TeeNotVerified        = 5,
     ProviderNotRegistered = 6,
+    BatchSizeExceeded     = 7,
+    RequestNotFound       = 8,
+    Unauthorized          = 9,
+    InvalidState          = 10,
 }
 
 // ---------------------------------------------------------------------------
@@ -33,6 +37,7 @@ pub enum DataKey {
     Provider(Address),
     NextRequestId,
     Request(u64),
+    RequestsByState(RequestState),
 }
 
 // ---------------------------------------------------------------------------
@@ -45,6 +50,16 @@ pub enum RequestState {
     Pending,
     Verified,
     Rejected,
+    Cancelled,
+}
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum Priority {
+    Low,
+    Normal,
+    High,
+    Urgent,
 }
 
 #[contracttype]
@@ -54,6 +69,21 @@ pub struct VerificationRequest {
     pub manifest_hash: Bytes,
     pub requester:     Address,
     pub state:         RequestState,
+    pub priority:      Priority,
+}
+
+#[contracttype]
+#[derive(Clone, Debug)]
+pub struct RequestWithId {
+    pub id: u64,
+    pub request: VerificationRequest,
+}
+
+#[contracttype]
+#[derive(Clone, Debug)]
+pub struct PaginatedRequests {
+    pub requests: Vec<RequestWithId>,
+    pub total_count: u32,
 }
 
 // ---------------------------------------------------------------------------
@@ -109,6 +139,7 @@ impl OracleContract {
         storage_ref:   Bytes,
         manifest_hash: Bytes,
         requester:     Address,
+        priority:      Priority,
     ) -> u64 {
         requester.require_auth();
 
@@ -121,8 +152,9 @@ impl OracleContract {
         let req = VerificationRequest {
             storage_ref,
             manifest_hash,
-            requester,
+            requester: requester.clone(),
             state: RequestState::Pending,
+            priority,
         };
 
         env.storage().temporary().set(&DataKey::Request(id), &req);
@@ -132,7 +164,10 @@ impl OracleContract {
             REQUEST_TTL_LEDGERS,
         );
 
-        env.events().publish((Symbol::new(&env, "submitted"),), id);
+        Self::add_request_to_state_index(&env, &RequestState::Pending, id);
+
+        let fee = Self::calculate_priority_fee(&priority);
+        env.events().publish((Symbol::new(&env, "submitted"),), (id, fee));
         id
     }
 
@@ -189,6 +224,157 @@ impl OracleContract {
         env.crypto().ed25519_verify(&provider, &payload, &signature);
 
         Ok(())
+    }
+
+    // Issue #156: Batch Processing
+    pub fn submit_batch_request(
+        env:      Env,
+        requests: Vec<(Bytes, Bytes, Address, Priority)>,
+    ) -> Result<Vec<u64>, Error> {
+        if requests.len() > 10 {
+            return Err(Error::BatchSizeExceeded);
+        }
+
+        let mut ids = vec![&env];
+
+        for i in 0..requests.len() {
+            let (storage_ref, manifest_hash, requester, priority) = requests.get(i).unwrap();
+
+            requester.require_auth();
+
+            let id: u64 = env.storage().instance()
+                .get(&DataKey::NextRequestId)
+                .unwrap_or(0u64)
+                + 1;
+            env.storage().instance().set(&DataKey::NextRequestId, &id);
+
+            let req = VerificationRequest {
+                storage_ref: storage_ref.clone(),
+                manifest_hash: manifest_hash.clone(),
+                requester: requester.clone(),
+                state: RequestState::Pending,
+                priority: priority.clone(),
+            };
+
+            env.storage().temporary().set(&DataKey::Request(id), &req);
+            env.storage().temporary().extend_ttl(
+                &DataKey::Request(id),
+                REQUEST_TTL_LEDGERS,
+                REQUEST_TTL_LEDGERS,
+            );
+
+            Self::add_request_to_state_index(&env, &RequestState::Pending, id);
+            ids.push_back(id);
+        }
+
+        env.events().publish((Symbol::new(&env, "batch_submitted"),), ids.clone());
+        Ok(ids)
+    }
+
+    // Issue #157: Request Cancellation
+    pub fn cancel_request(env: Env, id: u64) -> Result<(), Error> {
+        let mut req = env.storage().temporary()
+            .get(&DataKey::Request(id))
+            .ok_or(Error::RequestNotFound)?;
+
+        req.requester.require_auth();
+
+        if req.state != RequestState::Pending {
+            return Err(Error::InvalidState);
+        }
+
+        Self::remove_request_from_state_index(&env, &req.state, id);
+        req.state = RequestState::Cancelled;
+        Self::add_request_to_state_index(&env, &RequestState::Cancelled, id);
+
+        env.storage().temporary().set(&DataKey::Request(id), &req);
+        env.events().publish((Symbol::new(&env, "cancelled"),), id);
+
+        Ok(())
+    }
+
+    // Issue #159: Request Status Query Pagination
+    pub fn get_requests_by_state(
+        env: Env,
+        state: RequestState,
+        offset: u32,
+        limit: u32,
+        requester: Option<Address>,
+    ) -> PaginatedRequests {
+        let all_ids: Vec<u64> = env.storage().persistent()
+            .get(&DataKey::RequestsByState(state.clone()))
+            .unwrap_or(vec![&env]);
+
+        let mut results = vec![&env];
+        let mut count = 0u32;
+        let limit_val = if limit == 0 { 100 } else { limit.min(100) };
+        let start = offset as usize;
+
+        if start >= all_ids.len() {
+            return PaginatedRequests {
+                requests: results,
+                total_count: all_ids.len() as u32,
+            };
+        }
+
+        for i in start..all_ids.len() {
+            if count >= limit_val {
+                break;
+            }
+
+            let req_id = all_ids.get(i).unwrap();
+            if let Some(req) = env.storage().temporary().get::<_, VerificationRequest>(&DataKey::Request(req_id)) {
+                if let Some(ref addr) = requester {
+                    if req.requester != *addr {
+                        continue;
+                    }
+                }
+                results.push_back(RequestWithId {
+                    id: req_id,
+                    request: req,
+                });
+                count += 1;
+            }
+        }
+
+        PaginatedRequests {
+            requests: results,
+            total_count: all_ids.len() as u32,
+        }
+    }
+
+    // Helper: Calculate fee based on priority
+    fn calculate_priority_fee(_priority: &Priority) -> u64 {
+        match _priority {
+            Priority::Low => 100,
+            Priority::Normal => 200,
+            Priority::High => 400,
+            Priority::Urgent => 800,
+        }
+    }
+
+    // Helper: Add request ID to state index
+    fn add_request_to_state_index(env: &Env, state: &RequestState, id: u64) {
+        let mut ids: Vec<u64> = env.storage().persistent()
+            .get(&DataKey::RequestsByState(state.clone()))
+            .unwrap_or(vec![env]);
+        ids.push_back(id);
+        env.storage().persistent().set(&DataKey::RequestsByState(state.clone()), &ids);
+    }
+
+    // Helper: Remove request ID from state index
+    fn remove_request_from_state_index(env: &Env, state: &RequestState, id: u64) {
+        let mut ids: Vec<u64> = env.storage().persistent()
+            .get(&DataKey::RequestsByState(state.clone()))
+            .unwrap_or(vec![env]);
+
+        let mut new_ids = vec![env];
+        for i in 0..ids.len() {
+            if ids.get(i).unwrap() != id {
+                new_ids.push_back(ids.get(i).unwrap());
+            }
+        }
+        env.storage().persistent().set(&DataKey::RequestsByState(state.clone()), &new_ids);
     }
 }
 
