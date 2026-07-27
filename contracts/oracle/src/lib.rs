@@ -16,11 +16,11 @@ const ARCHIVAL_THRESHOLD_LEDGERS: u32 = 1000; // Archive after 1000 ledgers
 #[contracterror]
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum Error {
-    NotInitialized        = 1,
-    UnauthorizedSigner    = 2,
-    AlreadyInitialized    = 3,
+    NotInitialized = 1,
+    UnauthorizedSigner = 2,
+    AlreadyInitialized = 3,
     RegistryNotConfigured = 4,
-    TeeNotVerified        = 5,
+    TeeNotVerified = 5,
     ProviderNotRegistered = 6,
     BatchSizeExceeded     = 7,
     RequestNotFound       = 8,
@@ -68,7 +68,7 @@ pub enum Priority {
 #[contracttype]
 #[derive(Clone, Debug)]
 pub struct VerificationRequest {
-    pub storage_ref:   Bytes,
+    pub storage_ref: Bytes,
     pub manifest_hash: Bytes,
     pub requester:     Address,
     pub state:         RequestState,
@@ -131,40 +131,64 @@ pub struct OracleContract;
 #[contractimpl]
 impl OracleContract {
     pub fn init(
-        env:        Env,
-        registry:   Address,
+        env: Env,
+        registry: Address,
         provenance: Address,
-        admin:      Address,
+        admin: Address,
     ) -> Result<(), Error> {
         if env.storage().instance().has(&DataKey::Admin) {
             return Err(Error::AlreadyInitialized);
         }
-        env.storage().instance().set(&DataKey::Registry,   &registry);
-        env.storage().instance().set(&DataKey::Provenance, &provenance);
-        env.storage().instance().set(&DataKey::Admin,      &admin);
+        env.storage().instance().set(&DataKey::Registry, &registry);
+        env.storage()
+            .instance()
+            .set(&DataKey::Provenance, &provenance);
+        env.storage().instance().set(&DataKey::Admin, &admin);
+
+        let default_config = TTLConfig {
+            default_ttl: DEFAULT_REQUEST_TTL_LEDGERS,
+            high_priority_ttl: 200,
+            low_priority_ttl: 50,
+        };
+        env.storage()
+            .instance()
+            .set(&DataKey::RequestTTL, &default_config);
+        env.storage().instance().set(
+            &DataKey::ExpirationWarningLedgers,
+            &DEFAULT_EXPIRATION_WARNING_LEDGERS,
+        );
         Ok(())
     }
 
     pub fn add_provider(env: Env, provider: Address) -> Result<(), Error> {
-        let admin: Address = env.storage().instance()
+        let admin: Address = env
+            .storage()
+            .instance()
             .get(&DataKey::Admin)
             .ok_or(Error::NotInitialized)?;
         admin.require_auth();
-        env.storage().persistent().set(&DataKey::Provider(provider), &true);
+        env.storage()
+            .persistent()
+            .set(&DataKey::Provider(provider), &true);
         Ok(())
     }
 
     pub fn remove_provider(env: Env, provider: Address) -> Result<(), Error> {
-        let admin: Address = env.storage().instance()
+        let admin: Address = env
+            .storage()
+            .instance()
             .get(&DataKey::Admin)
             .ok_or(Error::NotInitialized)?;
         admin.require_auth();
-        env.storage().persistent().remove(&DataKey::Provider(provider));
+        env.storage()
+            .persistent()
+            .remove(&DataKey::Provider(provider));
         Ok(())
     }
 
     pub fn is_provider(env: Env, provider: Address) -> bool {
-        env.storage().persistent()
+        env.storage()
+            .persistent()
             .get(&DataKey::Provider(provider))
             .unwrap_or(false)
     }
@@ -299,8 +323,8 @@ impl OracleContract {
     }
 
     pub fn submit_request(
-        env:           Env,
-        storage_ref:   Bytes,
+        env: Env,
+        storage_ref: Bytes,
         manifest_hash: Bytes,
         requester:     Address,
         priority:      Priority,
@@ -317,6 +341,9 @@ impl OracleContract {
             + 1;
         env.storage().instance().set(&DataKey::NextRequestId, &id);
 
+        let current_ledger = env.ledger().sequence();
+        let expiration_ledger = current_ledger + ttl;
+
         let req = VerificationRequest {
             storage_ref,
             manifest_hash,
@@ -326,11 +353,9 @@ impl OracleContract {
         };
 
         env.storage().temporary().set(&DataKey::Request(id), &req);
-        env.storage().temporary().extend_ttl(
-            &DataKey::Request(id),
-            REQUEST_TTL_LEDGERS,
-            REQUEST_TTL_LEDGERS,
-        );
+        env.storage()
+            .temporary()
+            .extend_ttl(&DataKey::Request(id), ttl, ttl);
 
         Self::add_request_to_state_index(&env, &RequestState::Pending, id);
 
@@ -386,7 +411,9 @@ impl OracleContract {
     }
 
     pub fn verify_tee_hash(env: Env, tee_hash: BytesN<32>) -> Result<(), Error> {
-        let registry: Address = env.storage().instance()
+        let registry: Address = env
+            .storage()
+            .instance()
             .get(&DataKey::Registry)
             .ok_or(Error::RegistryNotConfigured)?;
 
@@ -403,13 +430,15 @@ impl OracleContract {
     }
 
     pub fn verify_attestation(
-        env:       Env,
-        provider:  BytesN<32>,
-        tee_hash:  BytesN<32>,
-        payload:   Bytes,
+        env: Env,
+        provider: BytesN<32>,
+        tee_hash: BytesN<32>,
+        payload: Bytes,
         signature: BytesN<64>,
     ) -> Result<(), Error> {
-        let registry: Address = env.storage().instance()
+        let registry: Address = env
+            .storage()
+            .instance()
             .get(&DataKey::Registry)
             .ok_or(Error::RegistryNotConfigured)?;
 

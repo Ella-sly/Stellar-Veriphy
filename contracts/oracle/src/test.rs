@@ -2,8 +2,8 @@
 
 use super::*;
 use soroban_sdk::{
-    testutils::{Address as _, storage::Temporary as _},
-    Env, Bytes, BytesN,
+    testutils::{storage::Temporary as _, Address as _},
+    Bytes, BytesN, Env,
 };
 
 fn make_env() -> Env {
@@ -55,11 +55,10 @@ mod reject_registry {
 
 fn setup_with_mock_registry(env: &Env) -> (Address, Address) {
     let registry_id = env.register_contract(None, mock_registry::MockRegistry);
-    let oracle_id   = register_oracle(env);
-    let provenance  = Address::generate(env);
-    let admin       = Address::generate(env);
-    OracleContractClient::new(env, &oracle_id)
-        .init(&registry_id, &provenance, &admin);
+    let oracle_id = register_oracle(env);
+    let provenance = Address::generate(env);
+    let admin = Address::generate(env);
+    OracleContractClient::new(env, &oracle_id).init(&registry_id, &provenance, &admin);
     (oracle_id, registry_id)
 }
 
@@ -73,9 +72,9 @@ fn test_init() {
     let cid = register_oracle(&env);
     let client = OracleContractClient::new(&env, &cid);
 
-    let registry   = Address::generate(&env);
+    let registry = Address::generate(&env);
     let provenance = Address::generate(&env);
-    let admin      = Address::generate(&env);
+    let admin = Address::generate(&env);
 
     client.init(&registry, &provenance, &admin);
 
@@ -89,9 +88,9 @@ fn test_init_already_initialized() {
     let cid = register_oracle(&env);
     let client = OracleContractClient::new(&env, &cid);
 
-    let registry   = Address::generate(&env);
+    let registry = Address::generate(&env);
     let provenance = Address::generate(&env);
-    let admin      = Address::generate(&env);
+    let admin = Address::generate(&env);
 
     client.init(&registry, &provenance, &admin);
 
@@ -110,10 +109,14 @@ fn test_init_already_initialized() {
 fn test_submit_request_generates_unique_ids() {
     let env = make_env();
     env.mock_all_auths();
-    let cid    = register_oracle(&env);
+    let cid = register_oracle(&env);
     let client = OracleContractClient::new(&env, &cid);
-    let bytes  = Bytes::from_slice(&env, b"data");
-    let req    = Address::generate(&env);
+    let bytes = Bytes::from_slice(&env, b"data");
+    let req = Address::generate(&env);
+    let registry = Address::generate(&env);
+    let provenance = Address::generate(&env);
+    let admin = Address::generate(&env);
+    client.init(&registry, &provenance, &admin);
 
     assert_eq!(client.submit_request(&bytes, &bytes, &req, &Priority::Normal), 1);
     assert_eq!(client.submit_request(&bytes, &bytes, &req, &Priority::Normal), 2);
@@ -123,10 +126,14 @@ fn test_submit_request_generates_unique_ids() {
 fn test_submit_request_stores_pending_in_temporary_storage() {
     let env = make_env();
     env.mock_all_auths();
-    let cid    = register_oracle(&env);
+    let cid = register_oracle(&env);
     let client = OracleContractClient::new(&env, &cid);
-    let bytes  = Bytes::from_slice(&env, b"ref");
-    let req    = Address::generate(&env);
+    let bytes = Bytes::from_slice(&env, b"ref");
+    let req = Address::generate(&env);
+    let registry = Address::generate(&env);
+    let provenance = Address::generate(&env);
+    let admin = Address::generate(&env);
+    client.init(&registry, &provenance, &admin);
 
     let id = client.submit_request(&bytes, &bytes, &req, &Priority::Normal);
     assert_eq!(client.get_request(&id).unwrap().state, RequestState::Pending);
@@ -144,7 +151,7 @@ fn test_submit_request_stores_pending_in_temporary_storage() {
 #[test]
 fn test_verify_attestation_not_initialized() {
     let env = make_env();
-    let cid    = register_oracle(&env);
+    let cid = register_oracle(&env);
     let client = OracleContractClient::new(&env, &cid);
 
     let err = client
@@ -164,11 +171,10 @@ fn test_verify_attestation_unauthorized_signer() {
     let env = make_env();
     env.mock_all_auths();
     let registry_id = env.register_contract(None, reject_registry::RejectRegistry);
-    let oracle_id   = register_oracle(&env);
-    let provenance  = Address::generate(&env);
-    let admin       = Address::generate(&env);
-    OracleContractClient::new(&env, &oracle_id)
-        .init(&registry_id, &provenance, &admin);
+    let oracle_id = register_oracle(&env);
+    let provenance = Address::generate(&env);
+    let admin = Address::generate(&env);
+    OracleContractClient::new(&env, &oracle_id).init(&registry_id, &provenance, &admin);
     let client = OracleContractClient::new(&env, &oracle_id);
 
     let err = client
@@ -190,11 +196,11 @@ fn test_verify_attestation_invalid_signature() {
     let (oracle_id, _) = setup_with_mock_registry(&env);
     let client = OracleContractClient::new(&env, &oracle_id);
 
-    let sk       = ed25519_dalek::SigningKey::from_bytes(&[42u8; 32]);
+    let sk = ed25519_dalek::SigningKey::from_bytes(&[42u8; 32]);
     let provider = BytesN::from_array(&env, sk.verifying_key().as_bytes());
     let tee_hash = BytesN::from_array(&env, &[1u8; 32]);
-    let payload  = Bytes::from_slice(&env, b"payload");
-    let bad_sig  = BytesN::from_array(&env, &[0u8; 64]);
+    let payload = Bytes::from_slice(&env, b"payload");
+    let bad_sig = BytesN::from_array(&env, &[0u8; 64]);
 
     let result = client.try_verify_attestation(&provider, &tee_hash, &payload, &bad_sig);
     assert!(result.is_err());
@@ -209,11 +215,11 @@ fn test_verify_attestation_success() {
     let (oracle_id, _) = setup_with_mock_registry(&env);
     let client = OracleContractClient::new(&env, &oracle_id);
 
-    let sk       = ed25519_dalek::SigningKey::from_bytes(&[42u8; 32]);
+    let sk = ed25519_dalek::SigningKey::from_bytes(&[42u8; 32]);
     let provider = BytesN::from_array(&env, sk.verifying_key().as_bytes());
     let tee_hash = BytesN::from_array(&env, &[1u8; 32]);
-    let raw      = b"attestation payload";
-    let payload  = Bytes::from_slice(&env, raw);
+    let raw = b"attestation payload";
+    let payload = Bytes::from_slice(&env, raw);
 
     let sig: ed25519_dalek::Signature = sk.sign(raw);
     let signature = BytesN::from_array(&env, &sig.to_bytes());

@@ -1225,7 +1225,6 @@ version = "21.7.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7dcdf04484af7cc731a7a48ad1d9f5f940370edeea84734434ceaf398a6b862e"
 dependencies = [
- "bytes-lit",
  "arbitrary",
  "bytes-lit",
  "ctor",
