@@ -19,6 +19,7 @@ pub enum Error {
     RegistryNotConfigured = 4,
     TeeNotVerified        = 5,
     ProviderNotRegistered = 6,
+    RequestNotFound       = 7,
 }
 
 // ---------------------------------------------------------------------------
@@ -33,6 +34,10 @@ pub enum DataKey {
     Provider(Address),
     NextRequestId,
     Request(u64),
+    AttestationData(u64),
+    BaseFee,
+    FeeEscrow,
+    ProviderBalance(Address),
 }
 
 // ---------------------------------------------------------------------------
@@ -54,6 +59,15 @@ pub struct VerificationRequest {
     pub manifest_hash: Bytes,
     pub requester:     Address,
     pub state:         RequestState,
+}
+
+#[contracttype]
+#[derive(Clone, Debug)]
+pub struct AttestationData {
+    pub provider:   Address,
+    pub tee_hash:   BytesN<32>,
+    pub signature:  BytesN<64>,
+    pub timestamp:  u64,
 }
 
 // ---------------------------------------------------------------------------
@@ -189,6 +203,76 @@ impl OracleContract {
         env.crypto().ed25519_verify(&provider, &payload, &signature);
 
         Ok(())
+    }
+
+    pub fn resubmit_request(
+        env:           Env,
+        id:            u64,
+        storage_ref:   Bytes,
+        manifest_hash: Bytes,
+    ) -> Result<u64, Error> {
+        let req = env.storage().temporary()
+            .get(&DataKey::Request(id))
+            .ok_or(Error::RequestNotFound)?;
+
+        req.requester.require_auth();
+
+        let updated_req = VerificationRequest {
+            storage_ref,
+            manifest_hash,
+            requester: req.requester.clone(),
+            state: RequestState::Pending,
+        };
+
+        env.storage().temporary().set(&DataKey::Request(id), &updated_req);
+        env.storage().temporary().extend_ttl(
+            &DataKey::Request(id),
+            REQUEST_TTL_LEDGERS,
+            REQUEST_TTL_LEDGERS,
+        );
+
+        env.events().publish((Symbol::new(&env, "resubmitted"),), id);
+        Ok(id)
+    }
+
+    pub fn store_attestation(
+        env:       Env,
+        request_id: u64,
+        provider:  Address,
+        tee_hash:  BytesN<32>,
+        signature: BytesN<64>,
+    ) -> Result<(), Error> {
+        let attestation = AttestationData {
+            provider,
+            tee_hash,
+            signature,
+            timestamp: env.ledger().timestamp(),
+        };
+
+        env.storage().persistent()
+            .set(&DataKey::AttestationData(request_id), &attestation);
+        Ok(())
+    }
+
+    pub fn get_attestation(env: Env, request_id: u64) -> Option<AttestationData> {
+        env.storage().persistent()
+            .get(&DataKey::AttestationData(request_id))
+    }
+
+    pub fn set_base_fee(env: Env, fee: u128) -> Result<(), Error> {
+        let admin: Address = env.storage().instance()
+            .get(&DataKey::Admin)
+            .ok_or(Error::NotInitialized)?;
+        admin.require_auth();
+
+        env.storage().instance().set(&DataKey::BaseFee, &fee);
+        Ok(())
+    }
+
+    pub fn get_base_fee(env: Env) -> u128 {
+        env.storage().instance()
+            .get(&DataKey::BaseFee)
+            .unwrap_or(0u128)
     }
 }
 
