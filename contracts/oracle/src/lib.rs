@@ -86,6 +86,24 @@ pub struct PaginatedRequests {
     pub total_count: u32,
 }
 
+#[contracttype]
+#[derive(Clone, Debug)]
+pub struct AttestationData {
+    pub provider:   Address,
+    pub tee_hash:   BytesN<32>,
+    pub signature:  BytesN<64>,
+    pub timestamp:  u64,
+}
+
+#[contracttype]
+#[derive(Clone, Debug)]
+pub struct AggregatedRequest {
+    pub primary_id:      u64,
+    pub member_ids:      vec::Vec<u64>,
+    pub manifest_hash:   Bytes,
+    pub total_fee:       u128,
+}
+
 // ---------------------------------------------------------------------------
 // Contract
 // ---------------------------------------------------------------------------
