@@ -115,8 +115,8 @@ fn test_submit_request_generates_unique_ids() {
     let bytes  = Bytes::from_slice(&env, b"data");
     let req    = Address::generate(&env);
 
-    assert_eq!(client.submit_request(&bytes, &bytes, &req), 1);
-    assert_eq!(client.submit_request(&bytes, &bytes, &req), 2);
+    assert_eq!(client.submit_request(&bytes, &bytes, &req, &Priority::Normal), 1);
+    assert_eq!(client.submit_request(&bytes, &bytes, &req, &Priority::Normal), 2);
 }
 
 #[test]
@@ -128,7 +128,7 @@ fn test_submit_request_stores_pending_in_temporary_storage() {
     let bytes  = Bytes::from_slice(&env, b"ref");
     let req    = Address::generate(&env);
 
-    let id = client.submit_request(&bytes, &bytes, &req);
+    let id = client.submit_request(&bytes, &bytes, &req, &Priority::Normal);
     assert_eq!(client.get_request(&id).unwrap().state, RequestState::Pending);
 
     let ttl = env.as_contract(&cid, || {
@@ -219,4 +219,239 @@ fn test_verify_attestation_success() {
     let signature = BytesN::from_array(&env, &sig.to_bytes());
 
     client.verify_attestation(&provider, &tee_hash, &payload, &signature);
+}
+
+// ---------------------------------------------------------------------------
+// Issue #156 — Request Batch Processing
+// ---------------------------------------------------------------------------
+
+#[test]
+fn test_submit_batch_request_success() {
+    let env = make_env();
+    env.mock_all_auths();
+    let cid    = register_oracle(&env);
+    let client = OracleContractClient::new(&env, &cid);
+    let bytes  = Bytes::from_slice(&env, b"data");
+    let req    = Address::generate(&env);
+
+    let requests = vec![
+        &env,
+        (bytes.clone(), bytes.clone(), req.clone(), Priority::Normal),
+        (bytes.clone(), bytes.clone(), req.clone(), Priority::High),
+    ];
+
+    let ids = client.submit_batch_request(&requests).unwrap();
+    assert_eq!(ids.len(), 2);
+    assert_eq!(ids.get(0), 1);
+    assert_eq!(ids.get(1), 2);
+}
+
+#[test]
+fn test_submit_batch_request_exceeds_limit() {
+    let env = make_env();
+    env.mock_all_auths();
+    let cid    = register_oracle(&env);
+    let client = OracleContractClient::new(&env, &cid);
+    let bytes  = Bytes::from_slice(&env, b"data");
+    let req    = Address::generate(&env);
+
+    let mut requests = vec![&env];
+    for _ in 0..11 {
+        requests.push_back((bytes.clone(), bytes.clone(), req.clone(), Priority::Normal));
+    }
+
+    let err = client.try_submit_batch_request(&requests)
+        .unwrap_err()
+        .unwrap();
+    assert_eq!(err, Error::BatchSizeExceeded);
+}
+
+#[test]
+fn test_submit_batch_request_stores_all_pending() {
+    let env = make_env();
+    env.mock_all_auths();
+    let cid    = register_oracle(&env);
+    let client = OracleContractClient::new(&env, &cid);
+    let bytes  = Bytes::from_slice(&env, b"data");
+    let req    = Address::generate(&env);
+
+    let requests = vec![
+        &env,
+        (bytes.clone(), bytes.clone(), req.clone(), Priority::Low),
+        (bytes.clone(), bytes.clone(), req.clone(), Priority::Normal),
+    ];
+
+    let ids = client.submit_batch_request(&requests).unwrap();
+
+    for i in 0..ids.len() {
+        let id = ids.get(i);
+        let stored = client.get_request(&id).unwrap();
+        assert_eq!(stored.state, RequestState::Pending);
+        assert_eq!(stored.requester, req);
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Issue #157 — Request Cancellation Functionality
+// ---------------------------------------------------------------------------
+
+#[test]
+fn test_cancel_request_success() {
+    let env = make_env();
+    env.mock_all_auths();
+    let cid    = register_oracle(&env);
+    let client = OracleContractClient::new(&env, &cid);
+    let bytes  = Bytes::from_slice(&env, b"data");
+    let req    = Address::generate(&env);
+
+    let id = client.submit_request(&bytes, &bytes, &req, &Priority::Normal);
+    let cancelled = client.cancel_request(&id);
+
+    assert!(cancelled.is_ok());
+    assert_eq!(client.get_request(&id).unwrap().state, RequestState::Cancelled);
+}
+
+#[test]
+fn test_cancel_request_not_found() {
+    let env = make_env();
+    env.mock_all_auths();
+    let cid    = register_oracle(&env);
+    let client = OracleContractClient::new(&env, &cid);
+
+    let err = client.try_cancel_request(&9999)
+        .unwrap_err()
+        .unwrap();
+    assert_eq!(err, Error::RequestNotFound);
+}
+
+// ---------------------------------------------------------------------------
+// Issue #158 — Request Priority Levels
+// ---------------------------------------------------------------------------
+
+#[test]
+fn test_priority_affects_request() {
+    let env = make_env();
+    env.mock_all_auths();
+    let cid    = register_oracle(&env);
+    let client = OracleContractClient::new(&env, &cid);
+    let bytes  = Bytes::from_slice(&env, b"data");
+    let req    = Address::generate(&env);
+
+    let id_low = client.submit_request(&bytes, &bytes, &req, &Priority::Low);
+    let id_high = client.submit_request(&bytes, &bytes, &req, &Priority::High);
+
+    let req_low = client.get_request(&id_low).unwrap();
+    let req_high = client.get_request(&id_high).unwrap();
+
+    assert_eq!(req_low.priority, Priority::Low);
+    assert_eq!(req_high.priority, Priority::High);
+}
+
+#[test]
+fn test_all_priority_levels() {
+    let env = make_env();
+    env.mock_all_auths();
+    let cid    = register_oracle(&env);
+    let client = OracleContractClient::new(&env, &cid);
+    let bytes  = Bytes::from_slice(&env, b"data");
+    let req    = Address::generate(&env);
+
+    let priorities = vec![
+        &env,
+        Priority::Low,
+        Priority::Normal,
+        Priority::High,
+        Priority::Urgent,
+    ];
+
+    for i in 0..priorities.len() {
+        let priority = priorities.get(i);
+        let id = client.submit_request(&bytes, &bytes, &req, &priority);
+        let stored = client.get_request(&id).unwrap();
+        assert_eq!(stored.priority, *priority);
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Issue #159 — Request Status Query Pagination
+// ---------------------------------------------------------------------------
+
+#[test]
+fn test_get_requests_by_state_pending() {
+    let env = make_env();
+    env.mock_all_auths();
+    let cid    = register_oracle(&env);
+    let client = OracleContractClient::new(&env, &cid);
+    let bytes  = Bytes::from_slice(&env, b"data");
+    let req    = Address::generate(&env);
+
+    client.submit_request(&bytes, &bytes, &req, &Priority::Normal);
+    client.submit_request(&bytes, &bytes, &req, &Priority::High);
+
+    let paginated = client.get_requests_by_state(
+        &RequestState::Pending,
+        0,
+        10,
+        &Option::None,
+    );
+
+    assert_eq!(paginated.requests.len(), 2);
+    assert_eq!(paginated.total_count, 2);
+}
+
+#[test]
+fn test_get_requests_by_state_with_pagination() {
+    let env = make_env();
+    env.mock_all_auths();
+    let cid    = register_oracle(&env);
+    let client = OracleContractClient::new(&env, &cid);
+    let bytes  = Bytes::from_slice(&env, b"data");
+    let req    = Address::generate(&env);
+
+    for _ in 0..5 {
+        client.submit_request(&bytes, &bytes, &req, &Priority::Normal);
+    }
+
+    let page1 = client.get_requests_by_state(
+        &RequestState::Pending,
+        0,
+        2,
+        &Option::None,
+    );
+
+    let page2 = client.get_requests_by_state(
+        &RequestState::Pending,
+        2,
+        2,
+        &Option::None,
+    );
+
+    assert_eq!(page1.requests.len(), 2);
+    assert_eq!(page2.requests.len(), 2);
+    assert_eq!(page1.total_count, 5);
+    assert_eq!(page2.total_count, 5);
+}
+
+#[test]
+fn test_get_requests_by_state_filter_by_requester() {
+    let env = make_env();
+    env.mock_all_auths();
+    let cid    = register_oracle(&env);
+    let client = OracleContractClient::new(&env, &cid);
+    let bytes  = Bytes::from_slice(&env, b"data");
+    let req1   = Address::generate(&env);
+    let req2   = Address::generate(&env);
+
+    client.submit_request(&bytes, &bytes, &req1, &Priority::Normal);
+    client.submit_request(&bytes, &bytes, &req2, &Priority::Normal);
+
+    let paginated = client.get_requests_by_state(
+        &RequestState::Pending,
+        0,
+        10,
+        &Option::Some(req1),
+    );
+
+    assert_eq!(paginated.requests.len(), 1);
+    assert_eq!(paginated.requests.get(0).request.requester, req1);
 }

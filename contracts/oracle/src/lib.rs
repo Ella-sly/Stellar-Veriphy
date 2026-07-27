@@ -19,7 +19,10 @@ pub enum Error {
     RegistryNotConfigured = 4,
     TeeNotVerified        = 5,
     ProviderNotRegistered = 6,
-    RequestNotFound       = 7,
+    BatchSizeExceeded     = 7,
+    RequestNotFound       = 8,
+    Unauthorized          = 9,
+    InvalidState          = 10,
 }
 
 // ---------------------------------------------------------------------------
@@ -34,13 +37,7 @@ pub enum DataKey {
     Provider(Address),
     NextRequestId,
     Request(u64),
-    AttestationData(u64),
-    BaseFee,
-    FeeEscrow,
-    ProviderBalance(Address),
-    ManifestRequests(Bytes),
-    AggregatedGroup(Bytes),
-    AggregationPrimary(u64),
+    RequestsByState(RequestState),
 }
 
 // ---------------------------------------------------------------------------
@@ -53,6 +50,16 @@ pub enum RequestState {
     Pending,
     Verified,
     Rejected,
+    Cancelled,
+}
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum Priority {
+    Low,
+    Normal,
+    High,
+    Urgent,
 }
 
 #[contracttype]
@@ -62,6 +69,21 @@ pub struct VerificationRequest {
     pub manifest_hash: Bytes,
     pub requester:     Address,
     pub state:         RequestState,
+    pub priority:      Priority,
+}
+
+#[contracttype]
+#[derive(Clone, Debug)]
+pub struct RequestWithId {
+    pub id: u64,
+    pub request: VerificationRequest,
+}
+
+#[contracttype]
+#[derive(Clone, Debug)]
+pub struct PaginatedRequests {
+    pub requests: Vec<RequestWithId>,
+    pub total_count: u32,
 }
 
 #[contracttype]
@@ -135,6 +157,7 @@ impl OracleContract {
         storage_ref:   Bytes,
         manifest_hash: Bytes,
         requester:     Address,
+        priority:      Priority,
     ) -> u64 {
         requester.require_auth();
 
@@ -147,8 +170,9 @@ impl OracleContract {
         let req = VerificationRequest {
             storage_ref,
             manifest_hash,
-            requester,
+            requester: requester.clone(),
             state: RequestState::Pending,
+            priority,
         };
 
         env.storage().temporary().set(&DataKey::Request(id), &req);
@@ -158,7 +182,10 @@ impl OracleContract {
             REQUEST_TTL_LEDGERS,
         );
 
-        env.events().publish((Symbol::new(&env, "submitted"),), id);
+        Self::add_request_to_state_index(&env, &RequestState::Pending, id);
+
+        let fee = Self::calculate_priority_fee(&priority);
+        env.events().publish((Symbol::new(&env, "submitted"),), (id, fee));
         id
     }
 
@@ -217,259 +244,155 @@ impl OracleContract {
         Ok(())
     }
 
-    pub fn resubmit_request(
-        env:           Env,
-        id:            u64,
-        storage_ref:   Bytes,
-        manifest_hash: Bytes,
-    ) -> Result<u64, Error> {
-        let req = env.storage().temporary()
+    // Issue #156: Batch Processing
+    pub fn submit_batch_request(
+        env:      Env,
+        requests: Vec<(Bytes, Bytes, Address, Priority)>,
+    ) -> Result<Vec<u64>, Error> {
+        if requests.len() > 10 {
+            return Err(Error::BatchSizeExceeded);
+        }
+
+        let mut ids = vec![&env];
+
+        for i in 0..requests.len() {
+            let (storage_ref, manifest_hash, requester, priority) = requests.get(i).unwrap();
+
+            requester.require_auth();
+
+            let id: u64 = env.storage().instance()
+                .get(&DataKey::NextRequestId)
+                .unwrap_or(0u64)
+                + 1;
+            env.storage().instance().set(&DataKey::NextRequestId, &id);
+
+            let req = VerificationRequest {
+                storage_ref: storage_ref.clone(),
+                manifest_hash: manifest_hash.clone(),
+                requester: requester.clone(),
+                state: RequestState::Pending,
+                priority: priority.clone(),
+            };
+
+            env.storage().temporary().set(&DataKey::Request(id), &req);
+            env.storage().temporary().extend_ttl(
+                &DataKey::Request(id),
+                REQUEST_TTL_LEDGERS,
+                REQUEST_TTL_LEDGERS,
+            );
+
+            Self::add_request_to_state_index(&env, &RequestState::Pending, id);
+            ids.push_back(id);
+        }
+
+        env.events().publish((Symbol::new(&env, "batch_submitted"),), ids.clone());
+        Ok(ids)
+    }
+
+    // Issue #157: Request Cancellation
+    pub fn cancel_request(env: Env, id: u64) -> Result<(), Error> {
+        let mut req = env.storage().temporary()
             .get(&DataKey::Request(id))
             .ok_or(Error::RequestNotFound)?;
 
         req.requester.require_auth();
 
-        let updated_req = VerificationRequest {
-            storage_ref,
-            manifest_hash,
-            requester: req.requester.clone(),
-            state: RequestState::Pending,
-        };
-
-        env.storage().temporary().set(&DataKey::Request(id), &updated_req);
-        env.storage().temporary().extend_ttl(
-            &DataKey::Request(id),
-            REQUEST_TTL_LEDGERS,
-            REQUEST_TTL_LEDGERS,
-        );
-
-        env.events().publish((Symbol::new(&env, "resubmitted"),), id);
-        Ok(id)
-    }
-
-    pub fn store_attestation(
-        env:       Env,
-        request_id: u64,
-        provider:  Address,
-        tee_hash:  BytesN<32>,
-        signature: BytesN<64>,
-    ) -> Result<(), Error> {
-        let attestation = AttestationData {
-            provider,
-            tee_hash,
-            signature,
-            timestamp: env.ledger().timestamp(),
-        };
-
-        env.storage().persistent()
-            .set(&DataKey::AttestationData(request_id), &attestation);
-        Ok(())
-    }
-
-    pub fn get_attestation(env: Env, request_id: u64) -> Option<AttestationData> {
-        env.storage().persistent()
-            .get(&DataKey::AttestationData(request_id))
-    }
-
-    pub fn set_base_fee(env: Env, fee: u128) -> Result<(), Error> {
-        let admin: Address = env.storage().instance()
-            .get(&DataKey::Admin)
-            .ok_or(Error::NotInitialized)?;
-        admin.require_auth();
-
-        env.storage().instance().set(&DataKey::BaseFee, &fee);
-        Ok(())
-    }
-
-    pub fn get_base_fee(env: Env) -> u128 {
-        env.storage().instance()
-            .get(&DataKey::BaseFee)
-            .unwrap_or(0u128)
-    }
-
-    pub fn calculate_dynamic_fee(env: Env, pending_requests: u64) -> u128 {
-        let base_fee = Self::get_base_fee(env.clone());
-        if pending_requests == 0 {
-            return base_fee;
+        if req.state != RequestState::Pending {
+            return Err(Error::InvalidState);
         }
 
-        let load_factor = 1 + (pending_requests as u128 / 10);
-        base_fee.saturating_mul(load_factor)
+        Self::remove_request_from_state_index(&env, &req.state, id);
+        req.state = RequestState::Cancelled;
+        Self::add_request_to_state_index(&env, &RequestState::Cancelled, id);
+
+        env.storage().temporary().set(&DataKey::Request(id), &req);
+        env.events().publish((Symbol::new(&env, "cancelled"),), id);
+
+        Ok(())
     }
 
-    pub fn distribute_fee_to_provider(
+    // Issue #159: Request Status Query Pagination
+    pub fn get_requests_by_state(
         env: Env,
-        provider: Address,
-        amount: u128,
-    ) -> Result<(), Error> {
-        let current_balance: u128 = env.storage().persistent()
-            .get(&DataKey::ProviderBalance(provider.clone()))
-            .unwrap_or(0u128);
+        state: RequestState,
+        offset: u32,
+        limit: u32,
+        requester: Option<Address>,
+    ) -> PaginatedRequests {
+        let all_ids: Vec<u64> = env.storage().persistent()
+            .get(&DataKey::RequestsByState(state.clone()))
+            .unwrap_or(vec![&env]);
 
-        let new_balance = current_balance.saturating_add(amount);
-        env.storage().persistent()
-            .set(&DataKey::ProviderBalance(provider.clone()), &new_balance);
+        let mut results = vec![&env];
+        let mut count = 0u32;
+        let limit_val = if limit == 0 { 100 } else { limit.min(100) };
+        let start = offset as usize;
 
-        env.events().publish(
-            (Symbol::new(&env, "fee_distributed"),),
-            (provider, amount),
-        );
-        Ok(())
-    }
-
-    pub fn get_provider_balance(env: Env, provider: Address) -> u128 {
-        env.storage().persistent()
-            .get(&DataKey::ProviderBalance(provider))
-            .unwrap_or(0u128)
-    }
-
-    pub fn withdraw_provider_earnings(env: Env, provider: Address) -> Result<u128, Error> {
-        provider.require_auth();
-
-        let balance = Self::get_provider_balance(env.clone(), provider.clone());
-        if balance == 0 {
-            return Ok(0);
+        if start >= all_ids.len() {
+            return PaginatedRequests {
+                requests: results,
+                total_count: all_ids.len() as u32,
+            };
         }
 
-        env.storage().persistent()
-            .set(&DataKey::ProviderBalance(provider.clone()), &0u128);
+        for i in start..all_ids.len() {
+            if count >= limit_val {
+                break;
+            }
 
-        env.events().publish(
-            (Symbol::new(&env, "earnings_withdrawn"),),
-            (provider, balance),
-        );
-        Ok(balance)
-    }
-
-    pub fn refund_request_fee(
-        env: Env,
-        requester: Address,
-        amount: u128,
-    ) -> Result<(), Error> {
-        requester.require_auth();
-
-        let current_escrow: u128 = env.storage().instance()
-            .get(&DataKey::FeeEscrow)
-            .unwrap_or(0u128);
-
-        if current_escrow < amount {
-            return Err(Error::ProviderNotRegistered);
+            let req_id = all_ids.get(i).unwrap();
+            if let Some(req) = env.storage().temporary().get::<_, VerificationRequest>(&DataKey::Request(req_id)) {
+                if let Some(ref addr) = requester {
+                    if req.requester != *addr {
+                        continue;
+                    }
+                }
+                results.push_back(RequestWithId {
+                    id: req_id,
+                    request: req,
+                });
+                count += 1;
+            }
         }
 
-        let new_escrow = current_escrow.saturating_sub(amount);
-        env.storage().instance().set(&DataKey::FeeEscrow, &new_escrow);
-
-        env.events().publish(
-            (Symbol::new(&env, "fee_refunded"),),
-            (requester, amount),
-        );
-        Ok(())
-    }
-
-    pub fn get_escrow_balance(env: Env) -> u128 {
-        env.storage().instance()
-            .get(&DataKey::FeeEscrow)
-            .unwrap_or(0u128)
-    }
-
-    pub fn check_and_aggregate_request(
-        env: Env,
-        manifest_hash: Bytes,
-        request_id: u64,
-        fee: u128,
-    ) -> Result<Option<u64>, Error> {
-        let key = DataKey::ManifestRequests(manifest_hash.clone());
-
-        if let Some(primary_id) = env.storage().persistent().get::<_, Option<u64>>(&key) {
-            Self::add_to_aggregation_group(
-                env.clone(),
-                primary_id,
-                request_id,
-                fee,
-            )?;
-            env.events().publish(
-                (Symbol::new(&env, "request_aggregated"),),
-                (request_id, primary_id),
-            );
-            return Ok(Some(primary_id));
+        PaginatedRequests {
+            requests: results,
+            total_count: all_ids.len() as u32,
         }
-
-        env.storage().persistent()
-            .set(&key, &request_id);
-        env.storage().persistent()
-            .set(&DataKey::AggregationPrimary(request_id), &true);
-        Ok(None)
     }
 
-    fn add_to_aggregation_group(
-        env: Env,
-        primary_id: u64,
-        member_id: u64,
-        fee: u128,
-    ) -> Result<(), Error> {
-        let req = env.storage().temporary()
-            .get::<_, Option<VerificationRequest>>(&DataKey::Request(primary_id))
-            .flatten()
-            .ok_or(Error::RequestNotFound)?;
-
-        let group_key = DataKey::AggregatedGroup(req.manifest_hash.clone());
-
-        let mut group: AggregatedRequest = env.storage().persistent()
-            .get(&group_key)
-            .unwrap_or(AggregatedRequest {
-                primary_id,
-                member_ids: vec::Vec::new(&env),
-                manifest_hash: req.manifest_hash,
-                total_fee: 0,
-            });
-
-        group.member_ids.push_back(member_id);
-        group.total_fee = group.total_fee.saturating_add(fee);
-
-        env.storage().persistent().set(&group_key, &group);
-        Ok(())
-    }
-
-    pub fn get_aggregated_group(env: Env, manifest_hash: Bytes) -> Option<AggregatedRequest> {
-        env.storage().persistent()
-            .get(&DataKey::AggregatedGroup(manifest_hash))
-    }
-
-    pub fn distribute_aggregated_cost(
-        env: Env,
-        manifest_hash: Bytes,
-        verification_cost: u128,
-    ) -> Result<(), Error> {
-        let group = Self::get_aggregated_group(env.clone(), manifest_hash)
-            .ok_or(Error::RequestNotFound)?;
-
-        if group.member_ids.is_empty() {
-            return Err(Error::RequestNotFound);
+    // Helper: Calculate fee based on priority
+    fn calculate_priority_fee(_priority: &Priority) -> u64 {
+        match _priority {
+            Priority::Low => 100,
+            Priority::Normal => 200,
+            Priority::High => 400,
+            Priority::Urgent => 800,
         }
-
-        let cost_per_request = verification_cost / (group.member_ids.len() as u128);
-        let remainder = verification_cost % (group.member_ids.len() as u128);
-
-        for (idx, _member_id) in group.member_ids.iter().enumerate() {
-            let cost = cost_per_request + if idx == 0 { remainder } else { 0 };
-            let escrow: u128 = env.storage().instance()
-                .get(&DataKey::FeeEscrow)
-                .unwrap_or(0u128);
-            let new_escrow = escrow.saturating_sub(cost);
-            env.storage().instance().set(&DataKey::FeeEscrow, &new_escrow);
-        }
-
-        env.events().publish(
-            (Symbol::new(&env, "aggregated_cost_distributed"),),
-            group.member_ids.len(),
-        );
-        Ok(())
     }
 
-    pub fn is_primary_request(env: Env, request_id: u64) -> bool {
-        env.storage().persistent()
-            .get(&DataKey::AggregationPrimary(request_id))
-            .unwrap_or(false)
+    // Helper: Add request ID to state index
+    fn add_request_to_state_index(env: &Env, state: &RequestState, id: u64) {
+        let mut ids: Vec<u64> = env.storage().persistent()
+            .get(&DataKey::RequestsByState(state.clone()))
+            .unwrap_or(vec![env]);
+        ids.push_back(id);
+        env.storage().persistent().set(&DataKey::RequestsByState(state.clone()), &ids);
+    }
+
+    // Helper: Remove request ID from state index
+    fn remove_request_from_state_index(env: &Env, state: &RequestState, id: u64) {
+        let mut ids: Vec<u64> = env.storage().persistent()
+            .get(&DataKey::RequestsByState(state.clone()))
+            .unwrap_or(vec![env]);
+
+        let mut new_ids = vec![env];
+        for i in 0..ids.len() {
+            if ids.get(i).unwrap() != id {
+                new_ids.push_back(ids.get(i).unwrap());
+            }
+        }
+        env.storage().persistent().set(&DataKey::RequestsByState(state.clone()), &new_ids);
     }
 }
 
