@@ -397,3 +397,98 @@ fn test_check_expiration_warning_emits_event() {
 
     client.try_check_expiration_warning(&id).unwrap().unwrap();
 }
+
+// ---------------------------------------------------------------------------
+// Issue #162 — Provider Performance Metrics
+// ---------------------------------------------------------------------------
+
+#[test]
+fn test_get_provider_metrics_returns_none_initially() {
+    let env = make_env();
+    env.mock_all_auths();
+    let cid = register_oracle(&env);
+    let client = OracleContractClient::new(&env, &cid);
+    let registry = Address::generate(&env);
+    let provenance = Address::generate(&env);
+    let admin = Address::generate(&env);
+    let provider = Address::generate(&env);
+    client.init(&registry, &provenance, &admin);
+
+    let metrics = client.get_provider_metrics(&provider);
+    assert!(metrics.is_none());
+}
+
+#[test]
+fn test_record_verification_success() {
+    let env = make_env();
+    env.mock_all_auths();
+    let cid = register_oracle(&env);
+    let client = OracleContractClient::new(&env, &cid);
+    let registry = Address::generate(&env);
+    let provenance = Address::generate(&env);
+    let admin = Address::generate(&env);
+    let provider = Address::generate(&env);
+    client.init(&registry, &provenance, &admin);
+
+    client
+        .try_record_verification_success(&provider)
+        .unwrap()
+        .unwrap();
+    let metrics = client.get_provider_metrics(&provider).unwrap();
+    assert_eq!(metrics.total_verifications, 1);
+    assert_eq!(metrics.successful_verifications, 1);
+    assert_eq!(metrics.failed_verifications, 0);
+}
+
+#[test]
+fn test_record_verification_failure() {
+    let env = make_env();
+    env.mock_all_auths();
+    let cid = register_oracle(&env);
+    let client = OracleContractClient::new(&env, &cid);
+    let registry = Address::generate(&env);
+    let provenance = Address::generate(&env);
+    let admin = Address::generate(&env);
+    let provider = Address::generate(&env);
+    client.init(&registry, &provenance, &admin);
+
+    client
+        .try_record_verification_failure(&provider)
+        .unwrap()
+        .unwrap();
+    let metrics = client.get_provider_metrics(&provider).unwrap();
+    assert_eq!(metrics.total_verifications, 1);
+    assert_eq!(metrics.successful_verifications, 0);
+    assert_eq!(metrics.failed_verifications, 1);
+}
+
+#[test]
+fn test_record_multiple_verifications() {
+    let env = make_env();
+    env.mock_all_auths();
+    let cid = register_oracle(&env);
+    let client = OracleContractClient::new(&env, &cid);
+    let registry = Address::generate(&env);
+    let provenance = Address::generate(&env);
+    let admin = Address::generate(&env);
+    let provider = Address::generate(&env);
+    client.init(&registry, &provenance, &admin);
+
+    client
+        .try_record_verification_success(&provider)
+        .unwrap()
+        .unwrap();
+    client
+        .try_record_verification_success(&provider)
+        .unwrap()
+        .unwrap();
+    client
+        .try_record_verification_failure(&provider)
+        .unwrap()
+        .unwrap();
+
+    let metrics = client.get_provider_metrics(&provider).unwrap();
+    assert_eq!(metrics.total_verifications, 3);
+    assert_eq!(metrics.successful_verifications, 2);
+    assert_eq!(metrics.failed_verifications, 1);
+}

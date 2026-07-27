@@ -36,6 +36,7 @@ pub enum DataKey {
     Request(u64),
     RequestTTL,
     ExpirationWarningLedgers,
+    ProviderMetrics(Address),
 }
 
 // ---------------------------------------------------------------------------
@@ -66,6 +67,15 @@ pub struct TTLConfig {
     pub default_ttl: u32,
     pub high_priority_ttl: u32,
     pub low_priority_ttl: u32,
+}
+
+#[contracttype]
+#[derive(Clone, Debug)]
+pub struct ProviderMetrics {
+    pub total_verifications: u64,
+    pub successful_verifications: u64,
+    pub failed_verifications: u64,
+    pub last_activity: u64,
 }
 
 // ---------------------------------------------------------------------------
@@ -272,6 +282,50 @@ impl OracleContract {
             );
         }
 
+        Ok(())
+    }
+
+    pub fn get_provider_metrics(env: Env, provider: Address) -> Option<ProviderMetrics> {
+        env.storage()
+            .persistent()
+            .get(&DataKey::ProviderMetrics(provider))
+    }
+
+    pub fn record_verification_success(env: Env, provider: Address) -> Result<(), Error> {
+        let mut metrics =
+            Self::get_provider_metrics(env.clone(), provider.clone()).unwrap_or(ProviderMetrics {
+                total_verifications: 0,
+                successful_verifications: 0,
+                failed_verifications: 0,
+                last_activity: 0,
+            });
+
+        metrics.total_verifications += 1;
+        metrics.successful_verifications += 1;
+        metrics.last_activity = env.ledger().sequence() as u64;
+
+        env.storage()
+            .persistent()
+            .set(&DataKey::ProviderMetrics(provider), &metrics);
+        Ok(())
+    }
+
+    pub fn record_verification_failure(env: Env, provider: Address) -> Result<(), Error> {
+        let mut metrics =
+            Self::get_provider_metrics(env.clone(), provider.clone()).unwrap_or(ProviderMetrics {
+                total_verifications: 0,
+                successful_verifications: 0,
+                failed_verifications: 0,
+                last_activity: 0,
+            });
+
+        metrics.total_verifications += 1;
+        metrics.failed_verifications += 1;
+        metrics.last_activity = env.ledger().sequence() as u64;
+
+        env.storage()
+            .persistent()
+            .set(&DataKey::ProviderMetrics(provider), &metrics);
         Ok(())
     }
 
