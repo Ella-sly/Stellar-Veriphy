@@ -118,20 +118,8 @@ fn test_submit_request_generates_unique_ids() {
     let admin = Address::generate(&env);
     client.init(&registry, &provenance, &admin);
 
-    assert_eq!(
-        client
-            .try_submit_request(&bytes, &bytes, &req)
-            .unwrap()
-            .unwrap(),
-        1
-    );
-    assert_eq!(
-        client
-            .try_submit_request(&bytes, &bytes, &req)
-            .unwrap()
-            .unwrap(),
-        2
-    );
+    assert_eq!(client.submit_request(&bytes, &bytes, &req, &Priority::Normal), 1);
+    assert_eq!(client.submit_request(&bytes, &bytes, &req, &Priority::Normal), 2);
 }
 
 #[test]
@@ -147,14 +135,8 @@ fn test_submit_request_stores_pending_in_temporary_storage() {
     let admin = Address::generate(&env);
     client.init(&registry, &provenance, &admin);
 
-    let id = client
-        .try_submit_request(&bytes, &bytes, &req)
-        .unwrap()
-        .unwrap();
-    assert_eq!(
-        client.get_request(&id).unwrap().state,
-        RequestState::Pending
-    );
+    let id = client.submit_request(&bytes, &bytes, &req, &Priority::Normal);
+    assert_eq!(client.get_request(&id).unwrap().state, RequestState::Pending);
 
     let ttl = env.as_contract(&cid, || {
         env.storage().temporary().get_ttl(&DataKey::Request(id))
@@ -246,249 +228,236 @@ fn test_verify_attestation_success() {
 }
 
 // ---------------------------------------------------------------------------
-// Issue #161 — Configurable TTL
+// Issue #156 — Request Batch Processing
 // ---------------------------------------------------------------------------
 
 #[test]
-fn test_get_ttl_config_returns_default_after_init() {
+fn test_submit_batch_request_success() {
     let env = make_env();
     env.mock_all_auths();
-    let cid = register_oracle(&env);
+    let cid    = register_oracle(&env);
     let client = OracleContractClient::new(&env, &cid);
-    let registry = Address::generate(&env);
-    let provenance = Address::generate(&env);
-    let admin = Address::generate(&env);
-    client.init(&registry, &provenance, &admin);
+    let bytes  = Bytes::from_slice(&env, b"data");
+    let req    = Address::generate(&env);
 
-    let config = client.try_get_ttl_config().unwrap().unwrap();
-    assert_eq!(config.default_ttl, 100);
-    assert_eq!(config.high_priority_ttl, 200);
-    assert_eq!(config.low_priority_ttl, 50);
+    let requests = vec![
+        &env,
+        (bytes.clone(), bytes.clone(), req.clone(), Priority::Normal),
+        (bytes.clone(), bytes.clone(), req.clone(), Priority::High),
+    ];
+
+    let ids = client.submit_batch_request(&requests).unwrap();
+    assert_eq!(ids.len(), 2);
+    assert_eq!(ids.get(0), 1);
+    assert_eq!(ids.get(1), 2);
 }
 
 #[test]
-fn test_update_ttl_config_admin_only() {
+fn test_submit_batch_request_exceeds_limit() {
     let env = make_env();
     env.mock_all_auths();
-    let cid = register_oracle(&env);
+    let cid    = register_oracle(&env);
     let client = OracleContractClient::new(&env, &cid);
-    let registry = Address::generate(&env);
-    let provenance = Address::generate(&env);
-    let admin = Address::generate(&env);
-    client.init(&registry, &provenance, &admin);
+    let bytes  = Bytes::from_slice(&env, b"data");
+    let req    = Address::generate(&env);
 
-    client
-        .try_update_ttl_config(&150, &250, &75)
-        .unwrap()
+    let mut requests = vec![&env];
+    for _ in 0..11 {
+        requests.push_back((bytes.clone(), bytes.clone(), req.clone(), Priority::Normal));
+    }
+
+    let err = client.try_submit_batch_request(&requests)
+        .unwrap_err()
         .unwrap();
-    let config = client.try_get_ttl_config().unwrap().unwrap();
-    assert_eq!(config.default_ttl, 150);
-    assert_eq!(config.high_priority_ttl, 250);
-    assert_eq!(config.low_priority_ttl, 75);
+    assert_eq!(err, Error::BatchSizeExceeded);
 }
 
 #[test]
-fn test_update_ttl_config_invalid_ttl() {
+fn test_submit_batch_request_stores_all_pending() {
     let env = make_env();
     env.mock_all_auths();
-    let cid = register_oracle(&env);
+    let cid    = register_oracle(&env);
     let client = OracleContractClient::new(&env, &cid);
-    let registry = Address::generate(&env);
-    let provenance = Address::generate(&env);
-    let admin = Address::generate(&env);
-    client.init(&registry, &provenance, &admin);
+    let bytes  = Bytes::from_slice(&env, b"data");
+    let req    = Address::generate(&env);
 
-    let result = client.try_update_ttl_config(&0, &250, &75);
-    assert!(result.is_err());
-}
+    let requests = vec![
+        &env,
+        (bytes.clone(), bytes.clone(), req.clone(), Priority::Low),
+        (bytes.clone(), bytes.clone(), req.clone(), Priority::Normal),
+    ];
 
-#[test]
-fn test_submit_request_with_priority_uses_correct_ttl() {
-    let env = make_env();
-    env.mock_all_auths();
-    let cid = register_oracle(&env);
-    let client = OracleContractClient::new(&env, &cid);
-    let registry = Address::generate(&env);
-    let provenance = Address::generate(&env);
-    let admin = Address::generate(&env);
-    let requester = Address::generate(&env);
-    client.init(&registry, &provenance, &admin);
+    let ids = client.submit_batch_request(&requests).unwrap();
 
-    let bytes = Bytes::from_slice(&env, b"data");
-    let priority = 2u32;
-    let id = client
-        .try_submit_request_with_priority(&bytes, &bytes, &requester, &priority)
-        .unwrap()
-        .unwrap();
-
-    let ttl = env.as_contract(&cid, || {
-        env.storage().temporary().get_ttl(&DataKey::Request(id))
-    });
-    assert_eq!(ttl, 200);
+    for i in 0..ids.len() {
+        let id = ids.get(i);
+        let stored = client.get_request(&id).unwrap();
+        assert_eq!(stored.state, RequestState::Pending);
+        assert_eq!(stored.requester, req);
+    }
 }
 
 // ---------------------------------------------------------------------------
-// Issue #160 — Request Expiration Notifications
+// Issue #157 — Request Cancellation Functionality
 // ---------------------------------------------------------------------------
 
 #[test]
-fn test_get_warning_threshold_returns_default() {
+fn test_cancel_request_success() {
     let env = make_env();
     env.mock_all_auths();
-    let cid = register_oracle(&env);
+    let cid    = register_oracle(&env);
     let client = OracleContractClient::new(&env, &cid);
-    let registry = Address::generate(&env);
-    let provenance = Address::generate(&env);
-    let admin = Address::generate(&env);
-    client.init(&registry, &provenance, &admin);
+    let bytes  = Bytes::from_slice(&env, b"data");
+    let req    = Address::generate(&env);
 
-    let threshold = client.get_warning_threshold();
-    assert_eq!(threshold, 10);
+    let id = client.submit_request(&bytes, &bytes, &req, &Priority::Normal);
+    let cancelled = client.cancel_request(&id);
+
+    assert!(cancelled.is_ok());
+    assert_eq!(client.get_request(&id).unwrap().state, RequestState::Cancelled);
 }
 
 #[test]
-fn test_update_warning_threshold_admin_only() {
+fn test_cancel_request_not_found() {
     let env = make_env();
     env.mock_all_auths();
-    let cid = register_oracle(&env);
+    let cid    = register_oracle(&env);
     let client = OracleContractClient::new(&env, &cid);
-    let registry = Address::generate(&env);
-    let provenance = Address::generate(&env);
-    let admin = Address::generate(&env);
-    client.init(&registry, &provenance, &admin);
 
-    client.try_update_warning_threshold(&15).unwrap().unwrap();
-    let threshold = client.get_warning_threshold();
-    assert_eq!(threshold, 15);
-}
-
-#[test]
-fn test_update_warning_threshold_invalid() {
-    let env = make_env();
-    env.mock_all_auths();
-    let cid = register_oracle(&env);
-    let client = OracleContractClient::new(&env, &cid);
-    let registry = Address::generate(&env);
-    let provenance = Address::generate(&env);
-    let admin = Address::generate(&env);
-    client.init(&registry, &provenance, &admin);
-
-    let result = client.try_update_warning_threshold(&0);
-    assert!(result.is_err());
-}
-
-#[test]
-fn test_check_expiration_warning_emits_event() {
-    let env = make_env();
-    env.mock_all_auths();
-    let cid = register_oracle(&env);
-    let client = OracleContractClient::new(&env, &cid);
-    let registry = Address::generate(&env);
-    let provenance = Address::generate(&env);
-    let admin = Address::generate(&env);
-    let requester = Address::generate(&env);
-    client.init(&registry, &provenance, &admin);
-
-    let bytes = Bytes::from_slice(&env, b"data");
-    let id = client
-        .try_submit_request(&bytes, &bytes, &requester)
-        .unwrap()
+    let err = client.try_cancel_request(&9999)
+        .unwrap_err()
         .unwrap();
-
-    client.try_check_expiration_warning(&id).unwrap().unwrap();
+    assert_eq!(err, Error::RequestNotFound);
 }
 
 // ---------------------------------------------------------------------------
-// Issue #162 — Provider Performance Metrics
+// Issue #158 — Request Priority Levels
 // ---------------------------------------------------------------------------
 
 #[test]
-fn test_get_provider_metrics_returns_none_initially() {
+fn test_priority_affects_request() {
     let env = make_env();
     env.mock_all_auths();
-    let cid = register_oracle(&env);
+    let cid    = register_oracle(&env);
     let client = OracleContractClient::new(&env, &cid);
-    let registry = Address::generate(&env);
-    let provenance = Address::generate(&env);
-    let admin = Address::generate(&env);
-    let provider = Address::generate(&env);
-    client.init(&registry, &provenance, &admin);
+    let bytes  = Bytes::from_slice(&env, b"data");
+    let req    = Address::generate(&env);
 
-    let metrics = client.get_provider_metrics(&provider);
-    assert!(metrics.is_none());
+    let id_low = client.submit_request(&bytes, &bytes, &req, &Priority::Low);
+    let id_high = client.submit_request(&bytes, &bytes, &req, &Priority::High);
+
+    let req_low = client.get_request(&id_low).unwrap();
+    let req_high = client.get_request(&id_high).unwrap();
+
+    assert_eq!(req_low.priority, Priority::Low);
+    assert_eq!(req_high.priority, Priority::High);
 }
 
 #[test]
-fn test_record_verification_success() {
+fn test_all_priority_levels() {
     let env = make_env();
     env.mock_all_auths();
-    let cid = register_oracle(&env);
+    let cid    = register_oracle(&env);
     let client = OracleContractClient::new(&env, &cid);
-    let registry = Address::generate(&env);
-    let provenance = Address::generate(&env);
-    let admin = Address::generate(&env);
-    let provider = Address::generate(&env);
-    client.init(&registry, &provenance, &admin);
+    let bytes  = Bytes::from_slice(&env, b"data");
+    let req    = Address::generate(&env);
 
-    client
-        .try_record_verification_success(&provider)
-        .unwrap()
-        .unwrap();
-    let metrics = client.get_provider_metrics(&provider).unwrap();
-    assert_eq!(metrics.total_verifications, 1);
-    assert_eq!(metrics.successful_verifications, 1);
-    assert_eq!(metrics.failed_verifications, 0);
+    let priorities = vec![
+        &env,
+        Priority::Low,
+        Priority::Normal,
+        Priority::High,
+        Priority::Urgent,
+    ];
+
+    for i in 0..priorities.len() {
+        let priority = priorities.get(i);
+        let id = client.submit_request(&bytes, &bytes, &req, &priority);
+        let stored = client.get_request(&id).unwrap();
+        assert_eq!(stored.priority, *priority);
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Issue #159 — Request Status Query Pagination
+// ---------------------------------------------------------------------------
+
+#[test]
+fn test_get_requests_by_state_pending() {
+    let env = make_env();
+    env.mock_all_auths();
+    let cid    = register_oracle(&env);
+    let client = OracleContractClient::new(&env, &cid);
+    let bytes  = Bytes::from_slice(&env, b"data");
+    let req    = Address::generate(&env);
+
+    client.submit_request(&bytes, &bytes, &req, &Priority::Normal);
+    client.submit_request(&bytes, &bytes, &req, &Priority::High);
+
+    let paginated = client.get_requests_by_state(
+        &RequestState::Pending,
+        0,
+        10,
+        &Option::None,
+    );
+
+    assert_eq!(paginated.requests.len(), 2);
+    assert_eq!(paginated.total_count, 2);
 }
 
 #[test]
-fn test_record_verification_failure() {
+fn test_get_requests_by_state_with_pagination() {
     let env = make_env();
     env.mock_all_auths();
-    let cid = register_oracle(&env);
+    let cid    = register_oracle(&env);
     let client = OracleContractClient::new(&env, &cid);
-    let registry = Address::generate(&env);
-    let provenance = Address::generate(&env);
-    let admin = Address::generate(&env);
-    let provider = Address::generate(&env);
-    client.init(&registry, &provenance, &admin);
+    let bytes  = Bytes::from_slice(&env, b"data");
+    let req    = Address::generate(&env);
 
-    client
-        .try_record_verification_failure(&provider)
-        .unwrap()
-        .unwrap();
-    let metrics = client.get_provider_metrics(&provider).unwrap();
-    assert_eq!(metrics.total_verifications, 1);
-    assert_eq!(metrics.successful_verifications, 0);
-    assert_eq!(metrics.failed_verifications, 1);
+    for _ in 0..5 {
+        client.submit_request(&bytes, &bytes, &req, &Priority::Normal);
+    }
+
+    let page1 = client.get_requests_by_state(
+        &RequestState::Pending,
+        0,
+        2,
+        &Option::None,
+    );
+
+    let page2 = client.get_requests_by_state(
+        &RequestState::Pending,
+        2,
+        2,
+        &Option::None,
+    );
+
+    assert_eq!(page1.requests.len(), 2);
+    assert_eq!(page2.requests.len(), 2);
+    assert_eq!(page1.total_count, 5);
+    assert_eq!(page2.total_count, 5);
 }
 
 #[test]
-fn test_record_multiple_verifications() {
+fn test_get_requests_by_state_filter_by_requester() {
     let env = make_env();
     env.mock_all_auths();
-    let cid = register_oracle(&env);
+    let cid    = register_oracle(&env);
     let client = OracleContractClient::new(&env, &cid);
-    let registry = Address::generate(&env);
-    let provenance = Address::generate(&env);
-    let admin = Address::generate(&env);
-    let provider = Address::generate(&env);
-    client.init(&registry, &provenance, &admin);
+    let bytes  = Bytes::from_slice(&env, b"data");
+    let req1   = Address::generate(&env);
+    let req2   = Address::generate(&env);
 
-    client
-        .try_record_verification_success(&provider)
-        .unwrap()
-        .unwrap();
-    client
-        .try_record_verification_success(&provider)
-        .unwrap()
-        .unwrap();
-    client
-        .try_record_verification_failure(&provider)
-        .unwrap()
-        .unwrap();
+    client.submit_request(&bytes, &bytes, &req1, &Priority::Normal);
+    client.submit_request(&bytes, &bytes, &req2, &Priority::Normal);
 
-    let metrics = client.get_provider_metrics(&provider).unwrap();
-    assert_eq!(metrics.total_verifications, 3);
-    assert_eq!(metrics.successful_verifications, 2);
-    assert_eq!(metrics.failed_verifications, 1);
+    let paginated = client.get_requests_by_state(
+        &RequestState::Pending,
+        0,
+        10,
+        &Option::Some(req1),
+    );
+
+    assert_eq!(paginated.requests.len(), 1);
+    assert_eq!(paginated.requests.get(0).request.requester, req1);
 }

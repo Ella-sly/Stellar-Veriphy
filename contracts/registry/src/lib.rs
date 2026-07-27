@@ -1,14 +1,12 @@
 #![no_std]
-use soroban_sdk::{
-    contract, contracterror, contractimpl, contracttype, Address, Bytes, BytesN, Env, String, Vec,
-};
+use soroban_sdk::{contract, contractimpl, contracttype, Address, Bytes, BytesN, Env, String, Vec};
 
 // ---------------------------------------------------------------------------
 // #24 – provenance cross-contract client
 // ---------------------------------------------------------------------------
 
 mod provenance {
-    use soroban_sdk::{contractclient, contracttype, Address, Bytes, Env};
+    use soroban_sdk::{contractclient, contracttype, Address, Bytes, Env, String, Vec};
 
     #[contracttype]
     pub struct ProvenanceCert {
@@ -17,6 +15,13 @@ mod provenance {
         pub attestation_hash: Bytes,
         pub creator: Address,
         pub timestamp: u64,
+    }
+
+    #[contracttype]
+    pub struct CertificateMetadata {
+        pub display_name: String,
+        pub description: String,
+        pub version: u32,
     }
 
     #[contractclient(name = "ProvenanceClient")]
@@ -28,6 +33,44 @@ mod provenance {
             attestation_hash: Bytes,
             to: Address,
         ) -> u64;
+
+        // #172 - Certificate Transfer
+        fn transfer_certificate(
+            env: Env,
+            certificate_id: u64,
+            new_owner: Address,
+        );
+
+        // #173 - Metadata Updates
+        fn update_metadata(
+            env: Env,
+            certificate_id: u64,
+            display_name: String,
+            description: String,
+        );
+
+        fn get_metadata(
+            env: Env,
+            certificate_id: u64,
+        ) -> CertificateMetadata;
+
+        // #174 - Query by Time Range
+        fn get_certificates_by_time_range(
+            env: Env,
+            start_time: u64,
+            end_time: u64,
+            offset: u32,
+            limit: u32,
+        ) -> Vec<(u64, ProvenanceCert)>;
+
+        // #175 - Batch Minting
+        fn mint_batch(
+            env: Env,
+            storage_refs: Vec<Bytes>,
+            manifest_hashes: Vec<Bytes>,
+            attestation_hashes: Vec<Bytes>,
+            to: Address,
+        ) -> Vec<u64>;
     }
 }
 
