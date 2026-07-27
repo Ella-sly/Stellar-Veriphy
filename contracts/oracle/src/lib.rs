@@ -74,8 +74,15 @@ pub struct VerificationRequest {
 
 #[contracttype]
 #[derive(Clone, Debug)]
+pub struct RequestWithId {
+    pub id: u64,
+    pub request: VerificationRequest,
+}
+
+#[contracttype]
+#[derive(Clone, Debug)]
 pub struct PaginatedRequests {
-    pub requests: Vec<(u64, VerificationRequest)>,
+    pub requests: Vec<RequestWithId>,
     pub total_count: u32,
 }
 
@@ -301,8 +308,16 @@ impl OracleContract {
         let mut results = vec![&env];
         let mut count = 0u32;
         let limit_val = if limit == 0 { 100 } else { limit.min(100) };
+        let start = offset as usize;
 
-        for i in (offset as usize)..(all_ids.len()) {
+        if start >= all_ids.len() {
+            return PaginatedRequests {
+                requests: results,
+                total_count: all_ids.len() as u32,
+            };
+        }
+
+        for i in start..all_ids.len() {
             if count >= limit_val {
                 break;
             }
@@ -314,7 +329,10 @@ impl OracleContract {
                         continue;
                     }
                 }
-                results.push_back((req_id, req));
+                results.push_back(RequestWithId {
+                    id: req_id,
+                    request: req,
+                });
                 count += 1;
             }
         }

@@ -453,5 +453,5 @@ fn test_get_requests_by_state_filter_by_requester() {
     );
 
     assert_eq!(paginated.requests.len(), 1);
-    assert_eq!(paginated.requests.get(0).1.requester, req1);
+    assert_eq!(paginated.requests.get(0).request.requester, req1);
 }
