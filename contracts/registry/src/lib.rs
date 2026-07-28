@@ -88,6 +88,7 @@ pub enum Error {
     ProposalExpired = 5,
     InsufficientApprovals = 6,
     TeeHashNotFound = 7,
+    ProviderNotFound = 8,
 }
 
 // ---------------------------------------------------------------------------
@@ -108,6 +109,8 @@ pub enum DataKey {
     TeeHashVersionInfo(BytesN<32>), // #187
     TeeHashesByVersion(u32),        // #187
     TeeHashVersionHistory,          // #187
+    ProviderReputation(BytesN<32>), // #186
+    ProviderList,                   // #186
 }
 
 // ---------------------------------------------------------------------------
@@ -147,6 +150,24 @@ pub struct TeeHashVersionInfo {
     pub deprecated: bool,
     pub deprecated_at: Option<u64>,
 }
+
+// ---------------------------------------------------------------------------
+// #186 – Provider reputation system
+// ---------------------------------------------------------------------------
+
+#[contracttype]
+#[derive(Clone, Debug)]
+pub struct ProviderReputation {
+    pub score: u32,
+    pub total_verifications: u64,
+    pub successful_count: u64,
+    pub failed_count: u64,
+    pub last_updated: u64,
+}
+
+const REPUTATION_MAX_SCORE: u32 = 1000;
+const REPUTATION_DECAY_PERIOD_SECS: u64 = 2_592_000; // 30 days
+const REPUTATION_DECAY_AMOUNT: u32 = 50;
 
 // ---------------------------------------------------------------------------
 // #24 – VerificationResult
@@ -349,7 +370,35 @@ impl RegistryContract {
         admin.require_auth();
         env.storage()
             .persistent()
-            .set(&DataKey::Provider(provider), &true);
+            .set(&DataKey::Provider(provider.clone()), &true);
+
+        // #186 — seed reputation tracking for newly registered providers
+        if !env
+            .storage()
+            .persistent()
+            .has(&DataKey::ProviderReputation(provider.clone()))
+        {
+            let reputation = ProviderReputation {
+                score: REPUTATION_MAX_SCORE / 2,
+                total_verifications: 0,
+                successful_count: 0,
+                failed_count: 0,
+                last_updated: env.ledger().timestamp(),
+            };
+            env.storage()
+                .persistent()
+                .set(&DataKey::ProviderReputation(provider.clone()), &reputation);
+
+            let mut providers: Vec<BytesN<32>> = env
+                .storage()
+                .persistent()
+                .get(&DataKey::ProviderList)
+                .unwrap_or(Vec::new(&env));
+            providers.push_back(provider);
+            env.storage()
+                .persistent()
+                .set(&DataKey::ProviderList, &providers);
+        }
     }
 
     /// Check whether a provider public key is registered.  #21
@@ -358,6 +407,109 @@ impl RegistryContract {
             .persistent()
             .get(&DataKey::Provider(provider))
             .unwrap_or(false)
+    }
+
+    // -----------------------------------------------------------------------
+    // #186 – provider reputation system
+    // -----------------------------------------------------------------------
+
+    /// Record the outcome of a provider verification and recompute its
+    /// reputation score (admin-gated).
+    pub fn record_verification_result(
+        env: Env,
+        provider: BytesN<32>,
+        success: bool,
+    ) -> Result<(), Error> {
+        let admin: Address = env
+            .storage()
+            .instance()
+            .get(&DataKey::Admin)
+            .ok_or(Error::NotInitialized)?;
+        admin.require_auth();
+
+        let mut reputation: ProviderReputation = env
+            .storage()
+            .persistent()
+            .get(&DataKey::ProviderReputation(provider.clone()))
+            .ok_or(Error::ProviderNotFound)?;
+
+        reputation.total_verifications += 1;
+        if success {
+            reputation.successful_count += 1;
+        } else {
+            reputation.failed_count += 1;
+        }
+
+        reputation.score = ((reputation.successful_count as u128 * REPUTATION_MAX_SCORE as u128)
+            / reputation.total_verifications as u128) as u32;
+        reputation.last_updated = env.ledger().timestamp();
+
+        env.storage()
+            .persistent()
+            .set(&DataKey::ProviderReputation(provider), &reputation);
+
+        Ok(())
+    }
+
+    /// Apply time-based decay to a provider's score if it has been inactive
+    /// for one or more decay periods. Callable by anyone; decay is a
+    /// deterministic function of elapsed time, not an admin action.
+    pub fn apply_reputation_decay(env: Env, provider: BytesN<32>) -> Result<(), Error> {
+        let mut reputation: ProviderReputation = env
+            .storage()
+            .persistent()
+            .get(&DataKey::ProviderReputation(provider.clone()))
+            .ok_or(Error::ProviderNotFound)?;
+
+        let now = env.ledger().timestamp();
+        let elapsed = now.saturating_sub(reputation.last_updated);
+        let periods = elapsed / REPUTATION_DECAY_PERIOD_SECS;
+
+        if periods > 0 {
+            let decay = REPUTATION_DECAY_AMOUNT.saturating_mul(periods as u32);
+            reputation.score = reputation.score.saturating_sub(decay);
+            reputation.last_updated = now;
+            env.storage()
+                .persistent()
+                .set(&DataKey::ProviderReputation(provider), &reputation);
+        }
+
+        Ok(())
+    }
+
+    /// Fetch a provider's current reputation.
+    pub fn get_provider_reputation(env: Env, provider: BytesN<32>) -> Result<ProviderReputation, Error> {
+        env.storage()
+            .persistent()
+            .get(&DataKey::ProviderReputation(provider))
+            .ok_or(Error::ProviderNotFound)
+    }
+
+    /// Query all registered providers whose score meets or exceeds a
+    /// threshold.
+    pub fn get_providers_by_reputation_threshold(
+        env: Env,
+        min_score: u32,
+    ) -> Vec<BytesN<32>> {
+        let providers: Vec<BytesN<32>> = env
+            .storage()
+            .persistent()
+            .get(&DataKey::ProviderList)
+            .unwrap_or(Vec::new(&env));
+
+        let mut result: Vec<BytesN<32>> = Vec::new(&env);
+        for provider in providers.iter() {
+            if let Some(reputation) = env
+                .storage()
+                .persistent()
+                .get::<DataKey, ProviderReputation>(&DataKey::ProviderReputation(provider.clone()))
+            {
+                if reputation.score >= min_score {
+                    result.push_back(provider);
+                }
+            }
+        }
+        result
     }
 
     // -----------------------------------------------------------------------
