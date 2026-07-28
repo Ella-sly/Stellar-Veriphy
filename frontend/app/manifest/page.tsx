@@ -5,6 +5,7 @@ import { ContentManifest } from "@stellarveriphy/shared/types";
 import { KeyValueBuilder } from "@/components/KeyValueBuilder";
 import { ManifestPreview } from "@/components/ManifestPreview";
 import { isValidStellarAddress, downloadJSON, downloadXML } from "@/utils/validation";
+import { ALL_TEMPLATES, loadTemplate, type TemplateId } from "@/utils/manifestTemplates";
 
 export default function ManifestPage() {
   const [manifest, setManifest] = useState<Partial<ContentManifest>>({
@@ -15,6 +16,7 @@ export default function ManifestPage() {
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [activeTemplate, setActiveTemplate] = useState<TemplateId | null>(null);
 
   const handleChange = (field: keyof ContentManifest, value: any) => {
     setManifest((prev) => ({ ...prev, [field]: value }));
@@ -25,6 +27,13 @@ export default function ManifestPage() {
         return newErrors;
       });
     }
+  };
+
+  const handleTemplateSelect = (templateId: TemplateId) => {
+    const templateManifest = loadTemplate(templateId);
+    setManifest(templateManifest);
+    setActiveTemplate(templateId);
+    setErrors({});
   };
 
   const validateForm = (): boolean => {
@@ -60,6 +69,10 @@ export default function ManifestPage() {
     }
   };
 
+  const handleMetadataChange = (metadata: Record<string, any>) => {
+    setManifest((prev) => ({ ...prev, metadata }));
+  };
+
   return (
     <main className="min-h-screen bg-white dark:bg-gray-950 p-6">
       <div className="max-w-4xl mx-auto">
@@ -69,6 +82,33 @@ export default function ManifestPage() {
         <p className="text-gray-600 dark:text-gray-400 mb-8">
           Build a content manifest interactively with live preview.
         </p>
+
+        {/* Template Selector */}
+        <div className="mb-8">
+          <h2 className="text-lg font-semibold mb-3 text-black dark:text-white">
+            Start from a Template
+          </h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+            {ALL_TEMPLATES.map((template) => (
+              <button
+                key={template.id}
+                onClick={() => handleTemplateSelect(template.id)}
+                className={`p-3 rounded-lg border-2 text-left transition-all ${
+                  activeTemplate === template.id
+                    ? "border-blue-500 bg-blue-50 dark:bg-blue-900/30 shadow-sm"
+                    : "border-gray-200 dark:border-gray-700 hover:border-blue-400 dark:hover:border-blue-500 bg-white dark:bg-gray-800"
+                }`}
+              >
+                <span className="text-2xl block mb-1">{template.icon}</span>
+                <span className="text-sm font-medium text-black dark:text-white block">
+                  {template.label}
+                </span>
+                <span className="text-xs text-gray-500 dark:text-gray-400 block mt-1 leading-tight">
+                  {template.description}
+                </span>
+              </button>
+            ))}
+          </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <div className="space-y-6">
@@ -133,7 +173,7 @@ export default function ManifestPage() {
               </label>
               <KeyValueBuilder
                 value={manifest.metadata || {}}
-                onChange={(metadata) => handleChange("metadata", metadata)}
+                onChange={handleMetadataChange}
               />
             </div>
 
@@ -151,13 +191,12 @@ export default function ManifestPage() {
                 Download XML
               </button>
             </div>
-          </div>
 
           <div>
             <ManifestPreview manifest={manifest} />
           </div>
-        </div>
       </div>
     </main>
   );
-}
+}</｜｜DSML｜｜parameter>
+</create_file>
