@@ -1,6 +1,9 @@
 #[cfg(test)]
 mod tests {
-    use crate::{ProvenanceContract, ProvenanceContractClient, ProvenanceError, RevocationReason};
+    use crate::{
+        ProvenanceContract, ProvenanceContractClient, ProvenanceError, RevocationReason,
+        VerificationLevel,
+    };
     use soroban_sdk::{testutils::Address as _, testutils::Ledger as _, Env, String};
 
     fn s(env: &Env, v: &str) -> String {
@@ -248,6 +251,89 @@ mod tests {
 
         let results = client.get_certificates_by_time_range(&0, &(now + 1000), &0, &10);
         assert_eq!(results.len(), 1);
+    }
+
+    // --- Issue #176 --- Verification Badge Levels
+
+    #[test]
+    fn test_default_verification_level_is_standard() {
+        let env = Env::default();
+        env.mock_all_auths();
+        let cid = env.register_contract(None, ProvenanceContract);
+        let client = ProvenanceContractClient::new(&env, &cid);
+        let oracle = soroban_sdk::Address::generate(&env);
+        let owner = soroban_sdk::Address::generate(&env);
+        client.initialize(&oracle);
+
+        let id = client.mint(&s(&env, "sid"), &s(&env, "mhash_lvl1"), &s(&env, "ahash"), &owner);
+        assert_eq!(client.get_verification_level(&id), VerificationLevel::Standard);
+    }
+
+    #[test]
+    fn test_basic_verification_level_when_fields_incomplete() {
+        let env = Env::default();
+        env.mock_all_auths();
+        let cid = env.register_contract(None, ProvenanceContract);
+        let client = ProvenanceContractClient::new(&env, &cid);
+        let oracle = soroban_sdk::Address::generate(&env);
+        let owner = soroban_sdk::Address::generate(&env);
+        client.initialize(&oracle);
+
+        let id = client.mint(&s(&env, "sid"), &s(&env, "mhash_lvl2"), &s(&env, ""), &owner);
+        assert_eq!(client.get_verification_level(&id), VerificationLevel::Basic);
+    }
+
+    #[test]
+    fn test_set_verification_level_by_oracle() {
+        let env = Env::default();
+        env.mock_all_auths();
+        let cid = env.register_contract(None, ProvenanceContract);
+        let client = ProvenanceContractClient::new(&env, &cid);
+        let oracle = soroban_sdk::Address::generate(&env);
+        let owner = soroban_sdk::Address::generate(&env);
+        client.initialize(&oracle);
+
+        let id = client.mint(&s(&env, "sid"), &s(&env, "mhash_lvl3"), &s(&env, "ahash"), &owner);
+        client.set_verification_level(&id, &VerificationLevel::Enterprise);
+        assert_eq!(client.get_verification_level(&id), VerificationLevel::Enterprise);
+    }
+
+    #[test]
+    fn test_get_certificates_by_verification_level() {
+        let env = Env::default();
+        env.mock_all_auths();
+        let cid = env.register_contract(None, ProvenanceContract);
+        let client = ProvenanceContractClient::new(&env, &cid);
+        let oracle = soroban_sdk::Address::generate(&env);
+        let owner = soroban_sdk::Address::generate(&env);
+        client.initialize(&oracle);
+
+        let id1 = client.mint(&s(&env, "sid"), &s(&env, "mhash_lvl4"), &s(&env, "ahash"), &owner);
+        client.mint(&s(&env, "sid"), &s(&env, "mhash_lvl5"), &s(&env, "ahash"), &owner);
+        client.set_verification_level(&id1, &VerificationLevel::Premium);
+
+        let results = client.get_certificates_by_verification_level(&VerificationLevel::Premium, &0, &10);
+        assert_eq!(results.len(), 1);
+        assert_eq!(results.get_unchecked(0).0, id1);
+
+        let standard_results =
+            client.get_certificates_by_verification_level(&VerificationLevel::Standard, &0, &10);
+        assert_eq!(standard_results.len(), 1);
+    }
+
+    #[test]
+    fn test_get_verification_level_nonexistent_certificate() {
+        let env = Env::default();
+        env.mock_all_auths();
+        let cid = env.register_contract(None, ProvenanceContract);
+        let client = ProvenanceContractClient::new(&env, &cid);
+        let oracle = soroban_sdk::Address::generate(&env);
+        client.initialize(&oracle);
+
+        assert_eq!(
+            client.try_get_verification_level(&999u64).unwrap_err().unwrap(),
+            ProvenanceError::CertificateNotFound
+        );
     }
 
     // --- Issue #172 --- Certificate Transfer

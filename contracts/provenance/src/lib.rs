@@ -26,6 +26,16 @@ pub enum RevocationReason {
     ContractualViolation = 4,
 }
 
+// #176 — Verification badge level
+#[contracttype]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub enum VerificationLevel {
+    Basic = 0,
+    Standard = 1,
+    Premium = 2,
+    Enterprise = 3,
+}
+
 // #14 — String fields (was Bytes)
 #[contracttype]
 pub struct ProvenanceCert {
@@ -39,6 +49,8 @@ pub struct ProvenanceCert {
     pub revocation_timestamp: Option<u64>,
     // #177 — optional expiration
     pub expires_at:       Option<u64>,
+    // #176 — verification thoroughness badge
+    pub verification_level: VerificationLevel,
 }
 
 // #173 — Certificate metadata with version tracking
@@ -129,8 +141,33 @@ pub struct CertificateExpirationWarning {
     pub expires_at: u64,
 }
 
+// #176 — Verification level updated event
+#[contractevent]
+pub struct VerificationLevelUpdated {
+    #[topic]
+    pub certificate_id: u64,
+    #[topic]
+    pub updated_by: Address,
+    pub new_level: VerificationLevel,
+}
+
 #[contract]
 pub struct ProvenanceContract;
+
+// #176 — Basic level unless all three verification inputs are populated;
+// Premium/Enterprise require an explicit oracle upgrade via set_verification_level,
+// reflecting off-chain provider-reputation checks beyond what mint parameters convey.
+fn calculate_verification_level(
+    storage_ref: &String,
+    manifest_hash: &String,
+    attestation_hash: &String,
+) -> VerificationLevel {
+    if storage_ref.len() > 0 && manifest_hash.len() > 0 && attestation_hash.len() > 0 {
+        VerificationLevel::Standard
+    } else {
+        VerificationLevel::Basic
+    }
+}
 
 #[contractimpl]
 impl ProvenanceContract {
@@ -187,6 +224,9 @@ impl ProvenanceContract {
             + 1;
         env.storage().persistent().set(&cnt_key, &id);
 
+        let verification_level =
+            calculate_verification_level(&storage_ref, &manifest_hash, &attestation_hash);
+
         let cert = ProvenanceCert {
             storage_ref,
             manifest_hash: manifest_hash.clone(),
@@ -197,6 +237,7 @@ impl ProvenanceContract {
             revocation_reason: None,
             revocation_timestamp: None,
             expires_at: None,
+            verification_level,
         };
         env.storage().persistent().set(&id, &cert);
 
@@ -375,6 +416,83 @@ impl ProvenanceContract {
         }
 
         Ok(false)
+    }
+
+    /// #176 — Oracle-gated upgrade of a certificate's verification level,
+    /// reflecting off-chain provider-reputation vetting.
+    pub fn set_verification_level(
+        env: Env,
+        certificate_id: u64,
+        level: VerificationLevel,
+    ) -> Result<(), ProvenanceError> {
+        let oracle: Address = env
+            .storage()
+            .persistent()
+            .get(&symbol_short!("ORACLE"))
+            .expect("Not initialized");
+        oracle.require_auth();
+
+        let mut cert: ProvenanceCert = env
+            .storage()
+            .persistent()
+            .get(&certificate_id)
+            .ok_or(ProvenanceError::CertificateNotFound)?;
+
+        cert.verification_level = level;
+        env.storage().persistent().set(&certificate_id, &cert);
+
+        VerificationLevelUpdated {
+            certificate_id,
+            updated_by: oracle,
+            new_level: level,
+        }
+        .emit(&env);
+
+        Ok(())
+    }
+
+    /// #176 — Get a certificate's verification level
+    pub fn get_verification_level(
+        env: Env,
+        certificate_id: u64,
+    ) -> Result<VerificationLevel, ProvenanceError> {
+        env.storage()
+            .persistent()
+            .get(&certificate_id)
+            .map(|cert: ProvenanceCert| cert.verification_level)
+            .ok_or(ProvenanceError::CertificateNotFound)
+    }
+
+    /// #176 — Query certificates matching a given verification level
+    pub fn get_certificates_by_verification_level(
+        env: Env,
+        level: VerificationLevel,
+        offset: u32,
+        limit: u32,
+    ) -> Vec<(u64, ProvenanceCert)> {
+        let cnt_key = symbol_short!("CERT_CNT");
+        let total_certs: u64 = env.storage().persistent().get(&cnt_key).unwrap_or(0u64);
+
+        let mut results: Vec<(u64, ProvenanceCert)> = Vec::new();
+        let mut count = 0u32;
+        let mut skipped = 0u32;
+
+        let mut i = total_certs;
+        while i > 0 && count < limit {
+            if let Some(cert) = env.storage().persistent().get::<u64, ProvenanceCert>(&i) {
+                if cert.verification_level == level {
+                    if skipped >= offset {
+                        results.push_back((i, cert));
+                        count += 1;
+                    } else {
+                        skipped += 1;
+                    }
+                }
+            }
+            i -= 1;
+        }
+
+        results
     }
 
     /// #172 — Transfer certificate ownership to a new address
@@ -557,6 +675,9 @@ impl ProvenanceContract {
                 + 1;
             env.storage().persistent().set(&cnt_key, &id);
 
+            let verification_level =
+                calculate_verification_level(&storage_ref, &manifest_hash, &attestation_hash);
+
             let cert = ProvenanceCert {
                 storage_ref,
                 manifest_hash: manifest_hash.clone(),
@@ -567,6 +688,7 @@ impl ProvenanceContract {
                 revocation_reason: None,
                 revocation_timestamp: None,
                 expires_at: None,
+                verification_level,
             };
             env.storage().persistent().set(&id, &cert);
             env.storage().persistent().set(&mani_key, &id);
