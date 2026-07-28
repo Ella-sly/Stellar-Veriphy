@@ -94,3 +94,79 @@ export interface VerificationJob {
 export type ApiResponse<T> =
   | { success: true; data: T; error?: never }
   | { success: false; error: string; data?: never };
+
+// ---------------------------------------------------------------------------
+// SLA tracking  (mirrors oracle ProviderSLA + SLACompliance structs)
+// ---------------------------------------------------------------------------
+
+/** SLA targets and rolling actuals for a provider. */
+export interface ProviderSLA {
+  // Targets
+  targetResponseTimeSeconds: number;
+  targetUptimePercentage: number;
+  targetSuccessRate: number;
+  // Actuals
+  actualResponseTime: number;
+  actualUptime: number;
+  actualSuccessRate: number;
+  // Internal counters
+  totalRequests: number;
+  successful: number;
+  totalResponseSum: number;
+}
+
+/** Per-metric compliance result, including the overall compliance percentage. */
+export interface SLACompliance {
+  responseTimeOk: boolean;
+  uptimeOk: boolean;
+  successRateOk: boolean;
+  /** Fraction of met targets expressed as a value in [0, 100]. */
+  compliancePercent: number;
+  suspended: boolean;
+}
+
+// ---------------------------------------------------------------------------
+// Cost estimation  (mirrors oracle CostEstimate + ProviderPricing structs)
+// ---------------------------------------------------------------------------
+
+export type PriorityLevel = "low" | "normal" | "high" | "urgent";
+export type ContentComplexity = "simple" | "moderate" | "complex";
+
+/** Pricing configuration for a provider (amounts in stroops). */
+export interface ProviderPricing {
+  baseFeeStroops: number;
+  perKbFeeStroops: number;
+}
+
+/** Itemised cost breakdown returned by the oracle estimate_cost function. */
+export interface CostEstimate {
+  baseFee: number;
+  sizeFee: number;
+  priorityFee: number;
+  complexityFee: number;
+  total: number;
+}
+
+// ---------------------------------------------------------------------------
+// TEE hash certificate references  (mirrors registry TeeHashCertRef struct)
+// ---------------------------------------------------------------------------
+
+/** Attestation certificate metadata attached to an approved TEE code hash. */
+export interface TeeHashCertRef {
+  /** Human-readable identifier or fingerprint for the certificate issuer. */
+  issuer: string;
+  /** Unix timestamp from which the certificate is valid (seconds). */
+  validFrom: number;
+  /** Unix timestamp at which the certificate expires (seconds). */
+  validUntil: number;
+  /** Optional URI pointing to the full DER/PEM certificate (e.g. IPFS). */
+  certUri?: string;
+  /** The TEE code hash covered by this certificate (hex string). */
+  codeHash: string;
+}
+
+/** Result of querying a TEE hash together with its certificate reference. */
+export interface TeeHashWithCert {
+  approved: boolean;
+  certRef?: TeeHashCertRef;
+}

@@ -4,6 +4,7 @@ import { useWizard } from "@/context/WizardContext";
 import { hashFile } from "@/utils/hashing";
 import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
+import { MediaPreview } from "./MediaPreview";
 
 export function MediaInput() {
   const { setFile, setContentHash, setHashProgress, hashProgress } =
@@ -80,20 +81,8 @@ export function MediaInput() {
         </div>
       ) : (
         <div className="space-y-4">
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <p className="text-sm text-gray-600">File Name</p>
-            <p className="font-semibold">{selectedFile.name}</p>
-          </div>
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <p className="text-sm text-gray-600">File Size</p>
-            <p className="font-semibold">
-              {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
-            </p>
-          </div>
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <p className="text-sm text-gray-600">File Type</p>
-            <p className="font-semibold">{selectedFile.type}</p>
-          </div>
+          {/* ── Rich media preview (image, video, audio, PDF, etc.) ── */}
+          <MediaPreview file={selectedFile} />
 
           {isHashing && (
             <div className="space-y-2">

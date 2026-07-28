@@ -1,5 +1,5 @@
 #![no_std]
-use soroban_sdk::{contract, contractimpl, contracttype, Address, Bytes, BytesN, Env, String, Vec};
+use soroban_sdk::{contract, contractimpl, contracttype, contracterror, Address, Bytes, BytesN, Env, String, Vec};
 
 // ---------------------------------------------------------------------------
 // #24 – provenance cross-contract client
@@ -89,6 +89,7 @@ pub enum Error {
     InsufficientApprovals = 6,
     TeeHashNotFound = 7,
     ProviderNotFound = 8,
+    CertificateExpired = 9,
 }
 
 // ---------------------------------------------------------------------------
@@ -111,6 +112,7 @@ pub enum DataKey {
     TeeHashVersionHistory,          // #187
     ProviderReputation(BytesN<32>), // #186
     ProviderList,                   // #186
+    TeeHashCertRef(BytesN<32>),     // certificate reference on a TEE hash
 }
 
 // ---------------------------------------------------------------------------
@@ -180,6 +182,27 @@ pub struct VerificationResult {
     pub content_hash: BytesN<32>,
     pub certificate_id: u64,
     pub state: String,
+}
+
+// ---------------------------------------------------------------------------
+// Feature 3 – Attestation certificate references on TEE hash entries
+// ---------------------------------------------------------------------------
+
+/// A DER/PEM certificate reference attached to an approved TEE code hash.
+/// Stores enough metadata to validate freshness without holding the full cert.
+#[contracttype]
+#[derive(Clone, Debug)]
+pub struct TeeHashCertRef {
+    /// Human-readable identifier or fingerprint of the certificate issuer.
+    pub issuer: String,
+    /// Unix timestamp (seconds) from which the certificate is valid.
+    pub valid_from: u64,
+    /// Unix timestamp (seconds) at which the certificate expires.
+    pub valid_until: u64,
+    /// Optional external URI or IPFS reference to the full DER/PEM certificate.
+    pub cert_uri: Option<String>,
+    /// The TEE code hash this certificate covers.
+    pub code_hash: BytesN<32>,
 }
 
 // ---------------------------------------------------------------------------
@@ -715,6 +738,97 @@ impl RegistryContract {
             .get(&DataKey::ProposalApprovals(proposal_id))
             .unwrap_or(Vec::new(&env))
     }
+
+    // -----------------------------------------------------------------------
+    // Feature 3 – Attestation certificate references on TEE hash entries
+    // -----------------------------------------------------------------------
+
+    /// Attach an attestation certificate reference to an approved TEE code hash.
+    /// Only the admin may call this. The TEE hash must already be registered.
+    /// `valid_until` must be strictly after `valid_from`.
+    pub fn attach_cert_ref(
+        env: Env,
+        code_hash: BytesN<32>,
+        issuer: String,
+        valid_from: u64,
+        valid_until: u64,
+        cert_uri: Option<String>,
+    ) -> Result<(), Error> {
+        let admin: Address = env
+            .storage()
+            .instance()
+            .get(&DataKey::Admin)
+            .ok_or(Error::NotInitialized)?;
+        admin.require_auth();
+
+        // The TEE hash must already be registered.
+        if !env.storage().persistent().has(&DataKey::TeeHash(code_hash.clone())) {
+            return Err(Error::TeeHashNotFound);
+        }
+
+        // Basic sanity: expiry must be after issuance.
+        if valid_until <= valid_from {
+            return Err(Error::InvalidThreshold);
+        }
+
+        let cert_ref = TeeHashCertRef {
+            issuer,
+            valid_from,
+            valid_until,
+            cert_uri,
+            code_hash: code_hash.clone(),
+        };
+        env.storage()
+            .persistent()
+            .set(&DataKey::TeeHashCertRef(code_hash), &cert_ref);
+        Ok(())
+    }
+
+    /// Retrieve the certificate reference for a TEE hash, if one has been attached.
+    pub fn get_cert_ref(env: Env, code_hash: BytesN<32>) -> Result<TeeHashCertRef, Error> {
+        env.storage()
+            .persistent()
+            .get(&DataKey::TeeHashCertRef(code_hash))
+            .ok_or(Error::TeeHashNotFound)
+    }
+
+    /// Query a TEE hash together with its certificate reference in one call.
+    /// Returns `(is_approved, Option<TeeHashCertRef>)`.
+    pub fn get_tee_hash_with_cert(
+        env: Env,
+        code_hash: BytesN<32>,
+    ) -> (bool, Option<TeeHashCertRef>) {
+        let approved = env
+            .storage()
+            .persistent()
+            .get(&DataKey::TeeHash(code_hash.clone()))
+            .unwrap_or(false);
+        let cert_ref = env
+            .storage()
+            .persistent()
+            .get(&DataKey::TeeHashCertRef(code_hash));
+        (approved, cert_ref)
+    }
+
+    /// Check whether the certificate attached to a TEE hash has expired.
+    /// Returns `Ok(false)` if no cert is attached (treat as unexpired).
+    /// Returns `Err(CertificateExpired)` if the cert has expired.
+    pub fn validate_cert_expiration(env: Env, code_hash: BytesN<32>) -> Result<bool, Error> {
+        let cert_ref: TeeHashCertRef = match env
+            .storage()
+            .persistent()
+            .get(&DataKey::TeeHashCertRef(code_hash))
+        {
+            Some(c) => c,
+            None    => return Ok(false), // no cert attached → pass
+        };
+
+        let now = env.ledger().timestamp();
+        if now > cert_ref.valid_until {
+            return Err(Error::CertificateExpired);
+        }
+        Ok(true)
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -887,5 +1001,132 @@ mod tests {
 
         let proposal = client.get_proposal(&proposal_id).unwrap();
         assert!(proposal.executed);
+    }
+
+    // -----------------------------------------------------------------------
+    // Feature 3 – Attestation certificate references on TEE hash entries
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn test_attach_and_get_cert_ref() {
+        let (env, _admin, client) = setup();
+        let h = hash32(&env);
+        client.add_tee_hash(&h);
+
+        let issuer      = String::from_str(&env, "ACME CA");
+        let valid_from  = 1_000_000u64;
+        let valid_until = 9_999_999u64;
+        client
+            .attach_cert_ref(&h, &issuer, &valid_from, &valid_until, &None)
+            .unwrap();
+
+        let cert_ref = client.get_cert_ref(&h).unwrap();
+        assert_eq!(cert_ref.issuer, String::from_str(&env, "ACME CA"));
+        assert_eq!(cert_ref.valid_from, valid_from);
+        assert_eq!(cert_ref.valid_until, valid_until);
+        assert!(cert_ref.cert_uri.is_none());
+    }
+
+    #[test]
+    fn test_attach_cert_ref_with_uri() {
+        let (env, _admin, client) = setup();
+        let h = hash32(&env);
+        client.add_tee_hash(&h);
+
+        let uri = Some(String::from_str(&env, "ipfs://Qm1234567890"));
+        client
+            .attach_cert_ref(
+                &h,
+                &String::from_str(&env, "TEE Lab"),
+                &1000u64,
+                &5000u64,
+                &uri,
+            )
+            .unwrap();
+
+        let cert_ref = client.get_cert_ref(&h).unwrap();
+        assert!(cert_ref.cert_uri.is_some());
+    }
+
+    #[test]
+    fn test_attach_cert_ref_tee_not_registered() {
+        let (env, _admin, client) = setup();
+        let h = hash32_with_value(&env, 99);
+        let err = client
+            .try_attach_cert_ref(
+                &h,
+                &String::from_str(&env, "CA"),
+                &1000u64,
+                &5000u64,
+                &None,
+            )
+            .unwrap_err()
+            .unwrap();
+        assert_eq!(err, Error::TeeHashNotFound);
+    }
+
+    #[test]
+    fn test_attach_cert_ref_invalid_validity_period() {
+        let (env, _admin, client) = setup();
+        let h = hash32(&env);
+        client.add_tee_hash(&h);
+        // valid_until == valid_from → InvalidThreshold
+        let err = client
+            .try_attach_cert_ref(
+                &h,
+                &String::from_str(&env, "CA"),
+                &5000u64,
+                &5000u64,
+                &None,
+            )
+            .unwrap_err()
+            .unwrap();
+        assert_eq!(err, Error::InvalidThreshold);
+    }
+
+    #[test]
+    fn test_get_tee_hash_with_cert_both_present() {
+        let (env, _admin, client) = setup();
+        let h = hash32(&env);
+        client.add_tee_hash(&h);
+        client
+            .attach_cert_ref(&h, &String::from_str(&env, "CA"), &1000u64, &9999u64, &None)
+            .unwrap();
+        let (approved, cert_ref) = client.get_tee_hash_with_cert(&h);
+        assert!(approved);
+        assert!(cert_ref.is_some());
+    }
+
+    #[test]
+    fn test_get_tee_hash_with_cert_no_cert() {
+        let (env, _admin, client) = setup();
+        let h = hash32(&env);
+        client.add_tee_hash(&h);
+        let (approved, cert_ref) = client.get_tee_hash_with_cert(&h);
+        assert!(approved);
+        assert!(cert_ref.is_none());
+    }
+
+    #[test]
+    fn test_validate_cert_expiration_valid() {
+        let (env, _admin, client) = setup();
+        let h = hash32(&env);
+        client.add_tee_hash(&h);
+        // Ledger timestamp defaults to 0 in tests; expiry far in the future.
+        client
+            .attach_cert_ref(&h, &String::from_str(&env, "CA"), &0u64, &99_999_999u64, &None)
+            .unwrap();
+        let result = client.validate_cert_expiration(&h).unwrap();
+        assert!(result);
+    }
+
+    #[test]
+    fn test_validate_cert_expiration_no_cert_passes() {
+        let (env, _admin, client) = setup();
+        let h = hash32(&env);
+        client.add_tee_hash(&h);
+        // No cert attached → Ok(false)
+        let result = client.validate_cert_expiration(&h).unwrap();
+        assert!(!result);
     }
 }
