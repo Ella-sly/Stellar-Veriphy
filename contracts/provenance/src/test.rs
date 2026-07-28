@@ -1,8 +1,8 @@
 #[cfg(test)]
 mod tests {
     use crate::{
-        ProvenanceContract, ProvenanceContractClient, ProvenanceError, RevocationReason,
-        VerificationLevel,
+        CertificateRelation, ProvenanceContract, ProvenanceContractClient, ProvenanceError,
+        RevocationReason, VerificationLevel,
     };
     use soroban_sdk::{testutils::Address as _, testutils::Ledger as _, Env, String};
 
@@ -333,6 +333,112 @@ mod tests {
         assert_eq!(
             client.try_get_verification_level(&999u64).unwrap_err().unwrap(),
             ProvenanceError::CertificateNotFound
+        );
+    }
+
+    // --- Issue #178 --- Certificate Linking
+
+    #[test]
+    fn test_link_parent_child_reciprocal() {
+        let env = Env::default();
+        env.mock_all_auths();
+        let cid = env.register_contract(None, ProvenanceContract);
+        let client = ProvenanceContractClient::new(&env, &cid);
+        let oracle = soroban_sdk::Address::generate(&env);
+        let owner = soroban_sdk::Address::generate(&env);
+        client.initialize(&oracle);
+
+        let a = client.mint(&s(&env, "sid"), &s(&env, "mhash_lnk1"), &s(&env, "ahash"), &owner);
+        let b = client.mint(&s(&env, "sid"), &s(&env, "mhash_lnk2"), &s(&env, "ahash"), &owner);
+
+        client.link_certificates(&b, &CertificateRelation::Parent(a));
+
+        let b_links = client.get_linked_certificates(&b);
+        assert_eq!(b_links.len(), 1);
+        assert_eq!(b_links.get_unchecked(0), CertificateRelation::Parent(a));
+
+        let a_links = client.get_linked_certificates(&a);
+        assert_eq!(a_links.len(), 1);
+        assert_eq!(a_links.get_unchecked(0), CertificateRelation::Child(b));
+    }
+
+    #[test]
+    fn test_link_sibling_reciprocal() {
+        let env = Env::default();
+        env.mock_all_auths();
+        let cid = env.register_contract(None, ProvenanceContract);
+        let client = ProvenanceContractClient::new(&env, &cid);
+        let oracle = soroban_sdk::Address::generate(&env);
+        let owner = soroban_sdk::Address::generate(&env);
+        client.initialize(&oracle);
+
+        let c = client.mint(&s(&env, "sid"), &s(&env, "mhash_lnk3"), &s(&env, "ahash"), &owner);
+        let d = client.mint(&s(&env, "sid"), &s(&env, "mhash_lnk4"), &s(&env, "ahash"), &owner);
+
+        client.link_certificates(&c, &CertificateRelation::Sibling(d));
+
+        assert_eq!(client.get_linked_certificates(&c).get_unchecked(0), CertificateRelation::Sibling(d));
+        assert_eq!(client.get_linked_certificates(&d).get_unchecked(0), CertificateRelation::Sibling(c));
+    }
+
+    #[test]
+    fn test_link_self_rejected() {
+        let env = Env::default();
+        env.mock_all_auths();
+        let cid = env.register_contract(None, ProvenanceContract);
+        let client = ProvenanceContractClient::new(&env, &cid);
+        let oracle = soroban_sdk::Address::generate(&env);
+        let owner = soroban_sdk::Address::generate(&env);
+        client.initialize(&oracle);
+
+        let a = client.mint(&s(&env, "sid"), &s(&env, "mhash_lnk5"), &s(&env, "ahash"), &owner);
+
+        assert_eq!(
+            client.try_link_certificates(&a, &CertificateRelation::Parent(a)).unwrap_err().unwrap(),
+            ProvenanceError::CircularReference
+        );
+    }
+
+    #[test]
+    fn test_link_nonexistent_related_certificate_rejected() {
+        let env = Env::default();
+        env.mock_all_auths();
+        let cid = env.register_contract(None, ProvenanceContract);
+        let client = ProvenanceContractClient::new(&env, &cid);
+        let oracle = soroban_sdk::Address::generate(&env);
+        let owner = soroban_sdk::Address::generate(&env);
+        client.initialize(&oracle);
+
+        let a = client.mint(&s(&env, "sid"), &s(&env, "mhash_lnk6"), &s(&env, "ahash"), &owner);
+
+        assert_eq!(
+            client.try_link_certificates(&a, &CertificateRelation::Parent(999u64)).unwrap_err().unwrap(),
+            ProvenanceError::CertificateNotFound
+        );
+    }
+
+    #[test]
+    fn test_link_circular_reference_rejected() {
+        let env = Env::default();
+        env.mock_all_auths();
+        let cid = env.register_contract(None, ProvenanceContract);
+        let client = ProvenanceContractClient::new(&env, &cid);
+        let oracle = soroban_sdk::Address::generate(&env);
+        let owner = soroban_sdk::Address::generate(&env);
+        client.initialize(&oracle);
+
+        let a = client.mint(&s(&env, "sid"), &s(&env, "mhash_lnk7"), &s(&env, "ahash"), &owner);
+        let b = client.mint(&s(&env, "sid"), &s(&env, "mhash_lnk8"), &s(&env, "ahash"), &owner);
+        let c = client.mint(&s(&env, "sid"), &s(&env, "mhash_lnk9"), &s(&env, "ahash"), &owner);
+
+        // chain: C -> parent B -> parent A
+        client.link_certificates(&b, &CertificateRelation::Parent(a));
+        client.link_certificates(&c, &CertificateRelation::Parent(b));
+
+        // A -> parent C would close the loop A -> C -> B -> A
+        assert_eq!(
+            client.try_link_certificates(&a, &CertificateRelation::Parent(c)).unwrap_err().unwrap(),
+            ProvenanceError::CircularReference
         );
     }
 

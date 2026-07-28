@@ -14,6 +14,7 @@ pub enum ProvenanceError {
     BatchSizeExceeded = 4,
     UnauthorizedRevocation = 5,
     InvalidExpiration = 6,
+    CircularReference = 7,
 }
 
 // #171 — Revocation reason
@@ -34,6 +35,15 @@ pub enum VerificationLevel {
     Standard = 1,
     Premium = 2,
     Enterprise = 3,
+}
+
+// #178 — Relation to another certificate
+#[contracttype]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub enum CertificateRelation {
+    Parent(u64),
+    Child(u64),
+    Sibling(u64),
 }
 
 // #14 — String fields (was Bytes)
@@ -151,6 +161,16 @@ pub struct VerificationLevelUpdated {
     pub new_level: VerificationLevel,
 }
 
+// #178 — Certificates linked event
+#[contractevent]
+pub struct CertificatesLinked {
+    #[topic]
+    pub certificate_id: u64,
+    #[topic]
+    pub related_id: u64,
+    pub relation: CertificateRelation,
+}
+
 #[contract]
 pub struct ProvenanceContract;
 
@@ -167,6 +187,60 @@ fn calculate_verification_level(
     } else {
         VerificationLevel::Basic
     }
+}
+
+// #178 — the id embedded in a CertificateRelation
+fn relation_target(relation: CertificateRelation) -> u64 {
+    match relation {
+        CertificateRelation::Parent(id) => id,
+        CertificateRelation::Child(id) => id,
+        CertificateRelation::Sibling(id) => id,
+    }
+}
+
+// #178 — the reciprocal relation to store on the related certificate
+fn reciprocal_relation(relation: CertificateRelation, self_id: u64) -> CertificateRelation {
+    match relation {
+        CertificateRelation::Parent(_) => CertificateRelation::Child(self_id),
+        CertificateRelation::Child(_) => CertificateRelation::Parent(self_id),
+        CertificateRelation::Sibling(_) => CertificateRelation::Sibling(self_id),
+    }
+}
+
+// #178 — bounded walk up the Parent chain to detect a would-be cycle before
+// linking `start_id` as a child of `related_id`. Depth is capped so the
+// check stays gas-bounded regardless of how deep an existing chain is.
+fn creates_cycle(env: &Env, start_id: u64, target_id: u64) -> bool {
+    const MAX_DEPTH: u32 = 20;
+    let links_key = symbol_short!("LINKS");
+    let mut current = start_id;
+
+    for _ in 0..MAX_DEPTH {
+        if current == target_id {
+            return true;
+        }
+        let key = (links_key, current);
+        let links: Vec<CertificateRelation> = env
+            .storage()
+            .persistent()
+            .get(&key)
+            .unwrap_or(Vec::new());
+
+        let mut next: Option<u64> = None;
+        for relation in links.iter() {
+            if let CertificateRelation::Parent(parent_id) = relation {
+                next = Some(parent_id);
+                break;
+            }
+        }
+
+        match next {
+            Some(parent_id) => current = parent_id,
+            None => return false,
+        }
+    }
+
+    false
 }
 
 #[contractimpl]
@@ -493,6 +567,93 @@ impl ProvenanceContract {
         }
 
         results
+    }
+
+    /// #178 — Link two certificates together (parent/child/sibling). The link is
+    /// stored on both certificates as reciprocal relations. Requires auth from
+    /// `certificate_id`'s creator.
+    pub fn link_certificates(
+        env: Env,
+        certificate_id: u64,
+        relation: CertificateRelation,
+    ) -> Result<(), ProvenanceError> {
+        let related_id = relation_target(relation);
+
+        if certificate_id == related_id {
+            return Err(ProvenanceError::CircularReference);
+        }
+
+        let cert: ProvenanceCert = env
+            .storage()
+            .persistent()
+            .get(&certificate_id)
+            .ok_or(ProvenanceError::CertificateNotFound)?;
+        cert.creator.require_auth();
+
+        if !env.storage().persistent().has(&related_id) {
+            return Err(ProvenanceError::CertificateNotFound);
+        }
+
+        if let CertificateRelation::Parent(parent_id) = relation {
+            // Linking certificate_id as a child of parent_id — reject if
+            // parent_id is already a descendant of certificate_id.
+            if creates_cycle(&env, parent_id, certificate_id) {
+                return Err(ProvenanceError::CircularReference);
+            }
+        }
+        if let CertificateRelation::Child(child_id) = relation {
+            // Linking certificate_id as a parent of child_id — reject if
+            // certificate_id is already a descendant of child_id.
+            if creates_cycle(&env, certificate_id, child_id) {
+                return Err(ProvenanceError::CircularReference);
+            }
+        }
+
+        let links_key = symbol_short!("LINKS");
+
+        let key_a = (links_key, certificate_id);
+        let mut links_a: Vec<CertificateRelation> = env
+            .storage()
+            .persistent()
+            .get(&key_a)
+            .unwrap_or(Vec::new());
+        links_a.push_back(relation);
+        env.storage().persistent().set(&key_a, &links_a);
+
+        let key_b = (links_key, related_id);
+        let mut links_b: Vec<CertificateRelation> = env
+            .storage()
+            .persistent()
+            .get(&key_b)
+            .unwrap_or(Vec::new());
+        links_b.push_back(reciprocal_relation(relation, certificate_id));
+        env.storage().persistent().set(&key_b, &links_b);
+
+        CertificatesLinked {
+            certificate_id,
+            related_id,
+            relation,
+        }
+        .emit(&env);
+
+        Ok(())
+    }
+
+    /// #178 — Query the certificates linked to a given certificate
+    pub fn get_linked_certificates(
+        env: Env,
+        certificate_id: u64,
+    ) -> Result<Vec<CertificateRelation>, ProvenanceError> {
+        if !env.storage().persistent().has(&certificate_id) {
+            return Err(ProvenanceError::CertificateNotFound);
+        }
+
+        let links_key = symbol_short!("LINKS");
+        Ok(env
+            .storage()
+            .persistent()
+            .get(&(links_key, certificate_id))
+            .unwrap_or(Vec::new()))
     }
 
     /// #172 — Transfer certificate ownership to a new address
