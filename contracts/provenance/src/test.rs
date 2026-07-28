@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
     use crate::{ProvenanceContract, ProvenanceContractClient, ProvenanceError, RevocationReason};
-    use soroban_sdk::{testutils::Address as _, Env, String};
+    use soroban_sdk::{testutils::Address as _, testutils::Ledger as _, Env, String};
 
     fn s(env: &Env, v: &str) -> String {
         String::from_str(env, v)
@@ -136,6 +136,118 @@ mod tests {
                 .unwrap(),
             ProvenanceError::CertificateNotFound
         );
+    }
+
+    // --- Issue #177 --- Certificate Expiration
+
+    #[test]
+    fn test_certificate_not_expired_by_default() {
+        let env = Env::default();
+        env.mock_all_auths();
+        let cid = env.register_contract(None, ProvenanceContract);
+        let client = ProvenanceContractClient::new(&env, &cid);
+        let oracle = soroban_sdk::Address::generate(&env);
+        let owner = soroban_sdk::Address::generate(&env);
+        client.initialize(&oracle);
+
+        let id = client.mint(&s(&env, "sid"), &s(&env, "mhash_exp1"), &s(&env, "ahash"), &owner);
+        assert!(!client.is_certificate_expired(&id));
+    }
+
+    #[test]
+    fn test_set_expiration_and_expire() {
+        let env = Env::default();
+        env.mock_all_auths();
+        let cid = env.register_contract(None, ProvenanceContract);
+        let client = ProvenanceContractClient::new(&env, &cid);
+        let oracle = soroban_sdk::Address::generate(&env);
+        let owner = soroban_sdk::Address::generate(&env);
+        client.initialize(&oracle);
+
+        let id = client.mint(&s(&env, "sid"), &s(&env, "mhash_exp2"), &s(&env, "ahash"), &owner);
+        let now = env.ledger().timestamp();
+        client.set_expiration(&id, &Some(now + 100));
+        assert!(!client.is_certificate_expired(&id));
+
+        env.ledger().with_mut(|li| li.timestamp = now + 200);
+        assert!(client.is_certificate_expired(&id));
+    }
+
+    #[test]
+    fn test_set_expiration_in_past_rejected() {
+        let env = Env::default();
+        env.mock_all_auths();
+        let cid = env.register_contract(None, ProvenanceContract);
+        let client = ProvenanceContractClient::new(&env, &cid);
+        let oracle = soroban_sdk::Address::generate(&env);
+        let owner = soroban_sdk::Address::generate(&env);
+        client.initialize(&oracle);
+
+        let id = client.mint(&s(&env, "sid"), &s(&env, "mhash_exp3"), &s(&env, "ahash"), &owner);
+        let now = env.ledger().timestamp();
+        assert_eq!(
+            client.try_set_expiration(&id, &Some(now)).unwrap_err().unwrap(),
+            ProvenanceError::InvalidExpiration
+        );
+    }
+
+    #[test]
+    fn test_renew_certificate() {
+        let env = Env::default();
+        env.mock_all_auths();
+        let cid = env.register_contract(None, ProvenanceContract);
+        let client = ProvenanceContractClient::new(&env, &cid);
+        let oracle = soroban_sdk::Address::generate(&env);
+        let owner = soroban_sdk::Address::generate(&env);
+        client.initialize(&oracle);
+
+        let id = client.mint(&s(&env, "sid"), &s(&env, "mhash_exp4"), &s(&env, "ahash"), &owner);
+        let now = env.ledger().timestamp();
+        client.set_expiration(&id, &Some(now + 10));
+        env.ledger().with_mut(|li| li.timestamp = now + 20);
+        assert!(client.is_certificate_expired(&id));
+
+        client.renew_certificate(&id, &(now + 1000));
+        assert!(!client.is_certificate_expired(&id));
+    }
+
+    #[test]
+    fn test_check_expiration_warning() {
+        let env = Env::default();
+        env.mock_all_auths();
+        let cid = env.register_contract(None, ProvenanceContract);
+        let client = ProvenanceContractClient::new(&env, &cid);
+        let oracle = soroban_sdk::Address::generate(&env);
+        let owner = soroban_sdk::Address::generate(&env);
+        client.initialize(&oracle);
+
+        let id = client.mint(&s(&env, "sid"), &s(&env, "mhash_exp5"), &s(&env, "ahash"), &owner);
+        let now = env.ledger().timestamp();
+        client.set_expiration(&id, &Some(now + 50));
+
+        assert!(!client.check_expiration_warning(&id, &10));
+        assert!(client.check_expiration_warning(&id, &100));
+    }
+
+    #[test]
+    fn test_expired_certificate_filtered_from_time_range_query() {
+        let env = Env::default();
+        env.mock_all_auths();
+        let cid = env.register_contract(None, ProvenanceContract);
+        let client = ProvenanceContractClient::new(&env, &cid);
+        let oracle = soroban_sdk::Address::generate(&env);
+        let owner = soroban_sdk::Address::generate(&env);
+        client.initialize(&oracle);
+
+        let id1 = client.mint(&s(&env, "sid"), &s(&env, "mhash_exp6"), &s(&env, "ahash"), &owner);
+        client.mint(&s(&env, "sid"), &s(&env, "mhash_exp7"), &s(&env, "ahash"), &owner);
+
+        let now = env.ledger().timestamp();
+        client.set_expiration(&id1, &Some(now + 10));
+        env.ledger().with_mut(|li| li.timestamp = now + 20);
+
+        let results = client.get_certificates_by_time_range(&0, &(now + 1000), &0, &10);
+        assert_eq!(results.len(), 1);
     }
 
     // --- Issue #172 --- Certificate Transfer

@@ -13,6 +13,7 @@ pub enum ProvenanceError {
     DuplicateCertificate = 3,
     BatchSizeExceeded = 4,
     UnauthorizedRevocation = 5,
+    InvalidExpiration = 6,
 }
 
 // #171 — Revocation reason
@@ -36,6 +37,8 @@ pub struct ProvenanceCert {
     pub revoked:          bool,
     pub revocation_reason: Option<RevocationReason>,
     pub revocation_timestamp: Option<u64>,
+    // #177 — optional expiration
+    pub expires_at:       Option<u64>,
 }
 
 // #173 — Certificate metadata with version tracking
@@ -106,6 +109,26 @@ pub struct CertificateRevoked {
     pub reason: String,
 }
 
+// #177 — Expiration renewed event
+#[contractevent]
+pub struct CertificateRenewed {
+    #[topic]
+    pub certificate_id: u64,
+    #[topic]
+    pub renewed_by: Address,
+    pub new_expires_at: u64,
+}
+
+// #177 — Expiration warning event
+#[contractevent]
+pub struct CertificateExpirationWarning {
+    #[topic]
+    pub certificate_id: u64,
+    #[topic]
+    pub owner: Address,
+    pub expires_at: u64,
+}
+
 #[contract]
 pub struct ProvenanceContract;
 
@@ -173,6 +196,7 @@ impl ProvenanceContract {
             revoked: false,
             revocation_reason: None,
             revocation_timestamp: None,
+            expires_at: None,
         };
         env.storage().persistent().set(&id, &cert);
 
@@ -251,6 +275,106 @@ impl ProvenanceContract {
             .get(&certificate_id)
             .map(|cert: ProvenanceCert| cert.revoked)
             .ok_or(ProvenanceError::CertificateNotFound)
+    }
+
+    /// #177 — Set (or clear) a certificate's expiration timestamp
+    pub fn set_expiration(
+        env: Env,
+        certificate_id: u64,
+        expires_at: Option<u64>,
+    ) -> Result<(), ProvenanceError> {
+        let mut cert: ProvenanceCert = env
+            .storage()
+            .persistent()
+            .get(&certificate_id)
+            .ok_or(ProvenanceError::CertificateNotFound)?;
+
+        cert.creator.require_auth();
+
+        if let Some(ts) = expires_at {
+            if ts <= env.ledger().timestamp() {
+                return Err(ProvenanceError::InvalidExpiration);
+            }
+        }
+
+        cert.expires_at = expires_at;
+        env.storage().persistent().set(&certificate_id, &cert);
+
+        Ok(())
+    }
+
+    /// #177 — Check whether a certificate has expired
+    pub fn is_certificate_expired(env: Env, certificate_id: u64) -> Result<bool, ProvenanceError> {
+        let cert: ProvenanceCert = env
+            .storage()
+            .persistent()
+            .get(&certificate_id)
+            .ok_or(ProvenanceError::CertificateNotFound)?;
+
+        Ok(cert
+            .expires_at
+            .map_or(false, |ts| env.ledger().timestamp() > ts))
+    }
+
+    /// #177 — Renew an expired (or soon-to-expire) certificate with a new expiration
+    pub fn renew_certificate(
+        env: Env,
+        certificate_id: u64,
+        new_expires_at: u64,
+    ) -> Result<(), ProvenanceError> {
+        let mut cert: ProvenanceCert = env
+            .storage()
+            .persistent()
+            .get(&certificate_id)
+            .ok_or(ProvenanceError::CertificateNotFound)?;
+
+        cert.creator.require_auth();
+
+        if new_expires_at <= env.ledger().timestamp() {
+            return Err(ProvenanceError::InvalidExpiration);
+        }
+
+        cert.expires_at = Some(new_expires_at);
+        let renewed_by = cert.creator.clone();
+        env.storage().persistent().set(&certificate_id, &cert);
+
+        CertificateRenewed {
+            certificate_id,
+            renewed_by,
+            new_expires_at,
+        }
+        .emit(&env);
+
+        Ok(())
+    }
+
+    /// #177 — Emit a warning event if the certificate expires within `warning_window` seconds.
+    /// Returns true if a warning was emitted.
+    pub fn check_expiration_warning(
+        env: Env,
+        certificate_id: u64,
+        warning_window: u64,
+    ) -> Result<bool, ProvenanceError> {
+        let cert: ProvenanceCert = env
+            .storage()
+            .persistent()
+            .get(&certificate_id)
+            .ok_or(ProvenanceError::CertificateNotFound)?;
+
+        let now = env.ledger().timestamp();
+        if let Some(expires_at) = cert.expires_at {
+            if expires_at > now && expires_at - now <= warning_window {
+                CertificateExpirationWarning {
+                    certificate_id,
+                    owner: cert.creator,
+                    expires_at,
+                }
+                .emit(&env);
+                return Ok(true);
+            }
+        }
+
+        Ok(false)
     }
 
     /// #172 — Transfer certificate ownership to a new address
@@ -367,13 +491,16 @@ impl ProvenanceContract {
         let mut count = 0u32;
         let mut skipped = 0u32;
 
+        let now = env.ledger().timestamp();
         let mut i = total_certs;
         while i > 0 && count < limit {
-            if let Ok(cert) = env.storage()
+            if let Some(cert) = env.storage()
                 .persistent()
                 .get::<u64, ProvenanceCert>(&i)
             {
-                if cert.timestamp >= start_time && cert.timestamp <= end_time {
+                // #177 — filter expired certificates out of default queries
+                let expired = cert.expires_at.map_or(false, |ts| now > ts);
+                if !expired && cert.timestamp >= start_time && cert.timestamp <= end_time {
                     if skipped >= offset {
                         results.push_back((i, cert));
                         count += 1;
@@ -439,6 +566,7 @@ impl ProvenanceContract {
                 revoked: false,
                 revocation_reason: None,
                 revocation_timestamp: None,
+                expires_at: None,
             };
             env.storage().persistent().set(&id, &cert);
             env.storage().persistent().set(&mani_key, &id);
