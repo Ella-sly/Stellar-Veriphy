@@ -87,6 +87,8 @@ pub enum Error {
     ProposalNotFound = 4,
     ProposalExpired = 5,
     InsufficientApprovals = 6,
+    TeeHashNotFound = 7,
+    ProviderNotFound = 8,
 }
 
 // ---------------------------------------------------------------------------
@@ -104,6 +106,11 @@ pub enum DataKey {
     Proposal(u64),
     ProposalApprovals(u64),
     NextProposalId,
+    TeeHashVersionInfo(BytesN<32>), // #187
+    TeeHashesByVersion(u32),        // #187
+    TeeHashVersionHistory,          // #187
+    ProviderReputation(BytesN<32>), // #186
+    ProviderList,                   // #186
 }
 
 // ---------------------------------------------------------------------------
@@ -129,6 +136,38 @@ pub struct Proposal {
     pub execution_ledger: u32,
     pub executed: bool,
 }
+
+// ---------------------------------------------------------------------------
+// #187 – TEE hash versioning
+// ---------------------------------------------------------------------------
+
+#[contracttype]
+#[derive(Clone, Debug)]
+pub struct TeeHashVersionInfo {
+    pub code_hash: BytesN<32>,
+    pub version: u32,
+    pub added_at: u64,
+    pub deprecated: bool,
+    pub deprecated_at: Option<u64>,
+}
+
+// ---------------------------------------------------------------------------
+// #186 – Provider reputation system
+// ---------------------------------------------------------------------------
+
+#[contracttype]
+#[derive(Clone, Debug)]
+pub struct ProviderReputation {
+    pub score: u32,
+    pub total_verifications: u64,
+    pub successful_count: u64,
+    pub failed_count: u64,
+    pub last_updated: u64,
+}
+
+const REPUTATION_MAX_SCORE: u32 = 1000;
+const REPUTATION_DECAY_PERIOD_SECS: u64 = 2_592_000; // 30 days
+const REPUTATION_DECAY_AMOUNT: u32 = 50;
 
 // ---------------------------------------------------------------------------
 // #24 – VerificationResult
@@ -205,6 +244,119 @@ impl RegistryContract {
     }
 
     // -----------------------------------------------------------------------
+    // #187 – TEE hash versioning
+    // -----------------------------------------------------------------------
+
+    /// Register an approved TEE code hash with an explicit version (admin-gated).
+    /// Multiple versions may be active simultaneously, and multiple hashes may
+    /// share the same version.
+    pub fn add_tee_hash_version(env: Env, code_hash: BytesN<32>, version: u32) {
+        let admin: Address = env
+            .storage()
+            .instance()
+            .get(&DataKey::Admin)
+            .expect("Not initialized");
+        admin.require_auth();
+
+        env.storage()
+            .persistent()
+            .set(&DataKey::TeeHash(code_hash.clone()), &true);
+
+        let info = TeeHashVersionInfo {
+            code_hash: code_hash.clone(),
+            version,
+            added_at: env.ledger().timestamp(),
+            deprecated: false,
+            deprecated_at: None,
+        };
+        env.storage()
+            .persistent()
+            .set(&DataKey::TeeHashVersionInfo(code_hash.clone()), &info);
+
+        let version_key = DataKey::TeeHashesByVersion(version);
+        let mut hashes: Vec<BytesN<32>> = env
+            .storage()
+            .persistent()
+            .get(&version_key)
+            .unwrap_or(Vec::new(&env));
+        if !hashes.contains(&code_hash) {
+            hashes.push_back(code_hash);
+            env.storage().persistent().set(&version_key, &hashes);
+        }
+
+        let mut history: Vec<TeeHashVersionInfo> = env
+            .storage()
+            .persistent()
+            .get(&DataKey::TeeHashVersionHistory)
+            .unwrap_or(Vec::new(&env));
+        history.push_back(info);
+        env.storage()
+            .persistent()
+            .set(&DataKey::TeeHashVersionHistory, &history);
+    }
+
+    /// Deprecate a previously registered TEE code hash (admin-gated). The
+    /// hash remains queryable but is flagged as deprecated; other active
+    /// versions are unaffected.
+    pub fn deprecate_tee_hash(env: Env, code_hash: BytesN<32>) -> Result<(), Error> {
+        let admin: Address = env
+            .storage()
+            .instance()
+            .get(&DataKey::Admin)
+            .ok_or(Error::NotInitialized)?;
+        admin.require_auth();
+
+        let mut info: TeeHashVersionInfo = env
+            .storage()
+            .persistent()
+            .get(&DataKey::TeeHashVersionInfo(code_hash.clone()))
+            .ok_or(Error::TeeHashNotFound)?;
+
+        info.deprecated = true;
+        info.deprecated_at = Some(env.ledger().timestamp());
+        env.storage()
+            .persistent()
+            .set(&DataKey::TeeHashVersionInfo(code_hash), &info);
+
+        let mut history: Vec<TeeHashVersionInfo> = env
+            .storage()
+            .persistent()
+            .get(&DataKey::TeeHashVersionHistory)
+            .unwrap_or(Vec::new(&env));
+        history.push_back(info);
+        env.storage()
+            .persistent()
+            .set(&DataKey::TeeHashVersionHistory, &history);
+
+        Ok(())
+    }
+
+    /// Fetch version metadata for a TEE code hash.
+    pub fn get_tee_hash_version(env: Env, code_hash: BytesN<32>) -> Result<TeeHashVersionInfo, Error> {
+        env.storage()
+            .persistent()
+            .get(&DataKey::TeeHashVersionInfo(code_hash))
+            .ok_or(Error::TeeHashNotFound)
+    }
+
+    /// Query all TEE code hashes registered under a given version.
+    pub fn get_tee_hashes_by_version(env: Env, version: u32) -> Vec<BytesN<32>> {
+        env.storage()
+            .persistent()
+            .get(&DataKey::TeeHashesByVersion(version))
+            .unwrap_or(Vec::new(&env))
+    }
+
+    /// Full chronological history of TEE hash version registrations and
+    /// deprecations.
+    pub fn get_tee_hash_version_history(env: Env) -> Vec<TeeHashVersionInfo> {
+        env.storage()
+            .persistent()
+            .get(&DataKey::TeeHashVersionHistory)
+            .unwrap_or(Vec::new(&env))
+    }
+
+    // -----------------------------------------------------------------------
     // #21 – add_provider / is_provider (BytesN<32> keys)
     // -----------------------------------------------------------------------
 
@@ -218,7 +370,35 @@ impl RegistryContract {
         admin.require_auth();
         env.storage()
             .persistent()
-            .set(&DataKey::Provider(provider), &true);
+            .set(&DataKey::Provider(provider.clone()), &true);
+
+        // #186 — seed reputation tracking for newly registered providers
+        if !env
+            .storage()
+            .persistent()
+            .has(&DataKey::ProviderReputation(provider.clone()))
+        {
+            let reputation = ProviderReputation {
+                score: REPUTATION_MAX_SCORE / 2,
+                total_verifications: 0,
+                successful_count: 0,
+                failed_count: 0,
+                last_updated: env.ledger().timestamp(),
+            };
+            env.storage()
+                .persistent()
+                .set(&DataKey::ProviderReputation(provider.clone()), &reputation);
+
+            let mut providers: Vec<BytesN<32>> = env
+                .storage()
+                .persistent()
+                .get(&DataKey::ProviderList)
+                .unwrap_or(Vec::new(&env));
+            providers.push_back(provider);
+            env.storage()
+                .persistent()
+                .set(&DataKey::ProviderList, &providers);
+        }
     }
 
     /// Check whether a provider public key is registered.  #21
@@ -227,6 +407,109 @@ impl RegistryContract {
             .persistent()
             .get(&DataKey::Provider(provider))
             .unwrap_or(false)
+    }
+
+    // -----------------------------------------------------------------------
+    // #186 – provider reputation system
+    // -----------------------------------------------------------------------
+
+    /// Record the outcome of a provider verification and recompute its
+    /// reputation score (admin-gated).
+    pub fn record_verification_result(
+        env: Env,
+        provider: BytesN<32>,
+        success: bool,
+    ) -> Result<(), Error> {
+        let admin: Address = env
+            .storage()
+            .instance()
+            .get(&DataKey::Admin)
+            .ok_or(Error::NotInitialized)?;
+        admin.require_auth();
+
+        let mut reputation: ProviderReputation = env
+            .storage()
+            .persistent()
+            .get(&DataKey::ProviderReputation(provider.clone()))
+            .ok_or(Error::ProviderNotFound)?;
+
+        reputation.total_verifications += 1;
+        if success {
+            reputation.successful_count += 1;
+        } else {
+            reputation.failed_count += 1;
+        }
+
+        reputation.score = ((reputation.successful_count as u128 * REPUTATION_MAX_SCORE as u128)
+            / reputation.total_verifications as u128) as u32;
+        reputation.last_updated = env.ledger().timestamp();
+
+        env.storage()
+            .persistent()
+            .set(&DataKey::ProviderReputation(provider), &reputation);
+
+        Ok(())
+    }
+
+    /// Apply time-based decay to a provider's score if it has been inactive
+    /// for one or more decay periods. Callable by anyone; decay is a
+    /// deterministic function of elapsed time, not an admin action.
+    pub fn apply_reputation_decay(env: Env, provider: BytesN<32>) -> Result<(), Error> {
+        let mut reputation: ProviderReputation = env
+            .storage()
+            .persistent()
+            .get(&DataKey::ProviderReputation(provider.clone()))
+            .ok_or(Error::ProviderNotFound)?;
+
+        let now = env.ledger().timestamp();
+        let elapsed = now.saturating_sub(reputation.last_updated);
+        let periods = elapsed / REPUTATION_DECAY_PERIOD_SECS;
+
+        if periods > 0 {
+            let decay = REPUTATION_DECAY_AMOUNT.saturating_mul(periods as u32);
+            reputation.score = reputation.score.saturating_sub(decay);
+            reputation.last_updated = now;
+            env.storage()
+                .persistent()
+                .set(&DataKey::ProviderReputation(provider), &reputation);
+        }
+
+        Ok(())
+    }
+
+    /// Fetch a provider's current reputation.
+    pub fn get_provider_reputation(env: Env, provider: BytesN<32>) -> Result<ProviderReputation, Error> {
+        env.storage()
+            .persistent()
+            .get(&DataKey::ProviderReputation(provider))
+            .ok_or(Error::ProviderNotFound)
+    }
+
+    /// Query all registered providers whose score meets or exceeds a
+    /// threshold.
+    pub fn get_providers_by_reputation_threshold(
+        env: Env,
+        min_score: u32,
+    ) -> Vec<BytesN<32>> {
+        let providers: Vec<BytesN<32>> = env
+            .storage()
+            .persistent()
+            .get(&DataKey::ProviderList)
+            .unwrap_or(Vec::new(&env));
+
+        let mut result: Vec<BytesN<32>> = Vec::new(&env);
+        for provider in providers.iter() {
+            if let Some(reputation) = env
+                .storage()
+                .persistent()
+                .get::<DataKey, ProviderReputation>(&DataKey::ProviderReputation(provider.clone()))
+            {
+                if reputation.score >= min_score {
+                    result.push_back(provider);
+                }
+            }
+        }
+        result
     }
 
     // -----------------------------------------------------------------------
