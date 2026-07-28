@@ -87,6 +87,7 @@ pub enum Error {
     ProposalNotFound = 4,
     ProposalExpired = 5,
     InsufficientApprovals = 6,
+    TeeHashNotFound = 7,
 }
 
 // ---------------------------------------------------------------------------
@@ -104,6 +105,9 @@ pub enum DataKey {
     Proposal(u64),
     ProposalApprovals(u64),
     NextProposalId,
+    TeeHashVersionInfo(BytesN<32>), // #187
+    TeeHashesByVersion(u32),        // #187
+    TeeHashVersionHistory,          // #187
 }
 
 // ---------------------------------------------------------------------------
@@ -128,6 +132,20 @@ pub struct Proposal {
     pub created_ledger: u32,
     pub execution_ledger: u32,
     pub executed: bool,
+}
+
+// ---------------------------------------------------------------------------
+// #187 – TEE hash versioning
+// ---------------------------------------------------------------------------
+
+#[contracttype]
+#[derive(Clone, Debug)]
+pub struct TeeHashVersionInfo {
+    pub code_hash: BytesN<32>,
+    pub version: u32,
+    pub added_at: u64,
+    pub deprecated: bool,
+    pub deprecated_at: Option<u64>,
 }
 
 // ---------------------------------------------------------------------------
@@ -202,6 +220,119 @@ impl RegistryContract {
             .persistent()
             .get(&DataKey::TeeHash(code_hash))
             .unwrap_or(false)
+    }
+
+    // -----------------------------------------------------------------------
+    // #187 – TEE hash versioning
+    // -----------------------------------------------------------------------
+
+    /// Register an approved TEE code hash with an explicit version (admin-gated).
+    /// Multiple versions may be active simultaneously, and multiple hashes may
+    /// share the same version.
+    pub fn add_tee_hash_version(env: Env, code_hash: BytesN<32>, version: u32) {
+        let admin: Address = env
+            .storage()
+            .instance()
+            .get(&DataKey::Admin)
+            .expect("Not initialized");
+        admin.require_auth();
+
+        env.storage()
+            .persistent()
+            .set(&DataKey::TeeHash(code_hash.clone()), &true);
+
+        let info = TeeHashVersionInfo {
+            code_hash: code_hash.clone(),
+            version,
+            added_at: env.ledger().timestamp(),
+            deprecated: false,
+            deprecated_at: None,
+        };
+        env.storage()
+            .persistent()
+            .set(&DataKey::TeeHashVersionInfo(code_hash.clone()), &info);
+
+        let version_key = DataKey::TeeHashesByVersion(version);
+        let mut hashes: Vec<BytesN<32>> = env
+            .storage()
+            .persistent()
+            .get(&version_key)
+            .unwrap_or(Vec::new(&env));
+        if !hashes.contains(&code_hash) {
+            hashes.push_back(code_hash);
+            env.storage().persistent().set(&version_key, &hashes);
+        }
+
+        let mut history: Vec<TeeHashVersionInfo> = env
+            .storage()
+            .persistent()
+            .get(&DataKey::TeeHashVersionHistory)
+            .unwrap_or(Vec::new(&env));
+        history.push_back(info);
+        env.storage()
+            .persistent()
+            .set(&DataKey::TeeHashVersionHistory, &history);
+    }
+
+    /// Deprecate a previously registered TEE code hash (admin-gated). The
+    /// hash remains queryable but is flagged as deprecated; other active
+    /// versions are unaffected.
+    pub fn deprecate_tee_hash(env: Env, code_hash: BytesN<32>) -> Result<(), Error> {
+        let admin: Address = env
+            .storage()
+            .instance()
+            .get(&DataKey::Admin)
+            .ok_or(Error::NotInitialized)?;
+        admin.require_auth();
+
+        let mut info: TeeHashVersionInfo = env
+            .storage()
+            .persistent()
+            .get(&DataKey::TeeHashVersionInfo(code_hash.clone()))
+            .ok_or(Error::TeeHashNotFound)?;
+
+        info.deprecated = true;
+        info.deprecated_at = Some(env.ledger().timestamp());
+        env.storage()
+            .persistent()
+            .set(&DataKey::TeeHashVersionInfo(code_hash), &info);
+
+        let mut history: Vec<TeeHashVersionInfo> = env
+            .storage()
+            .persistent()
+            .get(&DataKey::TeeHashVersionHistory)
+            .unwrap_or(Vec::new(&env));
+        history.push_back(info);
+        env.storage()
+            .persistent()
+            .set(&DataKey::TeeHashVersionHistory, &history);
+
+        Ok(())
+    }
+
+    /// Fetch version metadata for a TEE code hash.
+    pub fn get_tee_hash_version(env: Env, code_hash: BytesN<32>) -> Result<TeeHashVersionInfo, Error> {
+        env.storage()
+            .persistent()
+            .get(&DataKey::TeeHashVersionInfo(code_hash))
+            .ok_or(Error::TeeHashNotFound)
+    }
+
+    /// Query all TEE code hashes registered under a given version.
+    pub fn get_tee_hashes_by_version(env: Env, version: u32) -> Vec<BytesN<32>> {
+        env.storage()
+            .persistent()
+            .get(&DataKey::TeeHashesByVersion(version))
+            .unwrap_or(Vec::new(&env))
+    }
+
+    /// Full chronological history of TEE hash version registrations and
+    /// deprecations.
+    pub fn get_tee_hash_version_history(env: Env) -> Vec<TeeHashVersionInfo> {
+        env.storage()
+            .persistent()
+            .get(&DataKey::TeeHashVersionHistory)
+            .unwrap_or(Vec::new(&env))
     }
 
     // -----------------------------------------------------------------------
