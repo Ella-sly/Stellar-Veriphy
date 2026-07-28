@@ -12,6 +12,7 @@ pub enum ProvenanceError {
     Unauthorized = 2,
     DuplicateCertificate = 3,
     BatchSizeExceeded = 4,
+    CollectionNotFound = 5,
 }
 
 // #14 — String fields (was Bytes)
@@ -42,6 +43,15 @@ pub struct MetadataVersion {
     pub display_name: String,
     pub description: String,
     pub updated_at: u64,
+}
+
+// #185 — Certificate collection/portfolio
+#[contracttype]
+pub struct Collection {
+    pub owner: Address,
+    pub name: String,
+    pub description: String,
+    pub created_at: u64,
 }
 
 // #15 — typed contract event
@@ -377,6 +387,102 @@ impl ProvenanceContract {
         .emit(&env);
 
         Ok(certificate_ids)
+    }
+
+    /// #185 — Create a new certificate collection/portfolio.
+    pub fn create_collection(
+        env: Env,
+        owner: Address,
+        name: String,
+        description: String,
+    ) -> u64 {
+        owner.require_auth();
+
+        let cnt_key = symbol_short!("COLL_CNT");
+        let id: u64 = env
+            .storage()
+            .persistent()
+            .get(&cnt_key)
+            .unwrap_or(0u64)
+            + 1;
+        env.storage().persistent().set(&cnt_key, &id);
+
+        let collection = Collection {
+            owner,
+            name,
+            description,
+            created_at: env.ledger().timestamp(),
+        };
+        env.storage().persistent().set(&(symbol_short!("COLL"), id), &collection);
+
+        id
+    }
+
+    /// #185 — Fetch a collection by id.
+    pub fn get_collection(env: Env, collection_id: u64) -> Result<Collection, ProvenanceError> {
+        env.storage()
+            .persistent()
+            .get(&(symbol_short!("COLL"), collection_id))
+            .ok_or(ProvenanceError::CollectionNotFound)
+    }
+
+    /// #185 — Add a certificate to a collection. A certificate may belong to
+    /// multiple collections simultaneously.
+    pub fn add_certificate_to_collection(
+        env: Env,
+        collection_id: u64,
+        certificate_id: u64,
+    ) -> Result<(), ProvenanceError> {
+        let collection: Collection = env
+            .storage()
+            .persistent()
+            .get(&(symbol_short!("COLL"), collection_id))
+            .ok_or(ProvenanceError::CollectionNotFound)?;
+        collection.owner.require_auth();
+
+        if !env.storage().persistent().has(&certificate_id) {
+            return Err(ProvenanceError::CertificateNotFound);
+        }
+
+        let coll_certs_key = (symbol_short!("COLLCERT"), collection_id);
+        let mut coll_certs: Vec<u64> = env
+            .storage()
+            .persistent()
+            .get(&coll_certs_key)
+            .unwrap_or(Vec::new(&env));
+        if !coll_certs.contains(&certificate_id) {
+            coll_certs.push_back(certificate_id);
+            env.storage().persistent().set(&coll_certs_key, &coll_certs);
+        }
+
+        let cert_colls_key = (symbol_short!("CERTCOLL"), certificate_id);
+        let mut cert_colls: Vec<u64> = env
+            .storage()
+            .persistent()
+            .get(&cert_colls_key)
+            .unwrap_or(Vec::new(&env));
+        if !cert_colls.contains(&collection_id) {
+            cert_colls.push_back(collection_id);
+            env.storage().persistent().set(&cert_colls_key, &cert_colls);
+        }
+
+        Ok(())
+    }
+
+    /// #185 — Query all certificate ids belonging to a collection.
+    pub fn get_certificates_in_collection(env: Env, collection_id: u64) -> Vec<u64> {
+        env.storage()
+            .persistent()
+            .get(&(symbol_short!("COLLCERT"), collection_id))
+            .unwrap_or(Vec::new(&env))
+    }
+
+    /// #185 — Query all collection ids a certificate belongs to.
+    pub fn get_collections_for_certificate(env: Env, certificate_id: u64) -> Vec<u64> {
+        env.storage()
+            .persistent()
+            .get(&(symbol_short!("CERTCOLL"), certificate_id))
+            .unwrap_or(Vec::new(&env))
     }
 }
 
