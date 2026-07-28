@@ -12,6 +12,17 @@ pub enum ProvenanceError {
     Unauthorized = 2,
     DuplicateCertificate = 3,
     BatchSizeExceeded = 4,
+    UnauthorizedRevocation = 5,
+}
+
+// #171 — Revocation reason
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum RevocationReason {
+    FraudulentContent = 1,
+    LegalRequirement = 2,
+    CreatorRequest = 3,
+    ContractualViolation = 4,
 }
 
 // #14 — String fields (was Bytes)
@@ -83,6 +94,16 @@ pub struct BatchMinted {
     pub owner: Address,
     pub certificate_ids: Vec<u64>,
     pub count: u32,
+}
+
+// #171 — Revocation event
+#[contractevent]
+pub struct CertificateRevoked {
+    #[topic]
+    pub certificate_id: u64,
+    #[topic]
+    pub owner: Address,
+    pub reason: String,
 }
 
 #[contract]
@@ -177,6 +198,58 @@ impl ProvenanceContract {
         env.storage()
             .persistent()
             .get(&id)
+            .ok_or(ProvenanceError::CertificateNotFound)
+    }
+
+    /// #171 — Revoke a certificate. Only the oracle may call this.
+    pub fn revoke_certificate(
+        env: Env,
+        certificate_id: u64,
+        reason: RevocationReason,
+    ) -> Result<(), ProvenanceError> {
+        let oracle: Address = env
+            .storage()
+            .persistent()
+            .get(&symbol_short!("ORACLE"))
+            .expect("Not initialized");
+        oracle.require_auth();
+
+        let mut cert: ProvenanceCert = env
+            .storage()
+            .persistent()
+            .get(&certificate_id)
+            .ok_or(ProvenanceError::CertificateNotFound)?;
+
+        cert.revoked = true;
+        cert.revocation_reason = Some(reason.clone());
+        cert.revocation_timestamp = Some(env.ledger().timestamp());
+        let owner = cert.creator.clone();
+
+        env.storage().persistent().set(&certificate_id, &cert);
+
+        let reason_str = match reason {
+            RevocationReason::FraudulentContent => String::from_str(&env, "fraudulent_content"),
+            RevocationReason::LegalRequirement => String::from_str(&env, "legal_requirement"),
+            RevocationReason::CreatorRequest => String::from_str(&env, "creator_request"),
+            RevocationReason::ContractualViolation => String::from_str(&env, "contractual_violation"),
+        };
+
+        CertificateRevoked {
+            certificate_id,
+            owner,
+            reason: reason_str,
+        }
+        .emit(&env);
+
+        Ok(())
+    }
+
+    /// #171 — Check whether a certificate has been revoked
+    pub fn is_certificate_revoked(env: Env, certificate_id: u64) -> Result<bool, ProvenanceError> {
+        env.storage()
+            .persistent()
+            .get(&certificate_id)
+            .map(|cert: ProvenanceCert| cert.revoked)
             .ok_or(ProvenanceError::CertificateNotFound)
     }
 
@@ -363,6 +436,9 @@ impl ProvenanceContract {
                 attestation_hash,
                 creator: to.clone(),
                 timestamp: env.ledger().timestamp(),
+                revoked: false,
+                revocation_reason: None,
+                revocation_timestamp: None,
             };
             env.storage().persistent().set(&id, &cert);
             env.storage().persistent().set(&mani_key, &id);

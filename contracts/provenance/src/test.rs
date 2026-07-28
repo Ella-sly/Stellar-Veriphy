@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use crate::{ProvenanceContract, ProvenanceContractClient, ProvenanceError};
+    use crate::{ProvenanceContract, ProvenanceContractClient, ProvenanceError, RevocationReason};
     use soroban_sdk::{testutils::Address as _, Env, String};
 
     fn s(env: &Env, v: &str) -> String {
@@ -95,6 +95,47 @@ mod tests {
         assert!(client
             .try_mint(&s(&env, "sid"), &s(&env, "mhash"), &s(&env, "ahash"), &to)
             .is_err());
+    }
+
+    // --- Issue #171 --- Certificate Revocation
+
+    #[test]
+    fn test_revoke_certificate() {
+        let env = Env::default();
+        env.mock_all_auths();
+        let cid = env.register_contract(None, ProvenanceContract);
+        let client = ProvenanceContractClient::new(&env, &cid);
+        let oracle = soroban_sdk::Address::generate(&env);
+        let owner = soroban_sdk::Address::generate(&env);
+        client.initialize(&oracle);
+
+        let id = client.mint(&s(&env, "sid"), &s(&env, "mhash_rev1"), &s(&env, "ahash"), &owner);
+        assert!(!client.is_certificate_revoked(&id));
+
+        client.revoke_certificate(&id, &RevocationReason::FraudulentContent);
+
+        assert!(client.is_certificate_revoked(&id));
+        let cert = client.get_certificate(&id).unwrap();
+        assert!(cert.revoked);
+        assert_eq!(cert.revocation_reason, Some(RevocationReason::FraudulentContent));
+    }
+
+    #[test]
+    fn test_revoke_nonexistent_certificate() {
+        let env = Env::default();
+        env.mock_all_auths();
+        let cid = env.register_contract(None, ProvenanceContract);
+        let client = ProvenanceContractClient::new(&env, &cid);
+        let oracle = soroban_sdk::Address::generate(&env);
+        client.initialize(&oracle);
+
+        assert_eq!(
+            client
+                .try_revoke_certificate(&999u64, &RevocationReason::LegalRequirement)
+                .unwrap_err()
+                .unwrap(),
+            ProvenanceError::CertificateNotFound
+        );
     }
 
     // --- Issue #172 --- Certificate Transfer
