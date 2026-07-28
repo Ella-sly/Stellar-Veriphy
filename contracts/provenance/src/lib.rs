@@ -13,6 +13,7 @@ pub enum ProvenanceError {
     DuplicateCertificate = 3,
     BatchSizeExceeded = 4,
     CollectionNotFound = 5,
+    CertificateLocked = 6,
 }
 
 // #14 — String fields (was Bytes)
@@ -26,6 +27,7 @@ pub struct ProvenanceCert {
     pub revoked:          bool,
     pub revocation_reason: Option<RevocationReason>,
     pub revocation_timestamp: Option<u64>,
+    pub locked:           bool,
 }
 
 // #173 — Certificate metadata with version tracking
@@ -43,6 +45,15 @@ pub struct MetadataVersion {
     pub display_name: String,
     pub description: String,
     pub updated_at: u64,
+}
+
+// #184 — Certificate immutability lock event
+#[contractevent]
+pub struct CertificateLockedEvent {
+    #[topic]
+    pub certificate_id: u64,
+    #[topic]
+    pub locked_by: Address,
 }
 
 // #185 — Certificate collection/portfolio
@@ -162,6 +173,7 @@ impl ProvenanceContract {
             revoked: false,
             revocation_reason: None,
             revocation_timestamp: None,
+            locked: false,
         };
         env.storage().persistent().set(&id, &cert);
 
@@ -202,6 +214,11 @@ impl ProvenanceContract {
             .ok_or(ProvenanceError::CertificateNotFound)?;
 
         cert.creator.require_auth();
+
+        if cert.locked {
+            return Err(ProvenanceError::CertificateLocked);
+        }
+
         let old_owner = cert.creator.clone();
 
         cert.creator = new_owner.clone();
@@ -237,6 +254,10 @@ impl ProvenanceContract {
             .ok_or(ProvenanceError::CertificateNotFound)?;
 
         cert.creator.require_auth();
+
+        if cert.locked {
+            return Err(ProvenanceError::CertificateLocked);
+        }
 
         let metadata_key = (symbol_short!("META"), certificate_id);
         let mut metadata: CertificateMetadata = env.storage()
@@ -483,6 +504,30 @@ impl ProvenanceContract {
             .persistent()
             .get(&(symbol_short!("CERTCOLL"), certificate_id))
             .unwrap_or(Vec::new(&env))
+    }
+
+    /// #184 — Irreversibly lock a certificate, preventing any further
+    /// modifications (transfers, metadata updates) even by its owner.
+    pub fn lock_certificate(env: Env, certificate_id: u64) -> Result<(), ProvenanceError> {
+        let mut cert = env.storage()
+            .persistent()
+            .get::<u64, ProvenanceCert>(&certificate_id)
+            .ok_or(ProvenanceError::CertificateNotFound)?;
+
+        cert.creator.require_auth();
+
+        if !cert.locked {
+            cert.locked = true;
+            env.storage().persistent().set(&certificate_id, &cert);
+
+            CertificateLockedEvent {
+                certificate_id,
+                locked_by: cert.creator,
+            }
+            .emit(&env);
+        }
+
+        Ok(())
     }
 }
 
