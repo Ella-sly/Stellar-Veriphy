@@ -1,7 +1,7 @@
 #![no_std]
 use soroban_sdk::{
-    contract, contractevent, contracterror, contractimpl, contracttype,
-    symbol_short, Address, Env, String, Vec, Map,
+    contract, contracterror, contractevent, contractimpl, contracttype, symbol_short, Address,
+    Bytes, BytesN, Env, Map, String, Vec,
 };
 
 // #16 — typed error enum
@@ -12,17 +12,29 @@ pub enum ProvenanceError {
     Unauthorized = 2,
     DuplicateCertificate = 3,
     BatchSizeExceeded = 4,
+    CodeNotFound = 5,
+    InvalidMediaMetadata = 6,
+}
+
+// Minimal type required for ProvenanceCert.revocation_reason to compile.
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum RevocationReason {
+    FraudulentContent = 1,
+    LegalRequirement = 2,
+    CreatorRequest = 3,
+    ContractualViolation = 4,
 }
 
 // #14 — String fields (was Bytes)
 #[contracttype]
 pub struct ProvenanceCert {
-    pub storage_ref:      String,
-    pub manifest_hash:    String,
+    pub storage_ref: String,
+    pub manifest_hash: String,
     pub attestation_hash: String,
-    pub creator:          Address,
-    pub timestamp:        u64,
-    pub revoked:          bool,
+    pub creator: Address,
+    pub timestamp: u64,
+    pub revoked: bool,
     pub revocation_reason: Option<RevocationReason>,
     pub revocation_timestamp: Option<u64>,
 }
@@ -106,7 +118,9 @@ impl ProvenanceContract {
             .get(&symbol_short!("ORACLE"))
             .expect("Not initialized");
         oracle.require_auth();
-        env.storage().persistent().set(&symbol_short!("ADMIN"), &admin);
+        env.storage()
+            .persistent()
+            .set(&symbol_short!("ADMIN"), &admin);
     }
 
     pub fn get_admin(env: Env) -> Option<Address> {
@@ -115,11 +129,11 @@ impl ProvenanceContract {
 
     /// Mint a provenance certificate. Only the oracle may call this.
     pub fn mint(
-        env:              Env,
-        storage_ref:      String,
-        manifest_hash:    String,
+        env: Env,
+        storage_ref: String,
+        manifest_hash: String,
         attestation_hash: String,
-        to:               Address,
+        to: Address,
     ) -> u64 {
         let oracle: Address = env
             .storage()
@@ -135,12 +149,7 @@ impl ProvenanceContract {
         }
 
         let cnt_key = symbol_short!("CERT_CNT");
-        let id: u64 = env
-            .storage()
-            .persistent()
-            .get(&cnt_key)
-            .unwrap_or(0u64)
-            + 1;
+        let id: u64 = env.storage().persistent().get(&cnt_key).unwrap_or(0u64) + 1;
         env.storage().persistent().set(&cnt_key, &id);
 
         let cert = ProvenanceCert {
@@ -170,10 +179,7 @@ impl ProvenanceContract {
     }
 
     // #16 — returns Result instead of panicking
-    pub fn get_certificate(
-        env: Env,
-        id:  u64,
-    ) -> Result<ProvenanceCert, ProvenanceError> {
+    pub fn get_certificate(env: Env, id: u64) -> Result<ProvenanceCert, ProvenanceError> {
         env.storage()
             .persistent()
             .get(&id)
@@ -186,7 +192,8 @@ impl ProvenanceContract {
         certificate_id: u64,
         new_owner: Address,
     ) -> Result<(), ProvenanceError> {
-        let mut cert = env.storage()
+        let mut cert = env
+            .storage()
             .persistent()
             .get::<u64, ProvenanceCert>(&certificate_id)
             .ok_or(ProvenanceError::CertificateNotFound)?;
@@ -198,11 +205,14 @@ impl ProvenanceContract {
         env.storage().persistent().set(&certificate_id, &cert);
 
         let transfer_key = (symbol_short!("TRNF"), certificate_id);
-        let transfer_count: u64 = env.storage()
+        let transfer_count: u64 = env
+            .storage()
             .persistent()
             .get(&transfer_key)
             .unwrap_or(0u64);
-        env.storage().persistent().set(&transfer_key, &(transfer_count + 1));
+        env.storage()
+            .persistent()
+            .set(&transfer_key, &(transfer_count + 1));
 
         CertificateTransferred {
             certificate_id,
@@ -221,7 +231,8 @@ impl ProvenanceContract {
         display_name: String,
         description: String,
     ) -> Result<(), ProvenanceError> {
-        let cert = env.storage()
+        let cert = env
+            .storage()
             .persistent()
             .get::<u64, ProvenanceCert>(&certificate_id)
             .ok_or(ProvenanceError::CertificateNotFound)?;
@@ -229,7 +240,8 @@ impl ProvenanceContract {
         cert.creator.require_auth();
 
         let metadata_key = (symbol_short!("META"), certificate_id);
-        let mut metadata: CertificateMetadata = env.storage()
+        let mut metadata: CertificateMetadata = env
+            .storage()
             .persistent()
             .get(&metadata_key)
             .unwrap_or_else(|| CertificateMetadata {
@@ -285,21 +297,15 @@ impl ProvenanceContract {
         limit: u32,
     ) -> Vec<(u64, ProvenanceCert)> {
         let cnt_key = symbol_short!("CERT_CNT");
-        let total_certs: u64 = env.storage()
-            .persistent()
-            .get(&cnt_key)
-            .unwrap_or(0u64);
+        let total_certs: u64 = env.storage().persistent().get(&cnt_key).unwrap_or(0u64);
 
-        let mut results: Vec<(u64, ProvenanceCert)> = Vec::new();
+        let mut results: Vec<(u64, ProvenanceCert)> = Vec::new(&env);
         let mut count = 0u32;
         let mut skipped = 0u32;
 
         let mut i = total_certs;
         while i > 0 && count < limit {
-            if let Ok(cert) = env.storage()
-                .persistent()
-                .get::<u64, ProvenanceCert>(&i)
-            {
+            if let Some(cert) = env.storage().persistent().get::<u64, ProvenanceCert>(&i) {
                 if cert.timestamp >= start_time && cert.timestamp <= end_time {
                     if skipped >= offset {
                         results.push_back((i, cert));
@@ -336,7 +342,7 @@ impl ProvenanceContract {
             .expect("Not initialized");
         oracle.require_auth();
 
-        let mut certificate_ids: Vec<u64> = Vec::new();
+        let mut certificate_ids: Vec<u64> = Vec::new(&env);
         let cnt_key = symbol_short!("CERT_CNT");
 
         for i in 0..storage_refs.len() {
@@ -349,12 +355,7 @@ impl ProvenanceContract {
                 return Err(ProvenanceError::DuplicateCertificate);
             }
 
-            let id: u64 = env
-                .storage()
-                .persistent()
-                .get(&cnt_key)
-                .unwrap_or(0u64)
-                + 1;
+            let id: u64 = env.storage().persistent().get(&cnt_key).unwrap_or(0u64) + 1;
             env.storage().persistent().set(&cnt_key, &id);
 
             let cert = ProvenanceCert {
@@ -363,6 +364,9 @@ impl ProvenanceContract {
                 attestation_hash,
                 creator: to.clone(),
                 timestamp: env.ledger().timestamp(),
+                revoked: false,
+                revocation_reason: None,
+                revocation_timestamp: None,
             };
             env.storage().persistent().set(&id, &cert);
             env.storage().persistent().set(&mani_key, &id);
