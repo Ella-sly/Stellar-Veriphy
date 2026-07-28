@@ -442,6 +442,88 @@ mod tests {
         );
     }
 
+    // --- Issue #179 --- Certificate Statistics and Analytics
+
+    #[test]
+    fn test_get_certificate_stats() {
+        let env = Env::default();
+        env.mock_all_auths();
+        let cid = env.register_contract(None, ProvenanceContract);
+        let client = ProvenanceContractClient::new(&env, &cid);
+        let oracle = soroban_sdk::Address::generate(&env);
+        let owner = soroban_sdk::Address::generate(&env);
+        client.initialize(&oracle);
+
+        client.mint(&s(&env, "sid"), &s(&env, "mhash_stat1"), &s(&env, "ahash"), &owner);
+        client.mint(&s(&env, "sid"), &s(&env, "mhash_stat2"), &s(&env, "ahash"), &owner);
+
+        let stats = client.get_certificate_stats();
+        assert_eq!(stats.total_certificates, 2);
+        assert_eq!(stats.certificates_today, 2);
+    }
+
+    #[test]
+    fn test_get_creator_certificate_count() {
+        let env = Env::default();
+        env.mock_all_auths();
+        let cid = env.register_contract(None, ProvenanceContract);
+        let client = ProvenanceContractClient::new(&env, &cid);
+        let oracle = soroban_sdk::Address::generate(&env);
+        let owner1 = soroban_sdk::Address::generate(&env);
+        let owner2 = soroban_sdk::Address::generate(&env);
+        client.initialize(&oracle);
+
+        client.mint(&s(&env, "sid"), &s(&env, "mhash_stat3"), &s(&env, "ahash"), &owner1);
+        client.mint(&s(&env, "sid"), &s(&env, "mhash_stat4"), &s(&env, "ahash"), &owner1);
+        client.mint(&s(&env, "sid"), &s(&env, "mhash_stat5"), &s(&env, "ahash"), &owner2);
+
+        assert_eq!(client.get_creator_certificate_count(&owner1), 2);
+        assert_eq!(client.get_creator_certificate_count(&owner2), 1);
+    }
+
+    #[test]
+    fn test_get_creator_certificate_count_includes_batch() {
+        let env = Env::default();
+        env.mock_all_auths();
+        let cid = env.register_contract(None, ProvenanceContract);
+        let client = ProvenanceContractClient::new(&env, &cid);
+        let oracle = soroban_sdk::Address::generate(&env);
+        let owner = soroban_sdk::Address::generate(&env);
+        client.initialize(&oracle);
+
+        let storage_refs = soroban_sdk::vec![&env, s(&env, "sid1"), s(&env, "sid2")];
+        let manifest_hashes = soroban_sdk::vec![&env, s(&env, "mhash_stat6"), s(&env, "mhash_stat7")];
+        let attestation_hashes = soroban_sdk::vec![&env, s(&env, "ah1"), s(&env, "ah2")];
+        client.mint_batch(&storage_refs, &manifest_hashes, &attestation_hashes, &owner);
+
+        assert_eq!(client.get_creator_certificate_count(&owner), 2);
+        let stats = client.get_certificate_stats();
+        assert_eq!(stats.total_certificates, 2);
+        assert_eq!(stats.certificates_today, 2);
+    }
+
+    #[test]
+    fn test_get_minting_time_series() {
+        let env = Env::default();
+        env.mock_all_auths();
+        let cid = env.register_contract(None, ProvenanceContract);
+        let client = ProvenanceContractClient::new(&env, &cid);
+        let oracle = soroban_sdk::Address::generate(&env);
+        let owner = soroban_sdk::Address::generate(&env);
+        client.initialize(&oracle);
+
+        client.mint(&s(&env, "sid"), &s(&env, "mhash_stat8"), &s(&env, "ahash"), &owner);
+        client.mint(&s(&env, "sid"), &s(&env, "mhash_stat9"), &s(&env, "ahash"), &owner);
+
+        let today = env.ledger().timestamp() / 86400;
+        let series = client.get_minting_time_series(&today, &today);
+        assert_eq!(series.len(), 1);
+        assert_eq!(series.get_unchecked(0).count, 2);
+
+        let empty_series = client.get_minting_time_series(&(today + 1), &(today + 1));
+        assert_eq!(empty_series.get_unchecked(0).count, 0);
+    }
+
     // --- Issue #172 --- Certificate Transfer
 
     #[test]

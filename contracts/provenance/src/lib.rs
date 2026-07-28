@@ -4,6 +4,9 @@ use soroban_sdk::{
     symbol_short, Address, Env, String, Vec, Map,
 };
 
+// #179 — bucket width for the minting time series / velocity stats
+const DAY_SECONDS: u64 = 86400;
+
 // #16 — typed error enum
 #[contracterror]
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
@@ -78,6 +81,21 @@ pub struct MetadataVersion {
     pub display_name: String,
     pub description: String,
     pub updated_at: u64,
+}
+
+// #179 — Aggregate certificate statistics
+#[contracttype]
+pub struct CertificateStats {
+    pub total_certificates: u64,
+    pub certificates_today: u64,
+}
+
+// #179 — A single point in the daily minting time series
+#[contracttype]
+pub struct TimeSeriesPoint {
+    pub day: u64,
+    pub period_start: u64,
+    pub count: u64,
 }
 
 // #15 — typed contract event
@@ -317,6 +335,16 @@ impl ProvenanceContract {
 
         // #13 — store manifest → id mapping
         env.storage().persistent().set(&mani_key, &id);
+
+        // #179 — creator / daily minting counters
+        let creator_key = (symbol_short!("CCNT"), to.clone());
+        let creator_count: u64 = env.storage().persistent().get(&creator_key).unwrap_or(0u64);
+        env.storage().persistent().set(&creator_key, &(creator_count + 1));
+
+        let day = env.ledger().timestamp() / DAY_SECONDS;
+        let daily_key = (symbol_short!("DAILY"), day);
+        let daily_count: u64 = env.storage().persistent().get(&daily_key).unwrap_or(0u64);
+        env.storage().persistent().set(&daily_key, &(daily_count + 1));
 
         // #15 — emit typed event
         CertificateMinted {
@@ -856,6 +884,21 @@ impl ProvenanceContract {
             certificate_ids.push_back(id);
         }
 
+        // #179 — creator / daily minting counters
+        let minted_count = certificate_ids.len() as u64;
+        let creator_key = (symbol_short!("CCNT"), to.clone());
+        let creator_count: u64 = env.storage().persistent().get(&creator_key).unwrap_or(0u64);
+        env.storage()
+            .persistent()
+            .set(&creator_key, &(creator_count + minted_count));
+
+        let day = env.ledger().timestamp() / DAY_SECONDS;
+        let daily_key = (symbol_short!("DAILY"), day);
+        let daily_count: u64 = env.storage().persistent().get(&daily_key).unwrap_or(0u64);
+        env.storage()
+            .persistent()
+            .set(&daily_key, &(daily_count + minted_count));
+
         BatchMinted {
             owner: to,
             certificate_ids: certificate_ids.clone(),
@@ -864,6 +907,63 @@ impl ProvenanceContract {
         .emit(&env);
 
         Ok(certificate_ids)
+    }
+
+    /// #179 — Aggregate certificate statistics: total minted, and minted today
+    pub fn get_certificate_stats(env: Env) -> CertificateStats {
+        let total_certificates: u64 = env
+            .storage()
+            .persistent()
+            .get(&symbol_short!("CERT_CNT"))
+            .unwrap_or(0u64);
+
+        let day = env.ledger().timestamp() / DAY_SECONDS;
+        let certificates_today: u64 = env
+            .storage()
+            .persistent()
+            .get(&(symbol_short!("DAILY"), day))
+            .unwrap_or(0u64);
+
+        CertificateStats {
+            total_certificates,
+            certificates_today,
+        }
+    }
+
+    /// #179 — Number of certificates minted to a given creator
+    pub fn get_creator_certificate_count(env: Env, creator: Address) -> u64 {
+        env.storage()
+            .persistent()
+            .get(&(symbol_short!("CCNT"), creator))
+            .unwrap_or(0u64)
+    }
+
+    /// #179 — Daily minting counts (a minting-velocity time series) for the
+    /// inclusive day range [start_day, end_day], capped at 366 points.
+    pub fn get_minting_time_series(
+        env: Env,
+        start_day: u64,
+        end_day: u64,
+    ) -> Vec<TimeSeriesPoint> {
+        const MAX_POINTS: u64 = 366;
+        let day_count = end_day.saturating_sub(start_day).saturating_add(1).min(MAX_POINTS);
+
+        let mut points: Vec<TimeSeriesPoint> = Vec::new();
+        for offset in 0..day_count {
+            let day = start_day + offset;
+            let count: u64 = env
+                .storage()
+                .persistent()
+                .get(&(symbol_short!("DAILY"), day))
+                .unwrap_or(0u64);
+            points.push_back(TimeSeriesPoint {
+                day,
+                period_start: day * DAY_SECONDS,
+                count,
+            });
+        }
+
+        points
     }
 }
 
