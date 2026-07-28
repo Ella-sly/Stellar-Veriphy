@@ -44,7 +44,12 @@ mod tests {
         let to = soroban_sdk::Address::generate(&env);
         client.initialize(&oracle);
 
-        let id = client.mint(&s(&env, "storage_ref"), &s(&env, "manifest_hash"), &s(&env, "attestation_hash"), &to);
+        let id = client.mint(
+            &s(&env, "storage_ref"),
+            &s(&env, "manifest_hash"),
+            &s(&env, "attestation_hash"),
+            &to,
+        );
         assert_eq!(id, 1);
 
         let cert = client.get_certificate(&id).unwrap();
@@ -63,9 +68,18 @@ mod tests {
         let oracle = soroban_sdk::Address::generate(&env);
         let to = soroban_sdk::Address::generate(&env);
         client.initialize(&oracle);
-        assert_eq!(client.mint(&s(&env, "sid"), &s(&env, "mh1"), &s(&env, "ah"), &to), 1);
-        assert_eq!(client.mint(&s(&env, "sid"), &s(&env, "mh2"), &s(&env, "ah"), &to), 2);
-        assert_eq!(client.mint(&s(&env, "sid"), &s(&env, "mh3"), &s(&env, "ah"), &to), 3);
+        assert_eq!(
+            client.mint(&s(&env, "sid"), &s(&env, "mh1"), &s(&env, "ah"), &to),
+            1
+        );
+        assert_eq!(
+            client.mint(&s(&env, "sid"), &s(&env, "mh2"), &s(&env, "ah"), &to),
+            2
+        );
+        assert_eq!(
+            client.mint(&s(&env, "sid"), &s(&env, "mh3"), &s(&env, "ah"), &to),
+            3
+        );
     }
 
     #[test]
@@ -110,7 +124,12 @@ mod tests {
         let owner2 = soroban_sdk::Address::generate(&env);
         client.initialize(&oracle);
 
-        let id = client.mint(&s(&env, "sid"), &s(&env, "mhash1"), &s(&env, "ahash"), &owner1);
+        let id = client.mint(
+            &s(&env, "sid"),
+            &s(&env, "mhash1"),
+            &s(&env, "ahash"),
+            &owner1,
+        );
         assert!(client.transfer_certificate(&id, &owner2).is_ok());
 
         let cert = client.get_certificate(&id).unwrap();
@@ -128,7 +147,10 @@ mod tests {
         client.initialize(&oracle);
 
         assert_eq!(
-            client.try_transfer_certificate(&999u64, &new_owner).unwrap_err().unwrap(),
+            client
+                .try_transfer_certificate(&999u64, &new_owner)
+                .unwrap_err()
+                .unwrap(),
             ProvenanceError::CertificateNotFound
         );
     }
@@ -145,8 +167,15 @@ mod tests {
         let owner = soroban_sdk::Address::generate(&env);
         client.initialize(&oracle);
 
-        let id = client.mint(&s(&env, "sid"), &s(&env, "mhash2"), &s(&env, "ahash"), &owner);
-        assert!(client.update_metadata(&id, &s(&env, "Display Name"), &s(&env, "Description")).is_ok());
+        let id = client.mint(
+            &s(&env, "sid"),
+            &s(&env, "mhash2"),
+            &s(&env, "ahash"),
+            &owner,
+        );
+        assert!(client
+            .update_metadata(&id, &s(&env, "Display Name"), &s(&env, "Description"))
+            .is_ok());
 
         let metadata = client.get_metadata(&id).unwrap();
         assert_eq!(metadata.display_name, s(&env, "Display Name"));
@@ -164,10 +193,19 @@ mod tests {
         let owner = soroban_sdk::Address::generate(&env);
         client.initialize(&oracle);
 
-        let id = client.mint(&s(&env, "sid"), &s(&env, "mhash3"), &s(&env, "ahash"), &owner);
+        let id = client.mint(
+            &s(&env, "sid"),
+            &s(&env, "mhash3"),
+            &s(&env, "ahash"),
+            &owner,
+        );
 
-        client.update_metadata(&id, &s(&env, "v1"), &s(&env, "desc1")).ok();
-        client.update_metadata(&id, &s(&env, "v2"), &s(&env, "desc2")).ok();
+        client
+            .update_metadata(&id, &s(&env, "v1"), &s(&env, "desc1"))
+            .ok();
+        client
+            .update_metadata(&id, &s(&env, "v2"), &s(&env, "desc2"))
+            .ok();
 
         let metadata = client.get_metadata(&id).unwrap();
         assert_eq!(metadata.version, 2);
@@ -184,7 +222,10 @@ mod tests {
         client.initialize(&oracle);
 
         assert_eq!(
-            client.try_update_metadata(&999u64, &s(&env, "name"), &s(&env, "desc")).unwrap_err().unwrap(),
+            client
+                .try_update_metadata(&999u64, &s(&env, "name"), &s(&env, "desc"))
+                .unwrap_err()
+                .unwrap(),
             ProvenanceError::CertificateNotFound
         );
     }
@@ -201,8 +242,18 @@ mod tests {
         let owner = soroban_sdk::Address::generate(&env);
         client.initialize(&oracle);
 
-        client.mint(&s(&env, "sid"), &s(&env, "mhash4"), &s(&env, "ahash"), &owner);
-        client.mint(&s(&env, "sid"), &s(&env, "mhash5"), &s(&env, "ahash"), &owner);
+        client.mint(
+            &s(&env, "sid"),
+            &s(&env, "mhash4"),
+            &s(&env, "ahash"),
+            &owner,
+        );
+        client.mint(
+            &s(&env, "sid"),
+            &s(&env, "mhash5"),
+            &s(&env, "ahash"),
+            &owner,
+        );
 
         let current_time = env.ledger().timestamp();
         let results = client.get_certificates_by_time_range(&0, &(current_time + 1000), &0, &10);
@@ -220,9 +271,24 @@ mod tests {
         let owner = soroban_sdk::Address::generate(&env);
         client.initialize(&oracle);
 
-        client.mint(&s(&env, "sid"), &s(&env, "mhash6"), &s(&env, "ahash"), &owner);
-        client.mint(&s(&env, "sid"), &s(&env, "mhash7"), &s(&env, "ahash"), &owner);
-        client.mint(&s(&env, "sid"), &s(&env, "mhash8"), &s(&env, "ahash"), &owner);
+        client.mint(
+            &s(&env, "sid"),
+            &s(&env, "mhash6"),
+            &s(&env, "ahash"),
+            &owner,
+        );
+        client.mint(
+            &s(&env, "sid"),
+            &s(&env, "mhash7"),
+            &s(&env, "ahash"),
+            &owner,
+        );
+        client.mint(
+            &s(&env, "sid"),
+            &s(&env, "mhash8"),
+            &s(&env, "ahash"),
+            &owner,
+        );
 
         let current_time = env.ledger().timestamp();
 
@@ -245,11 +311,20 @@ mod tests {
         let owner = soroban_sdk::Address::generate(&env);
         client.initialize(&oracle);
 
-        let storage_refs = soroban_sdk::vec![&env, s(&env, "sid1"), s(&env, "sid2"), s(&env, "sid3")];
-        let manifest_hashes = soroban_sdk::vec![&env, s(&env, "mhash9"), s(&env, "mhash10"), s(&env, "mhash11")];
-        let attestation_hashes = soroban_sdk::vec![&env, s(&env, "ah1"), s(&env, "ah2"), s(&env, "ah3")];
+        let storage_refs =
+            soroban_sdk::vec![&env, s(&env, "sid1"), s(&env, "sid2"), s(&env, "sid3")];
+        let manifest_hashes = soroban_sdk::vec![
+            &env,
+            s(&env, "mhash9"),
+            s(&env, "mhash10"),
+            s(&env, "mhash11")
+        ];
+        let attestation_hashes =
+            soroban_sdk::vec![&env, s(&env, "ah1"), s(&env, "ah2"), s(&env, "ah3")];
 
-        let ids = client.mint_batch(&storage_refs, &manifest_hashes, &attestation_hashes, &owner).unwrap();
+        let ids = client
+            .mint_batch(&storage_refs, &manifest_hashes, &attestation_hashes, &owner)
+            .unwrap();
 
         assert_eq!(ids.len(), 3);
         assert_eq!(ids.get_unchecked(0), 1);
@@ -277,8 +352,12 @@ mod tests {
             attestation_hashes.push_back(s(&env, &format!("ah{}", i)));
         }
 
-        let result = client.try_mint_batch(&storage_refs, &manifest_hashes, &attestation_hashes, &owner);
-        assert_eq!(result.unwrap_err().unwrap(), ProvenanceError::BatchSizeExceeded);
+        let result =
+            client.try_mint_batch(&storage_refs, &manifest_hashes, &attestation_hashes, &owner);
+        assert_eq!(
+            result.unwrap_err().unwrap(),
+            ProvenanceError::BatchSizeExceeded
+        );
     }
 
     #[test]
@@ -295,7 +374,11 @@ mod tests {
         let manifest_hashes = soroban_sdk::vec![&env, s(&env, "duplicate"), s(&env, "duplicate")];
         let attestation_hashes = soroban_sdk::vec![&env, s(&env, "ah1"), s(&env, "ah2")];
 
-        let result = client.try_mint_batch(&storage_refs, &manifest_hashes, &attestation_hashes, &owner);
-        assert_eq!(result.unwrap_err().unwrap(), ProvenanceError::DuplicateCertificate);
+        let result =
+            client.try_mint_batch(&storage_refs, &manifest_hashes, &attestation_hashes, &owner);
+        assert_eq!(
+            result.unwrap_err().unwrap(),
+            ProvenanceError::DuplicateCertificate
+        );
     }
 }
