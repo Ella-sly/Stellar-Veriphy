@@ -2021,4 +2021,508 @@ mod tests {
         let result = client.validate_cert_expiration(&h).unwrap();
         assert!(!result);
     }
+
+    // -----------------------------------------------------------------------
+    // #191 – TEE hash near-expiry warning
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn test_is_tee_hash_near_expiry_false_when_far_from_expiry() {
+        let (env, _admin, client) = setup();
+        let h = hash32(&env);
+        client.add_tee_hash(&h);
+        // Ledger timestamp = 0; expiry = TEE_HASH_VALIDITY (180 days in secs)
+        // Warning window = 14 days — not near yet
+        assert!(!client.is_tee_hash_near_expiry(&h));
+    }
+
+    #[test]
+    fn test_is_tee_hash_near_expiry_true_within_warning_window() {
+        let (env, _admin, client) = setup();
+        let h = hash32(&env);
+        client.add_tee_hash(&h);
+        // Advance time to just inside the 14-day warning window
+        env.ledger().with_mut(|l| {
+            l.timestamp = TEE_HASH_VALIDITY - TEE_WARNING_PERIOD + 1;
+        });
+        assert!(client.is_tee_hash_near_expiry(&h));
+    }
+
+    #[test]
+    fn test_is_tee_hash_near_expiry_false_for_unregistered_hash() {
+        let (env, _admin, client) = setup();
+        let h = hash32_with_value(&env, 77);
+        assert!(!client.is_tee_hash_near_expiry(&h));
+    }
+
+    #[test]
+    fn test_is_tee_hash_near_expiry_false_after_rotation() {
+        let (env, _admin, client) = setup();
+        let old = hash32_with_value(&env, 50);
+        let new = hash32_with_value(&env, 51);
+        client.add_tee_hash(&old);
+        client.rotate_tee_hash(&old, &new);
+        // Rotated hash should not show near-expiry
+        assert!(!client.is_tee_hash_near_expiry(&old));
+    }
+
+    // -----------------------------------------------------------------------
+    // #187 – TEE hash versioning
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn test_add_tee_hash_version_and_retrieve() {
+        let (env, _admin, client) = setup();
+        let h = hash32_with_value(&env, 20);
+        client.add_tee_hash_version(&h, &1u32);
+        let info = client.get_tee_hash_version(&h).unwrap();
+        assert_eq!(info.version, 1u32);
+        assert!(!info.deprecated);
+    }
+
+    #[test]
+    fn test_get_tee_hashes_by_version() {
+        let (env, _admin, client) = setup();
+        let h1 = hash32_with_value(&env, 21);
+        let h2 = hash32_with_value(&env, 22);
+        client.add_tee_hash_version(&h1, &2u32);
+        client.add_tee_hash_version(&h2, &2u32);
+        let hashes = client.get_tee_hashes_by_version(&2u32);
+        assert_eq!(hashes.len(), 2);
+    }
+
+    #[test]
+    fn test_add_same_hash_to_version_is_idempotent() {
+        let (env, _admin, client) = setup();
+        let h = hash32_with_value(&env, 23);
+        client.add_tee_hash_version(&h, &3u32);
+        client.add_tee_hash_version(&h, &3u32); // second call
+        let hashes = client.get_tee_hashes_by_version(&3u32);
+        assert_eq!(hashes.len(), 1);
+    }
+
+    #[test]
+    fn test_get_tee_hash_version_not_found() {
+        let (env, _admin, client) = setup();
+        let h = hash32_with_value(&env, 24);
+        let err = client.try_get_tee_hash_version(&h).unwrap_err().unwrap();
+        assert_eq!(err, Error::TeeHashNotFound);
+    }
+
+    // -----------------------------------------------------------------------
+    // #187 – TEE hash deprecation
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn test_deprecate_tee_hash() {
+        let (env, _admin, client) = setup();
+        let h = hash32_with_value(&env, 30);
+        client.add_tee_hash_version(&h, &1u32);
+        client.deprecate_tee_hash(&h).unwrap();
+        let info = client.get_tee_hash_version(&h).unwrap();
+        assert!(info.deprecated);
+        assert!(info.deprecated_at.is_some());
+    }
+
+    #[test]
+    fn test_deprecate_unregistered_tee_hash_fails() {
+        let (env, _admin, client) = setup();
+        let h = hash32_with_value(&env, 31);
+        let err = client.try_deprecate_tee_hash(&h).unwrap_err().unwrap();
+        assert_eq!(err, Error::TeeHashNotFound);
+    }
+
+    // -----------------------------------------------------------------------
+    // #186 – Provider reputation system
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn test_provider_has_initial_reputation_score() {
+        let (env, _admin, client) = setup();
+        let p = BytesN::from_array(&env, &[40u8; 32]);
+        client.add_provider(&p);
+        let rep = client.get_provider_reputation(&p).unwrap();
+        assert_eq!(rep.score, REPUTATION_MAX_SCORE / 2);
+        assert_eq!(rep.total_verifications, 0);
+    }
+
+    #[test]
+    fn test_record_verification_result_success_increases_score() {
+        let (env, _admin, client) = setup();
+        let p = BytesN::from_array(&env, &[41u8; 32]);
+        client.add_provider(&p);
+        client.record_verification_result(&p, &true).unwrap();
+        let rep = client.get_provider_reputation(&p).unwrap();
+        assert_eq!(rep.successful_count, 1);
+        assert_eq!(rep.total_verifications, 1);
+        assert_eq!(rep.score, REPUTATION_MAX_SCORE);
+    }
+
+    #[test]
+    fn test_record_verification_result_failure_lowers_score() {
+        let (env, _admin, client) = setup();
+        let p = BytesN::from_array(&env, &[42u8; 32]);
+        client.add_provider(&p);
+        client.record_verification_result(&p, &true).unwrap();
+        client.record_verification_result(&p, &false).unwrap();
+        let rep = client.get_provider_reputation(&p).unwrap();
+        assert_eq!(rep.score, REPUTATION_MAX_SCORE / 2);
+    }
+
+    #[test]
+    fn test_get_providers_by_min_reputation() {
+        let (env, _admin, client) = setup();
+        let p1 = BytesN::from_array(&env, &[43u8; 32]);
+        let p2 = BytesN::from_array(&env, &[44u8; 32]);
+        client.add_provider(&p1);
+        client.add_provider(&p2);
+        client.record_verification_result(&p1, &true).unwrap();
+        // p2 has base score = REPUTATION_MAX_SCORE / 2
+        let high_threshold = REPUTATION_MAX_SCORE - 1;
+        let result = client.get_providers_by_min_reputation(&high_threshold);
+        // Only p1 (score 1000) qualifies
+        assert_eq!(result.len(), 1);
+    }
+
+    #[test]
+    fn test_apply_reputation_decay() {
+        let (env, _admin, client) = setup();
+        let p = BytesN::from_array(&env, &[45u8; 32]);
+        client.add_provider(&p);
+        let initial = client.get_provider_reputation(&p).unwrap().score;
+        // Advance time by 2 decay periods (60 days)
+        env.ledger().with_mut(|l| {
+            l.timestamp = 2 * REPUTATION_DECAY_PERIOD_SECS + 1;
+        });
+        client.apply_reputation_decay(&p).unwrap();
+        let after = client.get_provider_reputation(&p).unwrap().score;
+        assert!(after < initial);
+    }
+
+    #[test]
+    fn test_apply_reputation_decay_no_change_within_period() {
+        let (env, _admin, client) = setup();
+        let p = BytesN::from_array(&env, &[46u8; 32]);
+        client.add_provider(&p);
+        let initial = client.get_provider_reputation(&p).unwrap().score;
+        // Only 1 second has passed — less than one period
+        env.ledger().with_mut(|l| { l.timestamp = 1; });
+        client.apply_reputation_decay(&p).unwrap();
+        assert_eq!(client.get_provider_reputation(&p).unwrap().score, initial);
+    }
+
+    #[test]
+    fn test_get_provider_reputation_not_found() {
+        let (env, _admin, client) = setup();
+        let p = BytesN::from_array(&env, &[47u8; 32]);
+        let err = client.try_get_provider_reputation(&p).unwrap_err().unwrap();
+        assert_eq!(err, Error::ProviderNotFound);
+    }
+
+    // -----------------------------------------------------------------------
+    // #192 – Provider geographic distribution
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn test_set_and_get_provider_regions() {
+        let (env, _admin, client) = setup();
+        let p = BytesN::from_array(&env, &[50u8; 32]);
+        client.add_provider(&p);
+        let regions = soroban_sdk::vec![&env, Region::Europe, Region::NorthAmerica];
+        client.set_provider_regions(&p, &regions).unwrap();
+        let stored = client.get_provider_regions(&p);
+        assert_eq!(stored.len(), 2);
+    }
+
+    #[test]
+    fn test_add_provider_region_is_idempotent() {
+        let (env, _admin, client) = setup();
+        let p = BytesN::from_array(&env, &[51u8; 32]);
+        client.add_provider(&p);
+        client.add_provider_region(&p, &Region::Asia).unwrap();
+        client.add_provider_region(&p, &Region::Asia).unwrap(); // duplicate
+        assert_eq!(client.get_provider_regions(&p).len(), 1);
+    }
+
+    #[test]
+    fn test_get_providers_by_region() {
+        let (env, _admin, client) = setup();
+        let p1 = BytesN::from_array(&env, &[52u8; 32]);
+        let p2 = BytesN::from_array(&env, &[53u8; 32]);
+        client.add_provider(&p1);
+        client.add_provider(&p2);
+        let r1 = soroban_sdk::vec![&env, Region::Europe];
+        let r2 = soroban_sdk::vec![&env, Region::Asia];
+        client.set_provider_regions(&p1, &r1).unwrap();
+        client.set_provider_regions(&p2, &r2).unwrap();
+        let europe_providers = client.get_providers_by_region(&Region::Europe);
+        assert_eq!(europe_providers.len(), 1);
+        assert_eq!(europe_providers.get(0).unwrap(), p1);
+    }
+
+    #[test]
+    fn test_set_provider_regions_for_unregistered_fails() {
+        let (env, _admin, client) = setup();
+        let p = BytesN::from_array(&env, &[54u8; 32]);
+        let regions = soroban_sdk::vec![&env, Region::Africa];
+        let err = client.try_set_provider_regions(&p, &regions).unwrap_err().unwrap();
+        assert_eq!(err, Error::ProviderNotFound);
+    }
+
+    // -----------------------------------------------------------------------
+    // #193 – Provider capacity management
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn test_set_and_get_provider_capacity() {
+        let (env, _admin, client) = setup();
+        let p = BytesN::from_array(&env, &[60u8; 32]);
+        client.add_provider(&p);
+        client.set_provider_capacity(&p, &10u32).unwrap();
+        let cap = client.get_provider_capacity(&p).unwrap();
+        assert_eq!(cap.max_concurrent, 10);
+        assert_eq!(cap.active_requests, 0);
+    }
+
+    #[test]
+    fn test_set_provider_capacity_zero_fails() {
+        let (env, _admin, client) = setup();
+        let p = BytesN::from_array(&env, &[61u8; 32]);
+        client.add_provider(&p);
+        let err = client.try_set_provider_capacity(&p, &0u32).unwrap_err().unwrap();
+        assert_eq!(err, Error::InvalidCapacity);
+    }
+
+    #[test]
+    fn test_has_capacity_true_when_not_at_limit() {
+        let (env, _admin, client) = setup();
+        let p = BytesN::from_array(&env, &[62u8; 32]);
+        client.add_provider(&p);
+        client.set_provider_capacity(&p, &5u32).unwrap();
+        assert!(client.has_capacity(&p));
+    }
+
+    #[test]
+    fn test_increment_and_decrement_active_requests() {
+        let (env, _admin, client) = setup();
+        let p = BytesN::from_array(&env, &[63u8; 32]);
+        client.add_provider(&p);
+        client.set_provider_capacity(&p, &3u32).unwrap();
+        client.increment_active_requests(&p).unwrap();
+        client.increment_active_requests(&p).unwrap();
+        assert_eq!(client.get_provider_capacity(&p).unwrap().active_requests, 2);
+        client.decrement_active_requests(&p).unwrap();
+        assert_eq!(client.get_provider_capacity(&p).unwrap().active_requests, 1);
+    }
+
+    #[test]
+    fn test_increment_beyond_capacity_fails() {
+        let (env, _admin, client) = setup();
+        let p = BytesN::from_array(&env, &[64u8; 32]);
+        client.add_provider(&p);
+        client.set_provider_capacity(&p, &1u32).unwrap();
+        client.increment_active_requests(&p).unwrap();
+        let err = client.try_increment_active_requests(&p).unwrap_err().unwrap();
+        assert_eq!(err, Error::CapacityExceeded);
+    }
+
+    #[test]
+    fn test_has_capacity_true_when_no_capacity_set() {
+        let (env, _admin, client) = setup();
+        let p = BytesN::from_array(&env, &[65u8; 32]);
+        client.add_provider(&p);
+        // No capacity configured → unlimited → has_capacity returns true
+        assert!(client.has_capacity(&p));
+    }
+
+    // -----------------------------------------------------------------------
+    // #194 – Provider specializations
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn test_add_and_get_provider_specialization() {
+        let (env, _admin, client) = setup();
+        let p = BytesN::from_array(&env, &[70u8; 32]);
+        client.add_provider(&p);
+        client.add_provider_specialization(&p, &Specialization::ImageVerification).unwrap();
+        let specs = client.get_provider_specializations(&p);
+        assert_eq!(specs.len(), 1);
+        assert_eq!(specs.get(0).unwrap(), Specialization::ImageVerification);
+    }
+
+    #[test]
+    fn test_add_specialization_idempotent() {
+        let (env, _admin, client) = setup();
+        let p = BytesN::from_array(&env, &[71u8; 32]);
+        client.add_provider(&p);
+        client.add_provider_specialization(&p, &Specialization::VideoVerification).unwrap();
+        client.add_provider_specialization(&p, &Specialization::VideoVerification).unwrap();
+        assert_eq!(client.get_provider_specializations(&p).len(), 1);
+    }
+
+    #[test]
+    fn test_remove_provider_specialization() {
+        let (env, _admin, client) = setup();
+        let p = BytesN::from_array(&env, &[72u8; 32]);
+        client.add_provider(&p);
+        client.add_provider_specialization(&p, &Specialization::AiDetection).unwrap();
+        client.add_provider_specialization(&p, &Specialization::DocumentVerification).unwrap();
+        client.remove_provider_specialization(&p, &Specialization::AiDetection).unwrap();
+        let specs = client.get_provider_specializations(&p);
+        assert_eq!(specs.len(), 1);
+        assert_eq!(specs.get(0).unwrap(), Specialization::DocumentVerification);
+    }
+
+    #[test]
+    fn test_get_providers_by_specialization() {
+        let (env, _admin, client) = setup();
+        let p1 = BytesN::from_array(&env, &[73u8; 32]);
+        let p2 = BytesN::from_array(&env, &[74u8; 32]);
+        client.add_provider(&p1);
+        client.add_provider(&p2);
+        client.add_provider_specialization(&p1, &Specialization::AudioVerification).unwrap();
+        let providers = client.get_providers_by_specialization(&Specialization::AudioVerification);
+        assert_eq!(providers.len(), 1);
+        assert_eq!(providers.get(0).unwrap(), p1);
+    }
+
+    #[test]
+    fn test_add_specialization_for_unregistered_provider_fails() {
+        let (env, _admin, client) = setup();
+        let p = BytesN::from_array(&env, &[75u8; 32]);
+        let err = client
+            .try_add_provider_specialization(&p, &Specialization::ImageVerification)
+            .unwrap_err().unwrap();
+        assert_eq!(err, Error::ProviderNotFound);
+    }
+
+    // -----------------------------------------------------------------------
+    // #195 – Provider blacklist / whitelist
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn test_blacklist_and_is_blacklisted() {
+        let (env, _admin, client) = setup();
+        let p = BytesN::from_array(&env, &[80u8; 32]);
+        client.add_provider(&p);
+        client.blacklist_provider(&p, &1u32).unwrap();
+        assert!(client.is_blacklisted(&p));
+    }
+
+    #[test]
+    fn test_get_blacklist_entry() {
+        let (env, _admin, client) = setup();
+        let p = BytesN::from_array(&env, &[81u8; 32]);
+        client.add_provider(&p);
+        client.blacklist_provider(&p, &42u32).unwrap();
+        let entry = client.get_blacklist_entry(&p).unwrap();
+        assert_eq!(entry.reason_code, 42u32);
+    }
+
+    #[test]
+    fn test_whitelist_provider_removes_from_blacklist() {
+        let (env, _admin, client) = setup();
+        let p = BytesN::from_array(&env, &[82u8; 32]);
+        client.add_provider(&p);
+        client.blacklist_provider(&p, &1u32).unwrap();
+        assert!(client.is_blacklisted(&p));
+        client.whitelist_provider(&p).unwrap();
+        assert!(!client.is_blacklisted(&p));
+    }
+
+    #[test]
+    fn test_whitelist_non_blacklisted_provider_fails() {
+        let (env, _admin, client) = setup();
+        let p = BytesN::from_array(&env, &[83u8; 32]);
+        client.add_provider(&p);
+        let err = client.try_whitelist_provider(&p).unwrap_err().unwrap();
+        assert_eq!(err, Error::NotBlacklisted);
+    }
+
+    #[test]
+    fn test_is_provider_authorized_registered_and_clean() {
+        let (env, _admin, client) = setup();
+        let p = BytesN::from_array(&env, &[84u8; 32]);
+        client.add_provider(&p);
+        assert!(client.is_provider_authorized(&p).unwrap());
+    }
+
+    #[test]
+    fn test_is_provider_authorized_blacklisted_returns_error() {
+        let (env, _admin, client) = setup();
+        let p = BytesN::from_array(&env, &[85u8; 32]);
+        client.add_provider(&p);
+        client.blacklist_provider(&p, &1u32).unwrap();
+        let err = client.try_is_provider_authorized(&p).unwrap_err().unwrap();
+        assert_eq!(err, Error::ProviderBlacklisted);
+    }
+
+    #[test]
+    fn test_is_provider_authorized_unregistered_returns_false() {
+        let (env, _admin, client) = setup();
+        let p = BytesN::from_array(&env, &[86u8; 32]);
+        assert!(!client.is_provider_authorized(&p).unwrap());
+    }
+
+    #[test]
+    fn test_get_blacklist_entry_not_blacklisted_fails() {
+        let (env, _admin, client) = setup();
+        let p = BytesN::from_array(&env, &[87u8; 32]);
+        client.add_provider(&p);
+        let err = client.try_get_blacklist_entry(&p).unwrap_err().unwrap();
+        assert_eq!(err, Error::NotBlacklisted);
+    }
+
+    // -----------------------------------------------------------------------
+    // #189 – reject application path
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn test_reject_application() {
+        let (env, _admin, client) = setup();
+        let applicant    = Address::generate(&env);
+        let provider_key = BytesN::from_array(&env, &[90u8; 32]);
+        let id = client.submit_provider_application(
+            &applicant,
+            &provider_key,
+            &String::from_str(&env, "test"),
+        );
+        client.review_application(&id, &false);
+        let app = client.get_application(&id).unwrap();
+        assert_eq!(app.status, ApplicationStatus::Rejected);
+        // Rejected provider must NOT be registered
+        assert!(!client.is_provider(&provider_key));
+    }
+
+    // -----------------------------------------------------------------------
+    // #163 – multisig: execute before timelock elapses
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn test_execute_proposal_before_timelock_fails() {
+        let (env, _admin, client) = setup();
+        let h = BytesN::from_array(&env, &[1u8; 32]);
+        let operation = ProposalOperation::AddTeeHash(h);
+        // Timelock = 100 ledgers; current sequence starts at 0
+        let pid = client.try_propose_operation(&operation, &100u32).unwrap().unwrap();
+        client.try_approve_proposal(&pid).unwrap().unwrap();
+        // Do NOT advance the ledger — should fail
+        let err = client.try_execute_proposal(&pid).unwrap_err().unwrap();
+        assert_eq!(err, Error::InvalidThreshold);
+    }
+
+    // -----------------------------------------------------------------------
+    // #24 – verify_and_mint hash mismatch
+    // -----------------------------------------------------------------------
+
+    #[test]
+    fn test_verify_and_mint_hash_mismatch_returns_failure() {
+        let (env, _admin, client) = setup();
+        let content  = Bytes::from_slice(&env, b"real content");
+        let bad_hash = BytesN::from_array(&env, &[0xFFu8; 32]);
+        let owner    = Address::generate(&env);
+        let result   = client.verify_and_mint(&content, &bad_hash, &owner);
+        assert!(!result.success);
+        assert_eq!(result.certificate_id, 0);
+    }
 }
