@@ -571,7 +571,7 @@ impl RegistryContract {
 
     /// Query all registered providers whose score meets or exceeds a
     /// threshold.
-    pub fn get_providers_by_reputation_threshold(env: Env, min_score: u32) -> Vec<BytesN<32>> {
+    pub fn get_providers_by_min_reputation(env: Env, min_score: u32) -> Vec<BytesN<32>> {
         let providers: Vec<BytesN<32>> = env
             .storage()
             .persistent()
