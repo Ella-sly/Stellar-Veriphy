@@ -255,4 +255,47 @@ describe("validateManifest - XSS prevention", () => {
     expect(result.valid).toBe(true);
     expect(result.errors).toHaveLength(0);
   });
+
+  it("rejects unknown top-level fields", () => {
+    const result = validateManifest({
+      schemaVersion: "2.0.0",
+      contentHash: VALID_HASH,
+      creator: VALID_ADDRESS,
+      timestamp: "2024-01-15T10:30:00Z",
+      unknownField: "unexpected",
+    });
+    expect(result.valid).toBe(false);
+    expect(result.errors).toContain("Unsupported top-level field: unknownField.");
+  });
+
+  it("accepts valid media metadata in schema v2", () => {
+    const result = validateManifest({
+      schemaVersion: "2.0.0",
+      contentHash: VALID_HASH,
+      creator: VALID_ADDRESS,
+      timestamp: "2024-01-15T10:30:00Z",
+      media: {
+        fileName: "proof.png",
+        fileType: "image/png",
+        fileSizeBytes: 2048,
+      },
+    });
+    expect(result.valid).toBe(true);
+  });
+
+  it("rejects disallowed media MIME type", () => {
+    const result = validateManifest({
+      schemaVersion: "2.0.0",
+      contentHash: VALID_HASH,
+      creator: VALID_ADDRESS,
+      timestamp: "2024-01-15T10:30:00Z",
+      media: {
+        fileName: "payload.exe",
+        fileType: "application/octet-stream",
+        fileSizeBytes: 2048,
+      },
+    });
+    expect(result.valid).toBe(false);
+    expect(result.errors).toContain("media.fileType is not allowed.");
+  });
 });

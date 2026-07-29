@@ -22,6 +22,8 @@ import type { ContentManifest } from "../../packages/shared/types";
 
 /** Parameters accepted by generateManifest. */
 export interface GenerateManifestParams {
+  /** Manifest schema version (semver), defaults to 2.0.0 */
+  schemaVersion?: string;
   /** SHA-256 hex digest of the media file. */
   contentHash: string;
   /** Stellar public key of the content creator. */
@@ -36,6 +38,12 @@ export interface GenerateManifestParams {
     device?: string;
     location?: string;
     aiModel?: string;
+  };
+  /** Optional media metadata used by schema v2+ */
+  media?: {
+    fileName?: string;
+    fileType?: string;
+    fileSizeBytes?: number;
   };
 }
 
@@ -55,6 +63,7 @@ export type ManifestFormat = "json" | "xml";
  */
 export function generateManifest(params: GenerateManifestParams): ContentManifest {
   const manifest: ContentManifest = {
+    schemaVersion: params.schemaVersion ?? "2.0.0",
     contentHash: params.contentHash,
     creator: params.creator,
     timestamp: params.timestamp ?? new Date().toISOString(),
@@ -73,6 +82,23 @@ export function generateManifest(params: GenerateManifestParams): ContentManifes
       if (device !== undefined && device !== "") manifest.metadata.device = device;
       if (location !== undefined && location !== "") manifest.metadata.location = location;
       if (aiModel !== undefined && aiModel !== "") manifest.metadata.aiModel = aiModel;
+    }
+  }
+
+  if (params.media) {
+    const { fileName, fileType, fileSizeBytes } = params.media;
+    const hasAnyMediaField =
+      (fileName !== undefined && fileName !== "") ||
+      (fileType !== undefined && fileType !== "") ||
+      (fileSizeBytes !== undefined && Number.isFinite(fileSizeBytes));
+
+    if (hasAnyMediaField) {
+      manifest.media = {};
+      if (fileName !== undefined && fileName !== "") manifest.media.fileName = fileName;
+      if (fileType !== undefined && fileType !== "") manifest.media.fileType = fileType;
+      if (fileSizeBytes !== undefined && Number.isFinite(fileSizeBytes)) {
+        manifest.media.fileSizeBytes = fileSizeBytes;
+      }
     }
   }
 

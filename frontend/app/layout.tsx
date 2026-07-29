@@ -11,21 +11,33 @@ import { TutorialOverlay } from "@/components/ui/TutorialOverlay";
 import { ScrollToTop } from "@/components/ui/ScrollToTop";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
+import { SkipToContentLink } from "@/utils/accessibility";
+import "./globals.css";
 
 export const metadata: Metadata = {
   title: "StellarVeriphy",
   description: "Decentralized content verification on the Stellar blockchain",
+  viewport: "width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover",
+  robots: "index, follow",
+  themeColor: "#000000",
+  other: {
+    "darkreader-lock": "true",
+  },
 };
 
 const themeInitScript = `(function(){try{var t=localStorage.getItem('theme')||(window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');document.documentElement.classList.toggle('dark',t==='dark')}catch(e){}})();`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className="ios-full-height">
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+        <meta name="color-scheme" content="light dark" />
+        <meta name="supported-color-schemes" content="light dark" />
+        <meta name="format-detection" content="telephone=no" />
       </head>
-      <body className={`${GeistSans.variable} ${GeistMono.variable} font-sans`}>
+      <body className={`${GeistSans.variable} ${GeistMono.variable} font-sans safe-inset`}>
+        <SkipToContentLink />
         <ThemeProvider>
           <WalletProvider>
             <NotificationProvider>

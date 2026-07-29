@@ -302,18 +302,17 @@ export default function ReportIssuePage() {
                         ? "border-red-500 focus:ring-red-500"
                         : "border-gray-300 dark:border-gray-700"
                     }`}
-                  {...register("stepsToReproduce", {
-                    required:
-                      issueType === "bug"
-                        ? "Steps to reproduce are required for bug reports."
-                        : false,
-                    ...(issueType === "bug" && {
-                      minLength: {
-                        value: 10,
-                        message: "Please provide at least 10 characters.",
-                      },
-                    }),
-                  })}
+                  {...register("stepsToReproduce", 
+                    issueType === "bug" 
+                      ? {
+                          required: "Steps to reproduce are required for bug reports.",
+                          minLength: {
+                            value: 10,
+                            message: "Please provide at least 10 characters.",
+                          },
+                        }
+                      : {}
+                  )}
                 />
                 {errors.stepsToReproduce && (
                   <p id="steps-error" role="alert" className="mt-1 text-sm text-red-600 dark:text-red-400">

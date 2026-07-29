@@ -228,8 +228,8 @@ export default function ManifestPage() {
             </div>
           </div>
 
-          <div>
-            <ManifestPreview manifest={manifest} />
+          </div>
+
           </div>
         </div>
       </div>
