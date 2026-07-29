@@ -4,6 +4,11 @@ import { ToastProvider } from "@/components/ToastProvider";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { WizardProvider } from "@/app/context/WizardContext";
 import { NotificationProvider } from "@/components/notifications";
+import { HelpProvider } from "@/context/HelpContext";
+import { KeyboardShortcutsProvider } from "@/components/KeyboardShortcutsProvider";
+import { HelpSearchOverlay } from "@/components/ui/HelpSearchOverlay";
+import { TutorialOverlay } from "@/components/ui/TutorialOverlay";
+import { ScrollToTop } from "@/components/ui/ScrollToTop";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import { SkipToContentLink } from "@/utils/accessibility";
@@ -37,7 +42,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <WalletProvider>
             <NotificationProvider>
               <WizardProvider>
-                <ToastProvider>{children}</ToastProvider>
+                <HelpProvider>
+                  <KeyboardShortcutsProvider>
+                    <ToastProvider>
+                      {children}
+                      <ScrollToTop />
+                      <HelpSearchOverlay />
+                      <TutorialOverlay />
+                    </ToastProvider>
+                  </KeyboardShortcutsProvider>
+                </HelpProvider>
               </WizardProvider>
             </NotificationProvider>
           </WalletProvider>

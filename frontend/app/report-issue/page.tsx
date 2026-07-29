@@ -11,7 +11,10 @@
  */
 
 import { useForm } from "react-hook-form";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAutoSave } from "@/hooks/useAutoSave";
+import { AutoSaveIndicator } from "@/components/ui/AutoSaveIndicator";
+import { HelpIcon } from "@/components/ui/HelpIcon";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -75,6 +78,7 @@ export default function ReportIssuePage() {
     register,
     handleSubmit,
     watch,
+    reset,
     formState: { errors, isSubmitting },
   } = useForm<ReportIssueFormValues>({
     defaultValues: {
@@ -85,9 +89,30 @@ export default function ReportIssuePage() {
     },
   });
 
+  const formValues = watch();
+
+  const { state: autoSaveState, clearSaved } = useAutoSave({
+    key: "report-issue-form",
+    data: formValues,
+    interval: 15000,
+  });
+
+  useEffect(() => {
+    const saved = localStorage.getItem("report-issue-form");
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved) as ReportIssueFormValues;
+        reset(parsed);
+      } catch {
+        /* noop */
+      }
+    }
+  }, [reset]);
+
   const issueType = watch("issueType");
 
   const onSubmit = (values: ReportIssueFormValues) => {
+    clearSaved();
     const url = buildGitHubUrl(values);
     window.open(url, "_blank", "noopener,noreferrer");
     setSubmitted(true);
@@ -123,6 +148,17 @@ export default function ReportIssuePage() {
             >
               Submit another report
             </button>
+          </div>
+        )}
+
+        {/* Auto-save indicator */}
+        {!submitted && (
+          <div className="mb-4 flex justify-end">
+            <AutoSaveIndicator
+              lastSaved={autoSaveState.lastSaved}
+              isSaving={autoSaveState.isSaving}
+              hasUnsaved={autoSaveState.hasUnsaved}
+            />
           </div>
         )}
 
@@ -173,6 +209,7 @@ export default function ReportIssuePage() {
                 className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1"
               >
                 Title <span aria-hidden="true" className="text-red-500">*</span>
+                <HelpIcon content="Provide a concise summary that helps identify the issue at a glance." className="ml-1.5" />
               </label>
               <input
                 id="title"
@@ -212,6 +249,7 @@ export default function ReportIssuePage() {
                 className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1"
               >
                 Description <span aria-hidden="true" className="text-red-500">*</span>
+                <HelpIcon content="Include steps to reproduce, expected vs actual behavior, and any relevant screenshots or error messages." className="ml-1.5" />
               </label>
               <textarea
                 id="description"

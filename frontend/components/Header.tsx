@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useWallet } from "@/context/WalletContext";
 import { NotificationBell } from "@/components/notifications";
 import { walletService } from "@/services/wallet";
+import { useHelp } from "@/context/HelpContext";
+import { Tooltip } from "@/components/ui/Tooltip";
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
