@@ -1,4 +1,5 @@
 export interface ContentManifest {
+  schemaVersion?: string;    // semantic version string (e.g. 1.0.0, 2.0.0)
   contentHash: string;       // sha256 of the media file
   creator: string;           // Stellar public key (G...)
   timestamp: string;         // ISO 8601
@@ -6,6 +7,11 @@ export interface ContentManifest {
     device?: string;
     location?: string;
     aiModel?: string;
+  };
+  media?: {
+    fileName?: string;
+    fileType?: string;
+    fileSizeBytes?: number;
   };
 }
 
