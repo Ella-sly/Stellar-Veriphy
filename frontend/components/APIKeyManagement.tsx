@@ -11,6 +11,7 @@
 import { useState, useEffect } from "react";
 import { cn } from "@/utils/cn";
 import { copyToClipboard } from "@/utils/validation";
+import { auditLogger } from "@/lib/security/auditLogger";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -160,6 +161,13 @@ export function APIKeyManagement({ userAddress, className }: ApiKeyManagementPro
     const updated = [newKey, ...keys];
     persistKeys(updated);
 
+    void auditLogger.logEvent({
+      actor: userAddress,
+      category: "admin",
+      action: "API key created",
+      details: `Key "${newKey.name}" (${newKey.id}) with scopes: ${newKey.scopes.join(", ")}`,
+    });
+
     // Reveal the newly generated key
     setRevealedKey(newKey.key);
 
@@ -176,16 +184,34 @@ export function APIKeyManagement({ userAddress, className }: ApiKeyManagementPro
     if (!confirm("Are you sure you want to revoke this API key? This cannot be undone.")) {
       return;
     }
+    const target = keys.find((k) => k.id === id);
     const updated = keys.map((k) =>
       k.id === id ? { ...k, status: "revoked" as const } : k
     );
     persistKeys(updated);
+
+    void auditLogger.logEvent({
+      actor: userAddress,
+      category: "admin",
+      action: "API key revoked",
+      severity: "warning",
+      details: target ? `Key "${target.name}" (${target.id})` : `Key ${id}`,
+    });
   };
 
   const handleDeleteKey = (id: string) => {
     if (!confirm("Permanently delete this API key?")) return;
+    const target = keys.find((k) => k.id === id);
     const updated = keys.filter((k) => k.id !== id);
     persistKeys(updated);
+
+    void auditLogger.logEvent({
+      actor: userAddress,
+      category: "admin",
+      action: "API key deleted",
+      severity: "warning",
+      details: target ? `Key "${target.name}" (${target.id})` : `Key ${id}`,
+    });
   };
 
   const handleCopyKey = async (key: string) => {

@@ -6,6 +6,8 @@
  * - Issue #217: Content Hash Calculator
  * - Issue #218: Certificate Embedding Widget
  * - Issue #219: API Key Management
+ * - Issue #265: Signature Verification UI
+ * - Issue #266: Audit Logging UI
  */
 
 import Link from "next/link";
@@ -59,6 +61,26 @@ const tools: ToolCard[] = [
     badge: "#219",
     badgeColor:
       "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",
+  },
+  {
+    title: "Signature Verifier",
+    description:
+      "Validate attestation and payload signatures independently using a browser-based verifier that supports common public-key formats.",
+    href: "/tools/signature-verifier",
+    icon: "🛡️",
+    badge: "#265",
+    badgeColor:
+      "bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300",
+  },
+  {
+    title: "Audit Logs",
+    description:
+      "Review tamper-evident security events, retention policy, and exportable compliance summaries for operational oversight.",
+    href: "/tools/audit-logs",
+    icon: "🧾",
+    badge: "#266",
+    badgeColor:
+      "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300",
   },
 ];
 

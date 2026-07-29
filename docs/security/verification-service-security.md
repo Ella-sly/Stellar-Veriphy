@@ -60,6 +60,36 @@ Validated fields:
 
 Malformed JSON or failed validation returns HTTP `400`.
 
+## Content Security Policy
+
+The frontend now emits a strict Content Security Policy via Next.js headers and a dedicated reporting endpoint at `/api/csp-report`.
+
+- `script-src` allows only first-party and trusted CDN assets.
+- `object-src 'none'` blocks plugin-based content.
+- `report-uri /api/csp-report` captures violations for inspection.
+
+This complements the request validation flow and reduces the chance of XSS execution in the browser.
+
+### CSP Evaluator review
+
+The policy was checked against [Google's CSP Evaluator](https://csp-evaluator.withgoogle.com/):
+
+- No `unsafe-inline` or `unsafe-eval` in `script-src` — inline script injection is blocked.
+- `object-src 'none'` and `base-uri 'self'` prevent common bypasses (plugin injection, `<base>` tag hijacking).
+- `frame-ancestors 'none'` blocks clickjacking via iframes.
+- `style-src` retains `unsafe-inline` to support Tailwind's runtime style injection. This is an accepted, scoped risk — style injection alone cannot execute script — and is mitigated by every other directive blocking script execution.
+
+## Audit Logging
+
+Security-relevant events are recorded by `frontend/lib/security/auditLogger.ts` and viewable at `/tools/audit-logs`.
+
+- **Admin actions** — API key creation, revocation, and deletion (`frontend/components/APIKeyManagement.tsx`).
+- **Authentication events** — wallet connect/disconnect (`frontend/context/WalletContext.tsx`).
+- **Contract interactions** — transaction signing success/failure (`frontend/context/WalletContext.tsx`).
+- **System events** — verification requests blocked or rejected by rate limiting and input validation (`frontend/app/api/verification/route.ts`).
+
+Each entry is chained via a SHA-256 hash of the previous entry, so any tampering with stored history breaks the chain and is surfaced in the audit log viewer. Entries are retained for 90 days and can be exported as a JSON compliance report from the audit log viewer.
+
 ## Security Outcome
 
 This implementation prevents:

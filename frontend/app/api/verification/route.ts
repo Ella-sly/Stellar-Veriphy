@@ -4,6 +4,7 @@ import {
   evaluateRateLimit,
 } from "@/lib/security/rateLimiter";
 import { validateVerificationRequest } from "@/lib/security/inputValidation";
+import { auditLogger } from "@/lib/security/auditLogger";
 
 function resolveAddressForRateLimit(
   bodyAddress: string | undefined,
@@ -32,6 +33,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const fallbackHeaders = buildRateLimitHeaders(fallbackLimit);
 
     if (!fallbackLimit.allowed) {
+      await auditLogger.logEvent({
+        actor: fallbackIdentity,
+        category: "system",
+        action: "verification request blocked",
+        severity: "warning",
+        details: "Malformed JSON payload triggered rate-limit enforcement",
+      });
       return NextResponse.json(
         {
           success: false,
@@ -61,6 +69,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const rateLimitHeaders = buildRateLimitHeaders(limit);
 
   if (!limit.allowed) {
+    await auditLogger.logEvent({
+      actor: rateLimitKey,
+      category: "system",
+      action: "verification request blocked",
+      severity: "warning",
+      details: "Rate limit exceeded for verification request",
+    });
     return NextResponse.json(
       {
         success: false,
@@ -73,6 +88,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   const validation = validateVerificationRequest(payload);
   if (!validation.valid || !validation.sanitized) {
+    await auditLogger.logEvent({
+      actor: rateLimitKey,
+      category: "system",
+      action: "verification request rejected",
+      severity: "warning",
+      details: validation.errors.join(", "),
+    });
     return NextResponse.json(
       {
         success: false,
