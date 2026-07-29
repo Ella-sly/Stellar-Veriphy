@@ -1,0 +1,13 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Run frontend build to catch build errors before pushing
+echo "🔨 Building frontend to catch errors before push..."
+pnpm build:frontend
+
+if [ $? -ne 0 ]; then
+  echo "❌ Frontend build failed. Fix errors before pushing."
+  exit 1
+fi
+
+echo "✅ Frontend build successful. Proceeding with push..."

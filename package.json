@@ -6,11 +6,26 @@
     "dev:frontend": "pnpm --filter frontend dev",
     "build:frontend": "pnpm --filter frontend build",
     "build:contracts": "cd contracts/oracle && stellar contract build && cd ../provenance && stellar contract build && cd ../registry && stellar contract build",
+    "check:frontend": "pnpm --filter frontend lint",
     "prepare": "husky"
   },
-  "keywords": ["stellar", "soroban", "blockchain", "verification", "provenance"],
+  "keywords": [
+    "stellar",
+    "soroban",
+    "blockchain",
+    "verification",
+    "provenance"
+  ],
   "license": "MIT",
   "packageManager": "pnpm@10.18.2",
+  "lint-staged": {
+    "frontend/**/*.{ts,tsx}": [
+      "eslint --fix"
+    ],
+    "contracts/**/*.rs": [
+      "rustfmt --edition 2021"
+    ]
+  },
   "devDependencies": {
     "husky": "^9.1.7",
     "lint-staged": "^16.2.7"

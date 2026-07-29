@@ -1,0 +1,139 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+env:
+  RUST_VERSION: stable
+  NODE_VERSION: 20
+  PNPM_VERSION: 10.18.2
+
+jobs:
+  lint-and-build-frontend:
+    name: Lint and Build Frontend
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Check frontend (lint)
+        run: pnpm check:frontend
+
+      - name: Build frontend
+        run: pnpm build:frontend
+
+      - name: Run frontend tests
+        run: pnpm --filter frontend test
+
+  build-contracts:
+    name: Build Soroban Contracts
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        contract: [oracle, provenance, registry]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+          target: wasm32-unknown-unknown
+          components: rustfmt, clippy
+
+      - name: Cache Rust dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            contracts/${{ matrix.contract }}/target/
+          key: ${{ runner.os }}-cargo-${{ matrix.contract }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-${{ matrix.contract }}-
+
+      - name: Check Rust formatting
+        working-directory: contracts/${{ matrix.contract }}
+        run: cargo fmt -- --check
+
+      - name: Run Clippy
+        working-directory: contracts/${{ matrix.contract }}
+        run: cargo clippy --target wasm32-unknown-unknown --release -- -D warnings
+
+      - name: Build contract
+        working-directory: contracts/${{ matrix.contract }}
+        run: cargo build --target wasm32-unknown-unknown --release
+
+      - name: Run contract tests
+        working-directory: contracts/${{ matrix.contract }}
+        run: cargo test
+
+      - name: Upload contract artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.contract }}-contract
+          path: contracts/${{ matrix.contract }}/target/wasm32-unknown-unknown/release/*.wasm
+          retention-days: 7
+
+  integration-check:
+    name: Integration Check
+    runs-on: ubuntu-latest
+    needs: [lint-and-build-frontend, build-contracts]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download contract artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: List artifacts
+        run: |
+          echo "✅ All contracts built successfully:"
+          ls -lh artifacts/*/
+
+      - name: CI Success
+        run: |
+          echo "🎉 All CI checks passed!"
+          echo "✅ Frontend linted and built"
+          echo "✅ All contracts built and tested"

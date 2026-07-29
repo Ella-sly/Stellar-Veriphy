@@ -1,267 +1,104 @@
 # ⭐ StellarVeriphy — The Truth Engine for the Stellar Ecosystem
 
-StellarVeriphy is a decentralized digital content verification and provenance platform built on the **Stellar blockchain**. It enables creators, developers, and platforms to generate immutable authenticity proofs for digital media directly on-chain using **Soroban smart contracts** — Stellar's native smart contract platform built on Rust/WASM.
-
-By leveraging Stellar's ultra-low transaction fees (~0.00001 XLM), fast 3–5 second finality, and energy-efficient **Stellar Consensus Protocol (SCP)**, StellarVeriphy makes large-scale content verification affordable, scalable, and environmentally sustainable.
+> **Note:** This README is intentionally long and comprehensive. It documents the *current* code in this repository (Soroban contracts, shared TypeScript utilities, and the Next.js frontend skeleton) and explains how the pieces are meant to work together.
 
 ---
 
-## 🔑 Quick Summary
+## 1. Project overview
 
-| Property | Value |
-|---|---|
-| **Project Name** | StellarVeriphy |
-| **Goal** | Verifiable, auditable provenance for digital media and metadata |
-| **Blockchain** | Stellar Network |
-| **Smart Contracts** | Soroban (Rust/WASM) |
-| **Frontend** | Next.js + TypeScript + Tailwind CSS |
-| **Storage** | IPFS (decentralized) or MongoDB (high performance) |
-| **Encryption** | StellarVeriphy Key Management Service (KMS) |
-| **Trusted Verification** | Oracle-driven TEE using AWS Nitro Enclave |
-| **Monorepo Manager** | pnpm |
+**StellarVeriphy** is a decentralized platform for **digital content verification** and **provenance** on the **Stellar** blockchain.
 
----
+In practice, “verification” means: given some piece of media (an image, video, document, or other binary asset) and some metadata that claims an origin (“who created it”, “when it was produced”, “what device produced it”, “which AI model was used”, etc.), the system must provide cryptographic evidence that:
 
-## 🌐 What StellarVeriphy Solves
+1. The content has not been altered since verification.
+2. The metadata (the “manifest”) corresponds to the content.
+3. A trusted verification process ran (for example, an oracle backed by a Trusted Execution Environment).
+4. The final result is recorded **immutably** on-chain, so any third party can audit and verify the certificate without trusting a central authority.
 
-Digital media today can easily be manipulated, forged, or misrepresented — deepfakes, AI-generated content, tampered documents. StellarVeriphy provides a robust solution through:
+StellarVeriphy implements this design by splitting the system into two main trust layers:
 
-- **Tamper-proof content provenance** — records the history and origin of content immutably on Stellar.
-- **Cryptographic authenticity verification** — uses advanced cryptographic techniques to verify media has not been altered.
-- **On-chain certification** — mints a permanent record on Stellar that acts as a "digital birth certificate" for the asset.
-- **Trustless third-party verification** — external apps can verify media without relying on a central authority.
-- **Secure encryption and access control** — protects sensitive media while allowing controlled sharing.
-- **Developer APIs** — simplifies integration of trust verification into existing workflows.
+- **Off-chain / Web2 layer**: fast storage and orchestration (e.g., IPFS or MongoDB for asset bytes and manifests).
+- **On-chain / Web3 layer**: immutable verification records on Stellar using **Soroban smart contracts**.
+
+The platform’s core outcome is an on-chain **“provenance certificate”**—a record minted on Stellar that binds together:
+
+- a reference to where the asset bytes live (e.g., an IPFS CID or a database id),
+- a cryptographic hash of the manifest,
+- a cryptographic hash of an attestation proof that verification happened in a trusted way,
+- and the creator identity (an on-chain address).
+
+The code in this repository also includes an additional **registry** of approved **TEE code hashes** and approved **oracle provider keys**, which is used to gate who can attest and which trusted code is acceptable.
 
 ---
 
-## 🚀 Core Architecture
+## 2. Repository layout (monorepo)
 
-StellarVeriphy combines **Web2 infrastructure** (speed and storage) with **Web3 trust guarantees** (immutability and verification).
+This repository is managed as a **pnpm workspace**.
 
-```
-Media + Manifest
-      │
-      ▼
-Storage Layer (IPFS / MongoDB)
-      │
-      ▼
-TEE Oracle Worker
-      │
-      ▼
-AWS Nitro Enclave (Attestation)
-      │
-      ▼
-Soroban Smart Contract
-      │
-      ▼
-On-Chain Provenance Certificate (Stellar)
-```
+Top-level:
 
----
+- `package.json` — workspace scripts and tooling.
+- `pnpm-workspace.yaml` — workspace package discovery.
+- `tsconfig.base.json` — shared TypeScript config.
 
-## 🏗️ Monorepo Structure
+Main components:
 
-```
-StellarVeriphy/
-├── package.json                  # Root workspace config (pnpm)
-├── pnpm-workspace.yaml
-├── tsconfig.base.json
-├── .gitignore
-│
-├── frontend/                     # Next.js app (UI + API routes)
-│   ├── app/
-│   │   ├── layout.tsx
-│   │   ├── page.tsx
-│   │   ├── api/health/route.ts
-│   │   └── creator/upload-content/page.tsx
-│   ├── components/
-│   ├── next.config.ts
-│   ├── tsconfig.json
-│   └── package.json
-│
-├── contracts/                    # Soroban smart contracts (Rust)
-│   ├── oracle/                   # Verification request + attestation
-│   │   ├── src/lib.rs
-│   │   └── Cargo.toml
-│   ├── provenance/               # Provenance certificate minting
-│   │   ├── src/lib.rs
-│   │   └── Cargo.toml
-│   └── registry/                 # TEE code hash registry
-│       ├── src/lib.rs
-│       └── Cargo.toml
-│
-└── packages/
-    └── shared/                   # Shared types and utilities
-        ├── types/index.ts
-        ├── utils/hash.ts
-        └── package.json
-```
+1. **`frontend/`** — Next.js application.
+2. **`contracts/`** — Rust/Soroban smart contracts:
+   - `contracts/oracle/`
+   - `contracts/provenance/`
+   - `contracts/registry/`
+3. **`packages/shared/`** — shared TypeScript types and hashing utilities.
+
+### 2.1. Why a monorepo?
+
+A monorepo is especially useful here because the system relies on a consistent definition of:
+
+- what a “manifest” is,
+- how hashes are computed,
+- which parameters are passed from the off-chain world into on-chain calls,
+- and which verification states exist.
+
+Keeping `packages/shared` close to both the frontend and the contracts reduces the risk of mismatched hashing or schema drift.
 
 ---
 
-## ⚙️ Key Features
+## 3. Stellar concepts used by the contracts
 
-### 📂 Media Provenance Verification
-- Upload images, videos, documents, or AI-generated media.
-- Attach a JSON manifest describing origin metadata (creator, timestamp, device info).
-- Generate immutable authenticity certificates on Stellar.
+The contracts use the **Soroban SDK** (Rust → WASM). The important building blocks include:
 
-### 🔐 Encryption & Access Control (KMS)
-- Encrypts media before it enters the storage layer.
-- Controls decryption permissions — creators specify who can view content.
-- Supports key rotation and audit trails for enterprise-grade security.
-
-### 🧠 Trusted Off-Chain Verification (TEE Oracle)
-- **AWS Nitro Enclaves** provide a highly isolated compute environment.
-- **Oracle Worker Nodes** orchestrate data flow between storage and the TEE.
-- **Cryptographic Attestation** — the TEE generates a signed proof that verification ran correctly.
-
-### 📜 On-Chain Provenance Certificates (Soroban)
-Each minted certificate contains:
-- Storage reference ID (IPFS CID or DB ID)
-- Manifest hash
-- Attestation proof hash
-- Timestamp and creator identity (Stellar public key)
-
-### 🧪 Proof-as-a-Service APIs
-- `POST /api/verify/submit` — submit media for verification
-- `GET /api/verify/status/:jobId` — check verification status
-- `POST /api/webhook` — receive real-time callbacks
+- `Env` — execution environment, provides storage, ledger time, crypto, etc.
+- Contract storage types:
+  - `env.storage().instance()` for contract instance data (persistent across calls; commonly used for configuration)
+  - `env.storage().persistent()` for long-lived mappings
+  - `env.storage().temporary()` for state that should expire
+- Cross-contract calls via `env.invoke_contract(...)` and generated contract clients.
+- Contract events via `env.events().publish(...)` or typed `#[contractevent]` events.
+- Cryptographic verification via `env.crypto().ed25519_verify(...)`.
 
 ---
 
-## 🛠️ Smart Contracts
+## 4. Shared TypeScript utilities (`packages/shared`)
 
-| Contract | Purpose |
-|---|---|
-| `contracts/oracle` | Handles verification request submission and state management |
-| `contracts/provenance` | Mints immutable provenance certificates after TEE attestation |
-| `contracts/registry` | Maintains approved TEE code hashes and trusted oracle providers |
+### 4.1. `packages/shared/types/index.ts`
 
-### Manifest Schema
+This file defines TypeScript interfaces that model what the frontend/off-chain systems will likely send to contracts.
 
-```json
-{
-  "contentHash": "sha256:...",
-  "creator": "G...",
-  "timestamp": "2026-03-15T17:00:00Z",
-  "metadata": {
-    "device": "Camera Model X",
-    "location": "Lat/Long",
-    "aiModel": "None"
-  }
-}
-```
+Key definitions:
 
----
+- `ContentManifest`
+  - `contentHash`: string representing a SHA-256 hash of the media file
+  - `creator`: Stellar public key like `G...`
+  - `timestamp`: ISO 8601 string
+  - `metadata` (optional): device/location/AI model
 
-## 🧰 Tech Stack
+- `ProvenanceCert`
+  - `id`: certificate id
+  - `storageRef`: where the asset bytes live
+  - `manifestHash`: hash of manifest
+  - `attestationHash`: hash of the TEE attestation
+  - `creator`: creator public key
+  - `timestamp`: when the certificate was minted
 
-| Component | Technology |
-|---|---|
-| Blockchain | Stellar Network |
-| Smart Contracts | Soroban (Rust/WASM) |
-| Frontend | Next.js 15 + TypeScript + Tailwind CSS |
-| Storage | IPFS / MongoDB |
-| Encryption | Custom KMS |
-| Trusted Compute | AWS Nitro Enclave |
-| Oracle | Node.js Worker |
-| Package Manager | pnpm |
-
----
-
-## ⚡ Getting Started
-
-### Prerequisites
-- Node.js 20+
-- Rust (latest stable) + Cargo
-- [Stellar CLI](https://developers.stellar.org/docs/tools/developer-tools/cli/stellar-cli)
-- pnpm
-- Freighter wallet (for Stellar testnet)
-
-### Installation
-
-```bash
-git clone https://github.com/your-org/StellarVeriphy.git
-cd StellarVeriphy
-pnpm install
-```
-
-### Run Frontend
-
-```bash
-pnpm dev:frontend
-# opens at http://localhost:3000
-```
-
-### Build Soroban Contracts
-
-```bash
-cd contracts/oracle && stellar contract build
-cd ../provenance && stellar contract build
-cd ../registry && stellar contract build
-```
-
-### Deploy to Testnet
-
-```bash
-stellar contract deploy \
-  --wasm contracts/oracle/target/wasm32-unknown-unknown/release/oracle.wasm \
-  --network testnet
-```
-
----
-
-## 🌍 Use Cases
-
-- **Journalism Authenticity** — verify source and time of news footage
-- **AI-Generated Content** — distinguish human vs AI creation
-- **NFT Provenance** — link NFTs to verifiable off-chain assets
-- **Document Compliance** — ensure legal documents haven't been tampered with
-- **Legal Audit Trails** — immutable chains of custody for evidence
-- **Supply Chain Verification** — verify photos of goods at transit points
-- **Prediction Market Resolution** — use verified media as trustless oracles
-
----
-
-## 🗺️ Roadmap
-
-| Phase | Description |
-|---|---|
-| Phase 0 | Architecture design — manifest schema, storage abstraction, Soroban contract schema |
-| Phase 1 | MVP creator workflow — upload UI, storage integration, basic TEE simulation |
-| Phase 2 | Developer APIs — SDK release, webhooks, job management |
-| Phase 3 | Security hardening — full Nitro Enclave deployment, KMS key rotation |
-| Phase 4 | Ecosystem integration — NFT provenance linking, marketplace verification APIs |
-| Phase 5 | Governance & registry — TEE hash governance, oracle provider staking |
-
----
-
-## 🤝 Contributing
-
-1. Fork the repository.
-2. Create a feature branch: `git checkout -b feature/my-feature`
-3. Commit your changes: `git commit -m 'Add my feature'`
-4. Push: `git push origin feature/my-feature`
-5. Open a Pull Request.
-
----
-
-## 📄 License
-
-MIT License
-
----
-
-## 🙏 Acknowledgments
-
-- Built on the **Stellar Blockchain** — [stellar.org](https://stellar.org)
-- Powered by **Soroban Smart Contracts** — [developers.stellar.org](https://developers.stellar.org)
-- Inspired by decentralized authenticity infrastructure
-
----
-
-## ❤️ Vision
-
-StellarVeriphy aims to become the universal authenticity layer for digital content across the Stellar ecosystem — enabling trust, transparency, and verifiable digital truth at scale.
+- `VerificationStatus`
+  - union of states: `
