@@ -25,7 +25,7 @@ export function HeroSection() {
           origin of any digital asset.
         </p>
         <button
-          onClick={connect}
+          onClick={() => connect("freighter")}
           disabled={connected}
           className="inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3 sm:py-4 bg-blue-600 hover:bg-blue-700 disabled:bg-green-600 disabled:hover:bg-green-600 text-white font-semibold rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-slate-900 focus:scale-105 active:scale-95 min-h-[44px] sm:min-h-[48px] min-w-[44px] text-base sm:text-lg"
           aria-label={connected ? "Wallet is connected" : "Connect wallet to start"}

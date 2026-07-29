@@ -17,7 +17,7 @@ export function Header() {
       disconnect();
     } else {
       try {
-        await connect();
+        await connect("freighter");
       } catch (error) {
         console.error("Failed to connect wallet:", error);
       }
