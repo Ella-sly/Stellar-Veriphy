@@ -46,15 +46,7 @@ export async function fetchTransactionStatus(
  */
 export function getExplorerUrl(txHash: string): string {
   return `${EXPLORER_BASE}/${txHash}`;
- * transactionService.ts
- *
- * Fetches Stellar transaction status from the Horizon API and provides a
- * Stellar Expert explorer URL helper.
- *
- * In development (NEXT_PUBLIC_MOCK_TX=true) a mock fallback simulates the
- * PENDING → CONFIRMED progression so the UI can be exercised without a live
- * network connection.
- */
+}
 
 // ---------------------------------------------------------------------------
 // Types

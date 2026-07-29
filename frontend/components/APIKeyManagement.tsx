@@ -243,7 +243,7 @@ export function APIKeyManagement({ userAddress, className }: ApiKeyManagementPro
           className="p-4 bg-yellow-50 dark:bg-yellow-900/20 border-2 border-yellow-300 dark:border-yellow-700 rounded-lg"
         >
           <p className="text-sm font-semibold text-yellow-800 dark:text-yellow-300 mb-2">
-            ⚠️ Save your API key now — it won't be shown again!
+            ⚠️ Save your API key now &mdash; it won&apos;t be shown again!
           </p>
           <div className="flex gap-2">
             <code className="flex-1 px-3 py-2 text-xs font-mono bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-600 rounded-md break-all">
@@ -419,7 +419,7 @@ export function APIKeyManagement({ userAddress, className }: ApiKeyManagementPro
         </h3>
         {activeKeys.length === 0 ? (
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            No active API keys. Click "Generate New Key" to create one.
+            No active API keys. Click &quot;Generate New Key&quot; to create one.
           </p>
         ) : (
           <div className="space-y-3">

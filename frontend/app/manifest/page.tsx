@@ -1,11 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ContentManifest } from "@stellarveriphy/shared/types";
 import { KeyValueBuilder } from "@/components/KeyValueBuilder";
 import { ManifestPreview } from "@/components/ManifestPreview";
 import { isValidStellarAddress, downloadJSON, downloadXML } from "@/utils/validation";
 import { ALL_TEMPLATES, loadTemplate, type TemplateId } from "@/utils/manifestTemplates";
+import { useAutoSave } from "@/hooks/useAutoSave";
+import { AutoSaveIndicator } from "@/components/ui/AutoSaveIndicator";
+import { HelpIcon } from "@/components/ui/HelpIcon";
 
 export default function ManifestPage() {
   const [manifest, setManifest] = useState<Partial<ContentManifest>>({
@@ -17,6 +20,24 @@ export default function ManifestPage() {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [activeTemplate, setActiveTemplate] = useState<TemplateId | null>(null);
+
+  const { state: autoSaveState, clearSaved } = useAutoSave({
+    key: "manifest-form",
+    data: manifest,
+    interval: 20000,
+  });
+
+  useEffect(() => {
+    const saved = localStorage.getItem("manifest-form");
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved) as Partial<ContentManifest>;
+        setManifest(parsed);
+      } catch {
+        /* noop */
+      }
+    }
+  }, []);
 
   const handleChange = (field: keyof ContentManifest, value: any) => {
     setManifest((prev) => ({ ...prev, [field]: value }));
@@ -59,12 +80,14 @@ export default function ManifestPage() {
 
   const handleDownloadJSON = () => {
     if (validateForm()) {
+      clearSaved();
       downloadJSON(manifest, "manifest.json");
     }
   };
 
   const handleDownloadXML = () => {
     if (validateForm()) {
+      clearSaved();
       downloadXML(manifest, "manifest.xml");
     }
   };
@@ -79,9 +102,16 @@ export default function ManifestPage() {
         <h1 className="text-3xl font-bold mb-2 text-black dark:text-white">
           Manifest Generator
         </h1>
-        <p className="text-gray-600 dark:text-gray-400 mb-8">
+        <p className="text-gray-600 dark:text-gray-400 mb-2">
           Build a content manifest interactively with live preview.
         </p>
+        <div className="mb-6 flex justify-end">
+          <AutoSaveIndicator
+            lastSaved={autoSaveState.lastSaved}
+            isSaving={autoSaveState.isSaving}
+            hasUnsaved={autoSaveState.hasUnsaved}
+          />
+        </div>
 
         {/* Template Selector */}
         <div className="mb-8">
@@ -109,12 +139,14 @@ export default function ManifestPage() {
               </button>
             ))}
           </div>
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <div className="space-y-6">
             <div>
               <label className="block text-sm font-medium text-black dark:text-white mb-2">
                 Content Hash (SHA-256)
+                <HelpIcon content="The SHA-256 hash of your content. Use the Hash Calculator tool to generate one." className="ml-1.5 align-middle" />
               </label>
               <input
                 type="text"
@@ -133,6 +165,7 @@ export default function ManifestPage() {
             <div>
               <label className="block text-sm font-medium text-black dark:text-white mb-2">
                 Creator (Stellar Address)
+                <HelpIcon content="Your Stellar public key starting with G. Connect your wallet or paste your address." className="ml-1.5 align-middle" />
               </label>
               <input
                 type="text"
@@ -151,6 +184,7 @@ export default function ManifestPage() {
             <div>
               <label className="block text-sm font-medium text-black dark:text-white mb-2">
                 Timestamp (ISO 8601)
+                <HelpIcon content="The date and time the content was created. Defaults to the current time." className="ml-1.5 align-middle" />
               </label>
               <input
                 type="datetime-local"
@@ -170,6 +204,7 @@ export default function ManifestPage() {
             <div>
               <label className="block text-sm font-medium text-black dark:text-white mb-2">
                 Custom Metadata
+                <HelpIcon content="Add custom key-value pairs to enrich your manifest with additional metadata." className="ml-1.5 align-middle" />
               </label>
               <KeyValueBuilder
                 value={manifest.metadata || {}}
@@ -191,12 +226,13 @@ export default function ManifestPage() {
                 Download XML
               </button>
             </div>
+          </div>
 
           <div>
             <ManifestPreview manifest={manifest} />
           </div>
+        </div>
       </div>
     </main>
   );
-}</｜｜DSML｜｜parameter>
-</create_file>
+}

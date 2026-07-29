@@ -40,7 +40,7 @@ export default function APIKeysPage() {
               scoped to your wallet address for security.
             </p>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Click "Connect Wallet" in the top navigation to get started.
+              Click &quot;Connect Wallet&quot; in the top navigation to get started.
             </p>
           </div>
         ) : (
