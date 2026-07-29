@@ -227,10 +227,6 @@ export default function ManifestPage() {
               </button>
             </div>
           </div>
-
-          </div>
-
-          </div>
         </div>
       </div>
     </main>

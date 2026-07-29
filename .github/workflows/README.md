@@ -245,12 +245,21 @@ Cold cache (first run or after cache invalidation):
 Potential improvements to the CI workflow:
 
 1. **Code Coverage**: Add coverage reporting with Codecov or Coveralls
-2. **Security Scanning**: Add dependency vulnerability scanning
-3. **Contract Size Check**: Verify WASM size doesn't exceed limits
-4. **Deploy Preview**: Automatic deployment to testnet for PRs
-5. **Performance Testing**: Add benchmarks for contract gas usage
-6. **Documentation**: Auto-generate and deploy documentation
-7. **Release Automation**: Automatic releases on version tags
+2. **Contract Size Check**: Verify WASM size doesn't exceed limits
+3. **Deploy Preview**: Automatic deployment to testnet for PRs
+4. **Performance Testing**: Add benchmarks for contract gas usage
+5. **Documentation**: Auto-generate and deploy documentation
+6. **Release Automation**: Automatic releases on version tags
+
+> Dependency vulnerability scanning, SBOM generation, and automated dependency PRs are covered by `security-scan.yml` and `dependabot.yml` — see [Security Scanning](#security-scanning) below.
+
+## Security Scanning
+
+`security-scan.yml` runs on every pull request to `main`, on a daily schedule, and on demand:
+
+- **Trivy** scans the filesystem for known vulnerabilities in dependencies and uploads results as a SARIF report to the GitHub Security tab (`security-events: write`), where critical and high-severity findings surface as code scanning alerts.
+- **anchore/sbom-action** generates a Software Bill of Materials (SPDX JSON) and uploads it as a build artifact.
+- `dependabot.yml` runs daily dependency scans across the npm/pnpm workspace, each Soroban contract crate, and GitHub Actions, opening pull requests automatically for outdated or vulnerable dependencies and raising native GitHub Dependabot alerts for critical vulnerabilities.
 
 ## Related Documentation
 

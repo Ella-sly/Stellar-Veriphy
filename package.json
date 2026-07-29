@@ -20,7 +20,7 @@
   "packageManager": "pnpm@10.18.2",
   "lint-staged": {
     "frontend/**/*.{ts,tsx}": [
-      "eslint --fix"
+      "eslint --fix --config frontend/eslint.config.mjs"
     ],
     "contracts/**/*.rs": [
       "rustfmt --edition 2021"

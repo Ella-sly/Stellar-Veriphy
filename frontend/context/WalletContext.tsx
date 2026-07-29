@@ -30,6 +30,7 @@ import {
   type WalletNetworkDetails,
   type WalletType,
 } from "@/services/walletAdapters";
+import { auditLogger } from "@/lib/security/auditLogger";
 
 // ---------------------------------------------------------------------------
 // Storage keys
@@ -188,6 +189,13 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       setNetwork(details);
       setError(null);
       startPolling();
+
+      void auditLogger.logEvent({
+        actor: address,
+        category: "auth",
+        action: "wallet connected",
+        details: `Connected via ${adpt.name}`,
+      });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to connect wallet");
     }
@@ -196,6 +204,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   // ── Disconnect ─────────────────────────────────────────────────────────────
 
   const disconnect = useCallback(() => {
+    const disconnectedKey = publicKey;
     localStorage.removeItem(STORAGE_KEY_TYPE);
     localStorage.removeItem(STORAGE_KEY_KEY);
     setPublicKey(null);
@@ -203,7 +212,15 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     setWalletType(null);
     setError(null);
     stopPolling();
-  }, [stopPolling]);
+
+    if (disconnectedKey) {
+      void auditLogger.logEvent({
+        actor: disconnectedKey,
+        category: "auth",
+        action: "wallet disconnected",
+      });
+    }
+  }, [publicKey, stopPolling]);
 
   // ── Switch wallet ──────────────────────────────────────────────────────────
 
@@ -216,11 +233,29 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
 
   const signTx = useCallback(async (xdr: string): Promise<string> => {
     if (!adapter || !publicKey) throw new Error("Wallet not connected");
-    return adapter.signTransaction(
-      xdr,
-      network?.networkPassphrase ?? "",
-      publicKey
-    );
+    try {
+      const signed = await adapter.signTransaction(
+        xdr,
+        network?.networkPassphrase ?? "",
+        publicKey
+      );
+      void auditLogger.logEvent({
+        actor: publicKey,
+        category: "contract",
+        action: "transaction signed",
+        details: `Network: ${network?.network ?? "unknown"}`,
+      });
+      return signed;
+    } catch (e) {
+      void auditLogger.logEvent({
+        actor: publicKey,
+        category: "contract",
+        action: "transaction signing failed",
+        severity: "warning",
+        details: e instanceof Error ? e.message : "Unknown error",
+      });
+      throw e;
+    }
   }, [adapter, publicKey, network]);
 
   // ── Clear error ────────────────────────────────────────────────────────────
