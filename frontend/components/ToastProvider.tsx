@@ -257,20 +257,43 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
 export const useToast = () => useContext(ToastContext);
 
-// Helper functions for common toast types
-export const toast = {
+// Create a separate hook for toast helpers
+export const useToastHelpers = () => {
+  const { toast, dismiss, dismissAll } = useToast();
+  
+  return {
+    success: (message: string, options?: Omit<ToastOptions, "type">) => 
+      toast(message, { ...options, type: "success" }),
+    
+    error: (message: string, options?: Omit<ToastOptions, "type">) => 
+      toast(message, { ...options, type: "error" }),
+    
+    info: (message: string, options?: Omit<ToastOptions, "type">) => 
+      toast(message, { ...options, type: "info" }),
+    
+    warning: (message: string, options?: Omit<ToastOptions, "type">) => 
+      toast(message, { ...options, type: "warning" }),
+    
+    dismiss,
+    dismissAll,
+  };
+};
+
+// For global access - this creates a toast instance that can be imported
+// but should be initialized with the toast context from useToast()
+export const createToastHelpers = (toastContext: ReturnType<typeof useToast>) => ({
   success: (message: string, options?: Omit<ToastOptions, "type">) => 
-    useToast().toast(message, { ...options, type: "success" }),
+    toastContext.toast(message, { ...options, type: "success" }),
   
   error: (message: string, options?: Omit<ToastOptions, "type">) => 
-    useToast().toast(message, { ...options, type: "error" }),
+    toastContext.toast(message, { ...options, type: "error" }),
   
   info: (message: string, options?: Omit<ToastOptions, "type">) => 
-    useToast().toast(message, { ...options, type: "info" }),
+    toastContext.toast(message, { ...options, type: "info" }),
   
   warning: (message: string, options?: Omit<ToastOptions, "type">) => 
-    useToast().toast(message, { ...options, type: "warning" }),
+    toastContext.toast(message, { ...options, type: "warning" }),
   
-  dismiss: (id: number) => useToast().dismiss(id),
-  dismissAll: () => useToast().dismissAll(),
-};
+  dismiss: (id: number) => toastContext.dismiss(id),
+  dismissAll: () => toastContext.dismissAll(),
+});

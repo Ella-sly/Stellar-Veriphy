@@ -192,11 +192,11 @@ export default function ManifestPage() {
               </button>
             </div>
 
-          <div>
-            <ManifestPreview manifest={manifest} />
           </div>
+
+          </div>
+        </div>
       </div>
     </main>
   );
-}</｜｜DSML｜｜parameter>
-</create_file>
+}

@@ -77,7 +77,9 @@ async function calculateHash(
 
   // Concatenate all chunks into one buffer and hash once
   const combined = mergeChunks(chunks, total);
-  const digest = await crypto.subtle.digest("SHA-512", combined);
+  // Ensure we have a regular ArrayBuffer, not SharedArrayBuffer
+  const buffer = combined.slice().buffer;
+  const digest = await crypto.subtle.digest("SHA-512", buffer);
   return bufferToHex(digest);
 }
 

@@ -210,32 +210,35 @@
     }
   }
 }
-  
-  /* Toast shrink animation */
-  @keyframes shrink {
-    from {
-      width: 100%;
-    }
-    to {
-      width: 0%;
-    }
+
+/* Toast shrink animation */
+@keyframes shrink {
+  from {
+    width: 100%;
   }
-  
-  /* Slide in animations for toast */
-  @keyframes slideInFromBottom {
-    from {
-      transform: translateY(100%);
-      opacity: 0;
-    }
-    to {
-      transform: translateY(0);
-      opacity: 1;
-    }
+  to {
+    width: 0%;
   }
-  
-  .slide-in-from-bottom-5 {
-    animation: slideInFromBottom 0.3s ease-out;
+}
+
+/* Slide in animations for toast */
+@keyframes slideInFromBottom {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
   }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.slide-in-from-bottom-5 {
+  animation: slideInFromBottom 0.3s ease-out;
+}
+
+/* Dark mode transitions */
+@media (prefers-color-scheme: dark) {
   html {
     color-scheme: dark;
   }

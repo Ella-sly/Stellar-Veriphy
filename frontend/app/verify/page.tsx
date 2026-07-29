@@ -1,6 +1,6 @@
 "use client";
 
-import { WizardProvider, useWizard } from "@/context/WizardContext";
+import { useWizardStore } from "@/src/features/verification/store/wizard.store";
 import { WizardPageShell } from "@/src/features/verification/components/WizardPageShell";
 import { useState } from "react";
 
@@ -28,10 +28,10 @@ const STEP_CONFIGS = [
 ];
 
 function VerifyPageContent() {
-  const { currentStep, steps, setStepComplete } = useWizard();
+  const { currentStep, setStepComplete } = useWizardStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const config = STEP_CONFIGS[currentStep];
+  const config = STEP_CONFIGS[Math.min(currentStep, STEP_CONFIGS.length - 1)]!;
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
@@ -93,7 +93,6 @@ function VerifyPageContent() {
             />
           </div>
         );
-      case 3:
         return (
           <div className="space-y-4">
             <p className="text-gray-700 dark:text-gray-300">
@@ -122,8 +121,6 @@ function VerifyPageContent() {
                 ✓ Verification successful
               </p>
             </div>
-            {/* Mark final step as complete */}
-            {!setStepComplete(4, true) && null}
           </div>
         );
       default:
@@ -141,7 +138,7 @@ function VerifyPageContent() {
       <div className="space-y-6">
         {renderStepContent()}
         <div className="text-sm text-gray-500 dark:text-gray-400">
-          Step {currentStep + 1} of {steps.length}
+          Step {currentStep + 1} of {STEP_CONFIGS.length}
         </div>
       </div>
     </WizardPageShell>
@@ -149,9 +146,5 @@ function VerifyPageContent() {
 }
 
 export default function VerifyPage() {
-  return (
-    <WizardProvider>
-      <VerifyPageContent />
-    </WizardProvider>
-  );
+  return <VerifyPageContent />;
 }

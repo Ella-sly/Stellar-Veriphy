@@ -216,7 +216,6 @@ export function Header() {
                 role="menuitem"
                 tabIndex={mobileMenuOpen ? 0 : -1}
                 aria-label={connected ? "Disconnect wallet" : "Connect wallet"}
-                aria-pressed={connected}
               >
                 {connected
                   ? `${publicKey?.slice(0, 6)}...${publicKey?.slice(-4)}`
