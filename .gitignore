@@ -5,3 +5,8 @@ dist/
 target/
 .next/
 *.wasm
+*.tsbuildinfo
+coverage/
+test-results/
+reports/
+.stryker-tmp/

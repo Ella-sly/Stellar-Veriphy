@@ -1,0 +1,199 @@
+openapi: 3.0.3
+info:
+  title: StellarVeriphy API
+  version: 1.0.0
+  description: |
+    HTTP API for the StellarVeriphy content verification and provenance platform.
+    This documents the Next.js API routes under `frontend/app/api`. For the
+    on-chain Soroban contract functions (oracle, provenance, registry), see
+    `docs/api/CONTRACTS.md`.
+  license:
+    name: MIT
+servers:
+  - url: /api
+    description: Same-origin relative path (works in any deployment environment)
+tags:
+  - name: Health
+    description: Service health checks
+  - name: Verification
+    description: Submit content manifests for verification and check job status
+
+paths:
+  /health:
+    get:
+      operationId: getHealth
+      tags: [Health]
+      summary: Service health check
+      responses:
+        "200":
+          description: The service is up.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+              example:
+                status: ok
+                service: stellarveriphy
+
+  /verify/submit:
+    post:
+      operationId: submitVerification
+      tags: [Verification]
+      summary: Submit a content manifest for verification
+      description: >
+        Accepts a content manifest and enqueues it for verification. Returns
+        immediately with a job id and `pending` status; poll
+        `GET /verify/status/{jobId}` for updates.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubmitVerificationRequest"
+            example:
+              manifest:
+                contentHash: "sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"
+                creator: "GABCD1234EXAMPLE5678STELLARPUBLICKEY000000000000000000"
+                timestamp: "2026-07-29T12:00:00Z"
+                metadata:
+                  device: "Camera Model X"
+                  aiModel: "None"
+      responses:
+        "202":
+          description: The verification job was accepted and is pending.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubmitVerificationResponse"
+              example:
+                id: "6f2b4b0e-9a3e-4b8a-9a0a-2f7e4c1d9b10"
+                status: pending
+        "400":
+          description: The request body was malformed or the manifest was invalid.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                invalidJson:
+                  value: { error: invalid_json, message: "Request body must be valid JSON." }
+                invalidManifest:
+                  value:
+                    error: invalid_manifest
+                    message: "manifest.contentHash, manifest.creator and manifest.timestamp are required strings."
+
+  /verify/status/{jobId}:
+    get:
+      operationId: getVerificationStatus
+      tags: [Verification]
+      summary: Get the status of a verification job
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The job id returned by `POST /verify/submit`.
+      responses:
+        "200":
+          description: The verification job.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VerificationRequest"
+        "404":
+          description: No job exists with the given id.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              example:
+                error: not_found
+                message: "No verification job with id unknown."
+
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      required: [status, service]
+      properties:
+        status:
+          type: string
+          enum: [ok]
+        service:
+          type: string
+
+    ContentManifest:
+      type: object
+      required: [contentHash, creator, timestamp]
+      properties:
+        contentHash:
+          type: string
+          description: sha256 hash of the media file, formatted as `sha256:<hex>`.
+        creator:
+          type: string
+          description: Stellar public key (G...) of the content creator.
+        timestamp:
+          type: string
+          format: date-time
+        metadata:
+          type: object
+          properties:
+            device:
+              type: string
+            location:
+              type: string
+            aiModel:
+              type: string
+
+    SubmitVerificationRequest:
+      type: object
+      required: [manifest]
+      properties:
+        manifest:
+          $ref: "#/components/schemas/ContentManifest"
+
+    SubmitVerificationResponse:
+      type: object
+      required: [id, status]
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending]
+
+    VerificationRequest:
+      type: object
+      required: [id, storageRef, manifestHash, requester, status]
+      properties:
+        id:
+          type: string
+          format: uuid
+        storageRef:
+          type: string
+          description: Reference to the stored content (e.g. an IPFS CID).
+        manifestHash:
+          type: string
+          description: sha256 hash of the submitted manifest.
+        requester:
+          type: string
+          description: Stellar public key of the submitter.
+        status:
+          $ref: "#/components/schemas/VerificationStatus"
+
+    VerificationStatus:
+      type: string
+      enum: [pending, processing, certified, failed]
+
+    ErrorResponse:
+      type: object
+      required: [error, message]
+      properties:
+        error:
+          type: string
+          description: Machine-readable error code.
+        message:
+          type: string
+          description: Human-readable explanation.
