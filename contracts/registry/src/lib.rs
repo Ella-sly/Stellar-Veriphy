@@ -1,5 +1,8 @@
 #![no_std]
 use soroban_sdk::{
+    contract, contracterror, contractimpl, contracttype, Address, Bytes, BytesN, Env, String,
+    Symbol, Vec,
+};
     contract, contractimpl, contracttype, symbol_short, Address, Bytes, BytesN, Env, String, Vec,
 };
 use soroban_sdk::{contract, contractimpl, contracttype, contracterror, Address, Bytes, BytesN, Env, String, Vec};
@@ -38,11 +41,7 @@ mod provenance {
         ) -> u64;
 
         // #172 - Certificate Transfer
-        fn transfer_certificate(
-            env: Env,
-            certificate_id: u64,
-            new_owner: Address,
-        );
+        fn transfer_certificate(env: Env, certificate_id: u64, new_owner: Address);
 
         // #173 - Metadata Updates
         fn update_metadata(
@@ -52,10 +51,7 @@ mod provenance {
             description: String,
         );
 
-        fn get_metadata(
-            env: Env,
-            certificate_id: u64,
-        ) -> CertificateMetadata;
+        fn get_metadata(env: Env, certificate_id: u64) -> CertificateMetadata;
 
         // #174 - Query by Time Range
         fn get_certificates_by_time_range(
@@ -100,6 +96,10 @@ pub enum Error {
     TeeHashNotFound = 7,
     ProviderNotFound = 8,
     CertificateExpired = 9,
+    ProviderBlacklisted = 10,
+    NotBlacklisted = 11,
+    CapacityExceeded = 12,
+    InvalidCapacity = 13,
 }
 
 // ---------------------------------------------------------------------------
@@ -125,12 +125,16 @@ pub enum DataKey {
     Proposal(u64),
     ProposalApprovals(u64),
     NextProposalId,
-    TeeHashVersionInfo(BytesN<32>), // #187
-    TeeHashesByVersion(u32),        // #187
-    TeeHashVersionHistory,          // #187
-    ProviderReputation(BytesN<32>), // #186
-    ProviderList,                   // #186
-    TeeHashCertRef(BytesN<32>),     // certificate reference on a TEE hash
+    TeeHashVersionInfo(BytesN<32>),      // #187
+    TeeHashesByVersion(u32),             // #187
+    TeeHashVersionHistory,               // #187
+    ProviderReputation(BytesN<32>),      // #186
+    ProviderList,                        // #186
+    TeeHashCertRef(BytesN<32>),          // certificate reference on a TEE hash
+    ProviderRegions(BytesN<32>),         // #192
+    ProviderCapacity(BytesN<32>),        // #193
+    ProviderSpecializations(BytesN<32>), // #194
+    ProviderBlacklist(BytesN<32>),       // #195
 }
 
 // ---------------------------------------------------------------------------
@@ -188,6 +192,57 @@ pub struct ProviderReputation {
 const REPUTATION_MAX_SCORE: u32 = 1000;
 const REPUTATION_DECAY_PERIOD_SECS: u64 = 2_592_000; // 30 days
 const REPUTATION_DECAY_AMOUNT: u32 = 50;
+
+// ---------------------------------------------------------------------------
+// #192 – Provider geographic distribution
+// ---------------------------------------------------------------------------
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum Region {
+    NorthAmerica,
+    Europe,
+    Asia,
+    SouthAmerica,
+    Africa,
+    Oceania,
+}
+
+// ---------------------------------------------------------------------------
+// #193 – Provider capacity management
+// ---------------------------------------------------------------------------
+
+#[contracttype]
+#[derive(Clone, Debug)]
+pub struct ProviderCapacity {
+    pub max_concurrent: u32,
+    pub active_requests: u32,
+}
+
+// ---------------------------------------------------------------------------
+// #194 – Provider specialization tags
+// ---------------------------------------------------------------------------
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum Specialization {
+    ImageVerification,
+    VideoVerification,
+    DocumentVerification,
+    AiDetection,
+    AudioVerification,
+}
+
+// ---------------------------------------------------------------------------
+// #195 – Provider blacklist / whitelist
+// ---------------------------------------------------------------------------
+
+#[contracttype]
+#[derive(Clone, Debug)]
+pub struct BlacklistEntry {
+    pub reason_code: u32,
+    pub blacklisted_at: u64,
+}
 
 // ---------------------------------------------------------------------------
 // #24 – VerificationResult
@@ -527,7 +582,10 @@ impl RegistryContract {
     }
 
     /// Fetch version metadata for a TEE code hash.
-    pub fn get_tee_hash_version(env: Env, code_hash: BytesN<32>) -> Result<TeeHashVersionInfo, Error> {
+    pub fn get_tee_hash_version(
+        env: Env,
+        code_hash: BytesN<32>,
+    ) -> Result<TeeHashVersionInfo, Error> {
         env.storage()
             .persistent()
             .get(&DataKey::TeeHashVersionInfo(code_hash))
@@ -839,7 +897,10 @@ impl RegistryContract {
     }
 
     /// Fetch a provider's current reputation.
-    pub fn get_provider_reputation(env: Env, provider: BytesN<32>) -> Result<ProviderReputation, Error> {
+    pub fn get_provider_reputation(
+        env: Env,
+        provider: BytesN<32>,
+    ) -> Result<ProviderReputation, Error> {
         env.storage()
             .persistent()
             .get(&DataKey::ProviderReputation(provider))
@@ -848,10 +909,7 @@ impl RegistryContract {
 
     /// Query all registered providers whose score meets or exceeds a
     /// threshold.
-    pub fn get_providers_by_reputation_threshold(
-        env: Env,
-        min_score: u32,
-    ) -> Vec<BytesN<32>> {
+    pub fn get_providers_by_min_reputation(env: Env, min_score: u32) -> Vec<BytesN<32>> {
         let providers: Vec<BytesN<32>> = env
             .storage()
             .persistent()
@@ -871,6 +929,416 @@ impl RegistryContract {
             }
         }
         result
+    }
+
+    // -----------------------------------------------------------------------
+    // #192 – Provider geographic distribution tracking
+    // -----------------------------------------------------------------------
+
+    /// Replace the set of regions a provider operates in (admin-gated).
+    /// Supports multi-region providers via the `regions` vector.
+    pub fn set_provider_regions(
+        env: Env,
+        provider: BytesN<32>,
+        regions: Vec<Region>,
+    ) -> Result<(), Error> {
+        let admin: Address = env
+            .storage()
+            .instance()
+            .get(&DataKey::Admin)
+            .ok_or(Error::NotInitialized)?;
+        admin.require_auth();
+
+        if !env
+            .storage()
+            .persistent()
+            .has(&DataKey::Provider(provider.clone()))
+        {
+            return Err(Error::ProviderNotFound);
+        }
+
+        env.storage()
+            .persistent()
+            .set(&DataKey::ProviderRegions(provider), &regions);
+        Ok(())
+    }
+
+    /// Add a single region to a provider's existing set of regions
+    /// (admin-gated). No-op if the region is already present.
+    pub fn add_provider_region(
+        env: Env,
+        provider: BytesN<32>,
+        region: Region,
+    ) -> Result<(), Error> {
+        let admin: Address = env
+            .storage()
+            .instance()
+            .get(&DataKey::Admin)
+            .ok_or(Error::NotInitialized)?;
+        admin.require_auth();
+
+        if !env
+            .storage()
+            .persistent()
+            .has(&DataKey::Provider(provider.clone()))
+        {
+            return Err(Error::ProviderNotFound);
+        }
+
+        let mut regions: Vec<Region> = env
+            .storage()
+            .persistent()
+            .get(&DataKey::ProviderRegions(provider.clone()))
+            .unwrap_or(Vec::new(&env));
+        if !regions.contains(&region) {
+            regions.push_back(region);
+            env.storage()
+                .persistent()
+                .set(&DataKey::ProviderRegions(provider), &regions);
+        }
+        Ok(())
+    }
+
+    /// Fetch the regions a provider is registered under.
+    pub fn get_provider_regions(env: Env, provider: BytesN<32>) -> Vec<Region> {
+        env.storage()
+            .persistent()
+            .get(&DataKey::ProviderRegions(provider))
+            .unwrap_or(Vec::new(&env))
+    }
+
+    /// Query all registered providers that operate in a given region.
+    pub fn get_providers_by_region(env: Env, region: Region) -> Vec<BytesN<32>> {
+        let providers: Vec<BytesN<32>> = env
+            .storage()
+            .persistent()
+            .get(&DataKey::ProviderList)
+            .unwrap_or(Vec::new(&env));
+
+        let mut result: Vec<BytesN<32>> = Vec::new(&env);
+        for provider in providers.iter() {
+            let regions: Vec<Region> = env
+                .storage()
+                .persistent()
+                .get(&DataKey::ProviderRegions(provider.clone()))
+                .unwrap_or(Vec::new(&env));
+            if regions.contains(&region) {
+                result.push_back(provider);
+            }
+        }
+        result
+    }
+
+    // -----------------------------------------------------------------------
+    // #193 – Provider capacity management
+    // -----------------------------------------------------------------------
+
+    /// Set (or update) a provider's max concurrent request capacity
+    /// (admin-gated). Preserves the current active-request count when
+    /// updating an existing entry.
+    pub fn set_provider_capacity(
+        env: Env,
+        provider: BytesN<32>,
+        max_concurrent: u32,
+    ) -> Result<(), Error> {
+        let admin: Address = env
+            .storage()
+            .instance()
+            .get(&DataKey::Admin)
+            .ok_or(Error::NotInitialized)?;
+        admin.require_auth();
+
+        if max_concurrent == 0 {
+            return Err(Error::InvalidCapacity);
+        }
+        if !env
+            .storage()
+            .persistent()
+            .has(&DataKey::Provider(provider.clone()))
+        {
+            return Err(Error::ProviderNotFound);
+        }
+
+        let active_requests = env
+            .storage()
+            .persistent()
+            .get::<DataKey, ProviderCapacity>(&DataKey::ProviderCapacity(provider.clone()))
+            .map(|c| c.active_requests)
+            .unwrap_or(0);
+
+        let capacity = ProviderCapacity {
+            max_concurrent,
+            active_requests,
+        };
+        env.storage()
+            .persistent()
+            .set(&DataKey::ProviderCapacity(provider), &capacity);
+        Ok(())
+    }
+
+    /// Fetch a provider's capacity record.
+    pub fn get_provider_capacity(
+        env: Env,
+        provider: BytesN<32>,
+    ) -> Result<ProviderCapacity, Error> {
+        env.storage()
+            .persistent()
+            .get(&DataKey::ProviderCapacity(provider))
+            .ok_or(Error::ProviderNotFound)
+    }
+
+    /// Returns true if the provider has room for another concurrent request.
+    pub fn has_capacity(env: Env, provider: BytesN<32>) -> bool {
+        match env
+            .storage()
+            .persistent()
+            .get::<DataKey, ProviderCapacity>(&DataKey::ProviderCapacity(provider))
+        {
+            Some(c) => c.active_requests < c.max_concurrent,
+            None => true, // no capacity limit configured
+        }
+    }
+
+    /// Reserve a capacity slot for a provider ahead of dispatching a
+    /// request. Emits a `capacity_exceeded` event and errors if the
+    /// provider is already at its configured limit.
+    pub fn increment_active_requests(env: Env, provider: BytesN<32>) -> Result<(), Error> {
+        let mut capacity: ProviderCapacity = env
+            .storage()
+            .persistent()
+            .get(&DataKey::ProviderCapacity(provider.clone()))
+            .ok_or(Error::ProviderNotFound)?;
+
+        if capacity.active_requests >= capacity.max_concurrent {
+            env.events()
+                .publish((Symbol::new(&env, "capacity_exceeded"),), provider);
+            return Err(Error::CapacityExceeded);
+        }
+
+        capacity.active_requests += 1;
+        env.storage()
+            .persistent()
+            .set(&DataKey::ProviderCapacity(provider), &capacity);
+        Ok(())
+    }
+
+    /// Release a previously reserved capacity slot for a provider.
+    pub fn decrement_active_requests(env: Env, provider: BytesN<32>) -> Result<(), Error> {
+        let mut capacity: ProviderCapacity = env
+            .storage()
+            .persistent()
+            .get(&DataKey::ProviderCapacity(provider.clone()))
+            .ok_or(Error::ProviderNotFound)?;
+
+        capacity.active_requests = capacity.active_requests.saturating_sub(1);
+        env.storage()
+            .persistent()
+            .set(&DataKey::ProviderCapacity(provider), &capacity);
+        Ok(())
+    }
+
+    // -----------------------------------------------------------------------
+    // #194 – Provider specialization tags
+    // -----------------------------------------------------------------------
+
+    /// Add a specialization tag to a provider (admin-gated). No-op if
+    /// already present.
+    pub fn add_provider_specialization(
+        env: Env,
+        provider: BytesN<32>,
+        specialization: Specialization,
+    ) -> Result<(), Error> {
+        let admin: Address = env
+            .storage()
+            .instance()
+            .get(&DataKey::Admin)
+            .ok_or(Error::NotInitialized)?;
+        admin.require_auth();
+
+        if !env
+            .storage()
+            .persistent()
+            .has(&DataKey::Provider(provider.clone()))
+        {
+            return Err(Error::ProviderNotFound);
+        }
+
+        let mut specs: Vec<Specialization> = env
+            .storage()
+            .persistent()
+            .get(&DataKey::ProviderSpecializations(provider.clone()))
+            .unwrap_or(Vec::new(&env));
+        if !specs.contains(&specialization) {
+            specs.push_back(specialization);
+            env.storage()
+                .persistent()
+                .set(&DataKey::ProviderSpecializations(provider), &specs);
+        }
+        Ok(())
+    }
+
+    /// Remove a specialization tag from a provider (admin-gated). No-op if
+    /// not present.
+    pub fn remove_provider_specialization(
+        env: Env,
+        provider: BytesN<32>,
+        specialization: Specialization,
+    ) -> Result<(), Error> {
+        let admin: Address = env
+            .storage()
+            .instance()
+            .get(&DataKey::Admin)
+            .ok_or(Error::NotInitialized)?;
+        admin.require_auth();
+
+        let specs: Vec<Specialization> = env
+            .storage()
+            .persistent()
+            .get(&DataKey::ProviderSpecializations(provider.clone()))
+            .unwrap_or(Vec::new(&env));
+
+        let mut result: Vec<Specialization> = Vec::new(&env);
+        for s in specs.iter() {
+            if s != specialization {
+                result.push_back(s);
+            }
+        }
+        env.storage()
+            .persistent()
+            .set(&DataKey::ProviderSpecializations(provider), &result);
+        Ok(())
+    }
+
+    /// Fetch a provider's specialization tags.
+    pub fn get_provider_specializations(env: Env, provider: BytesN<32>) -> Vec<Specialization> {
+        env.storage()
+            .persistent()
+            .get(&DataKey::ProviderSpecializations(provider))
+            .unwrap_or(Vec::new(&env))
+    }
+
+    /// Query all registered providers tagged with a given specialization.
+    pub fn get_providers_by_specialization(
+        env: Env,
+        specialization: Specialization,
+    ) -> Vec<BytesN<32>> {
+        let providers: Vec<BytesN<32>> = env
+            .storage()
+            .persistent()
+            .get(&DataKey::ProviderList)
+            .unwrap_or(Vec::new(&env));
+
+        let mut result: Vec<BytesN<32>> = Vec::new(&env);
+        for provider in providers.iter() {
+            let specs: Vec<Specialization> = env
+                .storage()
+                .persistent()
+                .get(&DataKey::ProviderSpecializations(provider.clone()))
+                .unwrap_or(Vec::new(&env));
+            if specs.contains(&specialization) {
+                result.push_back(provider);
+            }
+        }
+        result
+    }
+
+    // -----------------------------------------------------------------------
+    // #195 – Provider blacklist / whitelist
+    // -----------------------------------------------------------------------
+
+    /// Blacklist a provider with a reason code (admin-gated). Blacklisted
+    /// providers fail authorization checks until whitelisted again.
+    pub fn blacklist_provider(
+        env: Env,
+        provider: BytesN<32>,
+        reason_code: u32,
+    ) -> Result<(), Error> {
+        let admin: Address = env
+            .storage()
+            .instance()
+            .get(&DataKey::Admin)
+            .ok_or(Error::NotInitialized)?;
+        admin.require_auth();
+
+        let entry = BlacklistEntry {
+            reason_code,
+            blacklisted_at: env.ledger().timestamp(),
+        };
+        env.storage()
+            .persistent()
+            .set(&DataKey::ProviderBlacklist(provider.clone()), &entry);
+
+        env.events().publish(
+            (Symbol::new(&env, "provider_blacklisted"),),
+            (provider, reason_code),
+        );
+        Ok(())
+    }
+
+    /// Remove a provider from the blacklist (admin-gated).
+    pub fn whitelist_provider(env: Env, provider: BytesN<32>) -> Result<(), Error> {
+        let admin: Address = env
+            .storage()
+            .instance()
+            .get(&DataKey::Admin)
+            .ok_or(Error::NotInitialized)?;
+        admin.require_auth();
+
+        if !env
+            .storage()
+            .persistent()
+            .has(&DataKey::ProviderBlacklist(provider.clone()))
+        {
+            return Err(Error::NotBlacklisted);
+        }
+
+        env.storage()
+            .persistent()
+            .remove(&DataKey::ProviderBlacklist(provider.clone()));
+
+        env.events()
+            .publish((Symbol::new(&env, "provider_whitelisted"),), provider);
+        Ok(())
+    }
+
+    /// Returns true if the provider is currently blacklisted.
+    pub fn is_blacklisted(env: Env, provider: BytesN<32>) -> bool {
+        env.storage()
+            .persistent()
+            .has(&DataKey::ProviderBlacklist(provider))
+    }
+
+    /// Fetch the blacklist entry (reason code + timestamp) for a provider,
+    /// if any.
+    pub fn get_blacklist_entry(env: Env, provider: BytesN<32>) -> Result<BlacklistEntry, Error> {
+        env.storage()
+            .persistent()
+            .get(&DataKey::ProviderBlacklist(provider))
+            .ok_or(Error::NotBlacklisted)
+    }
+
+    /// Authorization check combining registration and blacklist status.
+    /// Registered-but-blacklisted providers are not authorized.
+    pub fn is_provider_authorized(env: Env, provider: BytesN<32>) -> Result<bool, Error> {
+        let registered = env
+            .storage()
+            .persistent()
+            .get(&DataKey::Provider(provider.clone()))
+            .unwrap_or(false);
+
+        if !registered {
+            return Ok(false);
+        }
+
+        if env
+            .storage()
+            .persistent()
+            .has(&DataKey::ProviderBlacklist(provider))
+        {
+            return Err(Error::ProviderBlacklisted);
+        }
+
+        Ok(true)
     }
 
     // -----------------------------------------------------------------------
@@ -1100,7 +1568,11 @@ impl RegistryContract {
         admin.require_auth();
 
         // The TEE hash must already be registered.
-        if !env.storage().persistent().has(&DataKey::TeeHash(code_hash.clone())) {
+        if !env
+            .storage()
+            .persistent()
+            .has(&DataKey::TeeHash(code_hash.clone()))
+        {
             return Err(Error::TeeHashNotFound);
         }
 
@@ -1158,7 +1630,7 @@ impl RegistryContract {
             .get(&DataKey::TeeHashCertRef(code_hash))
         {
             Some(c) => c,
-            None    => return Ok(false), // no cert attached → pass
+            None => return Ok(false), // no cert attached → pass
         };
 
         let now = env.ledger().timestamp();
@@ -1439,8 +1911,8 @@ mod tests {
         let h = hash32(&env);
         client.add_tee_hash(&h);
 
-        let issuer      = String::from_str(&env, "ACME CA");
-        let valid_from  = 1_000_000u64;
+        let issuer = String::from_str(&env, "ACME CA");
+        let valid_from = 1_000_000u64;
         let valid_until = 9_999_999u64;
         client
             .attach_cert_ref(&h, &issuer, &valid_from, &valid_until, &None)
@@ -1479,13 +1951,7 @@ mod tests {
         let (env, _admin, client) = setup();
         let h = hash32_with_value(&env, 99);
         let err = client
-            .try_attach_cert_ref(
-                &h,
-                &String::from_str(&env, "CA"),
-                &1000u64,
-                &5000u64,
-                &None,
-            )
+            .try_attach_cert_ref(&h, &String::from_str(&env, "CA"), &1000u64, &5000u64, &None)
             .unwrap_err()
             .unwrap();
         assert_eq!(err, Error::TeeHashNotFound);
@@ -1498,13 +1964,7 @@ mod tests {
         client.add_tee_hash(&h);
         // valid_until == valid_from → InvalidThreshold
         let err = client
-            .try_attach_cert_ref(
-                &h,
-                &String::from_str(&env, "CA"),
-                &5000u64,
-                &5000u64,
-                &None,
-            )
+            .try_attach_cert_ref(&h, &String::from_str(&env, "CA"), &5000u64, &5000u64, &None)
             .unwrap_err()
             .unwrap();
         assert_eq!(err, Error::InvalidThreshold);
@@ -1540,7 +2000,13 @@ mod tests {
         client.add_tee_hash(&h);
         // Ledger timestamp defaults to 0 in tests; expiry far in the future.
         client
-            .attach_cert_ref(&h, &String::from_str(&env, "CA"), &0u64, &99_999_999u64, &None)
+            .attach_cert_ref(
+                &h,
+                &String::from_str(&env, "CA"),
+                &0u64,
+                &99_999_999u64,
+                &None,
+            )
             .unwrap();
         let result = client.validate_cert_expiration(&h).unwrap();
         assert!(result);
