@@ -3,6 +3,7 @@ import { WalletProvider } from "@/context/WalletContext";
 import { ToastProvider } from "@/components/ToastProvider";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { WizardProvider } from "@/app/context/WizardContext";
+import { NotificationProvider } from "@/components/notifications";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 
@@ -22,9 +23,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={`${GeistSans.variable} ${GeistMono.variable} font-sans`}>
         <ThemeProvider>
           <WalletProvider>
-            <WizardProvider>
-              <ToastProvider>{children}</ToastProvider>
-            </WizardProvider>
+            <NotificationProvider>
+              <WizardProvider>
+                <ToastProvider>{children}</ToastProvider>
+              </WizardProvider>
+            </NotificationProvider>
           </WalletProvider>
         </ThemeProvider>
       </body>
