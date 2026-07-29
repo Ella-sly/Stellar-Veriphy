@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useWallet } from "@/context/WalletContext";
+import { NotificationBell } from "@/components/notifications";
 import { walletService } from "@/services/wallet";
 
 export function Header() {
@@ -54,6 +55,7 @@ export function Header() {
 
           {/* Right Section */}
           <div className="hidden md:flex items-center gap-4">
+            <NotificationBell />
             <button
               onClick={handleWalletClick}
               className="px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-medium transition-all"
