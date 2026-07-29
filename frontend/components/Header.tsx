@@ -53,12 +53,12 @@ export function Header() {
         const lastElement = focusableElements[focusableElements.length - 1];
 
         if (event.shiftKey) {
-          if (document.activeElement === firstElement) {
+          if (document.activeElement === firstElement && lastElement) {
             event.preventDefault();
             lastElement.focus();
           }
         } else {
-          if (document.activeElement === lastElement) {
+          if (document.activeElement === lastElement && firstElement) {
             event.preventDefault();
             firstElement.focus();
           }
