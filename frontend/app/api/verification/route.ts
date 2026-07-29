@@ -17,7 +17,7 @@ function resolveAddressForRateLimit(
 
   const forwardedFor = request.headers.get("x-forwarded-for");
   if (forwardedFor && forwardedFor.trim()) {
-    return forwardedFor.split(",")[0].trim();
+    return forwardedFor.split(",")[0]!.trim();
   }
 
   return "anonymous";

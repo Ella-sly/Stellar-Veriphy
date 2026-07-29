@@ -11,13 +11,13 @@ const SUPPORTED_ALGORITHMS = [
 
 type SupportedAlgorithm = (typeof SUPPORTED_ALGORITHMS)[number]["value"];
 
-function base64ToBytes(value: string): Uint8Array {
+function base64ToBytes(value: string): Uint8Array<ArrayBuffer> {
   const normalized = value.replace(/\s+/g, "");
   const binary = atob(normalized);
   return Uint8Array.from(binary, (char) => char.charCodeAt(0));
 }
 
-function hexToBytes(value: string): Uint8Array {
+function hexToBytes(value: string): Uint8Array<ArrayBuffer> {
   const normalized = value.replace(/\s+/g, "");
   if (normalized.length % 2 !== 0) {
     throw new Error("Hex signatures must contain an even number of characters.");
@@ -30,7 +30,7 @@ function hexToBytes(value: string): Uint8Array {
   return bytes;
 }
 
-function decodeSignatureInput(value: string): Uint8Array {
+function decodeSignatureInput(value: string): Uint8Array<ArrayBuffer> {
   const normalized = value.trim().replace(/\s+/g, "");
   if (!normalized) {
     throw new Error("Signature input is required.");
@@ -43,7 +43,7 @@ function decodeSignatureInput(value: string): Uint8Array {
   return base64ToBytes(normalized);
 }
 
-function parsePublicKeyInput(value: string): Uint8Array {
+function parsePublicKeyInput(value: string): Uint8Array<ArrayBuffer> {
   const normalized = value.trim();
   if (!normalized) {
     throw new Error("Public key input is required.");
@@ -54,7 +54,7 @@ function parsePublicKeyInput(value: string): Uint8Array {
   );
 
   if (pemMatch) {
-    return base64ToBytes(pemMatch[2].replace(/\s+/g, ""));
+    return base64ToBytes(pemMatch[2]!.replace(/\s+/g, ""));
   }
 
   if (/^[0-9a-fA-F]+$/.test(normalized.replace(/\s+/g, ""))) {
