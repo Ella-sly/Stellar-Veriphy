@@ -1,0 +1,114 @@
+"use client";
+
+/**
+ * Tools index page — links to all standalone tools:
+ * - Issue #216: Advanced Manifest Editor
+ * - Issue #217: Content Hash Calculator
+ * - Issue #218: Certificate Embedding Widget
+ * - Issue #219: API Key Management
+ */
+
+import Link from "next/link";
+import { Header } from "@/components/Header";
+
+interface ToolCard {
+  title: string;
+  description: string;
+  href: string;
+  icon: string;
+  badge: string;
+  badgeColor: string;
+}
+
+const tools: ToolCard[] = [
+  {
+    title: "Advanced Manifest Editor",
+    description:
+      "Rich manifest editor with real-time JSON schema validation, field-type enforcement, required-field indicators, auto-complete, and schema version selection.",
+    href: "/tools/manifest-editor",
+    icon: "📝",
+    badge: "#216",
+    badgeColor: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300",
+  },
+  {
+    title: "Content Hash Calculator",
+    description:
+      "Calculate SHA-256 and SHA-512 hashes for your files locally in the browser. Supports large files with chunking and progress tracking, plus hash comparison.",
+    href: "/tools/hash-calculator",
+    icon: "🔐",
+    badge: "#217",
+    badgeColor:
+      "bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300",
+  },
+  {
+    title: "Certificate Embedding Widget",
+    description:
+      "Embeddable JavaScript widget to display verification badges on external websites. Multiple styles, customizable colors, and responsive design.",
+    href: "/widget-demo.html",
+    icon: "🏅",
+    badge: "#218",
+    badgeColor:
+      "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300",
+  },
+  {
+    title: "API Key Management",
+    description:
+      "Generate and manage API keys for programmatic access to verification services. Includes scope management, rate limiting, usage analytics, and expiration dates.",
+    href: "/tools/api-keys",
+    icon: "🔑",
+    badge: "#219",
+    badgeColor:
+      "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",
+  },
+];
+
+export default function ToolsPage() {
+  return (
+    <main className="min-h-screen bg-white dark:bg-gray-950">
+      <Header />
+      <div className="max-w-6xl mx-auto px-6 py-12">
+        <div className="mb-10">
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-3">
+            Developer Tools
+          </h1>
+          <p className="text-lg text-gray-600 dark:text-gray-400">
+            Standalone utilities to help you build, verify, and integrate with
+            StellarVeriphy.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {tools.map((tool) => (
+            <Link
+              key={tool.href}
+              href={tool.href}
+              className="group p-6 bg-white dark:bg-gray-900 border-2 border-gray-200 dark:border-gray-800 rounded-xl hover:border-blue-500 dark:hover:border-blue-500 transition-all shadow-sm hover:shadow-md"
+            >
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0 text-4xl">{tool.icon}</div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-2">
+                    <h2 className="text-lg font-bold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                      {tool.title}
+                    </h2>
+                    <span
+                      className={`px-2 py-0.5 rounded-full text-xs font-semibold ${tool.badgeColor}`}
+                    >
+                      {tool.badge}
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                    {tool.description}
+                  </p>
+                  <span className="mt-3 inline-flex items-center text-sm text-blue-600 dark:text-blue-400 font-medium group-hover:gap-2 transition-all">
+                    Open tool →
+                  </span>
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </main>
+  );
+}

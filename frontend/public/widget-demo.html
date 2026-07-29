@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>StellarVeriphy Widget Demo — Issue #218</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: #1f2937;
+        padding: 40px 20px;
+        min-height: 100vh;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      h1 {
+        text-align: center;
+        color: #ffffff;
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        font-weight: 800;
+      }
+
+      .subtitle {
+        text-align: center;
+        color: #e0e7ff;
+        font-size: 1.25rem;
+        margin-bottom: 3rem;
+      }
+
+      .demo-section {
+        background: #ffffff;
+        border-radius: 16px;
+        padding: 32px;
+        margin-bottom: 32px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      }
+
+      h2 {
+        font-size: 1.75rem;
+        margin-bottom: 1rem;
+        color: #1f2937;
+      }
+
+      p {
+        color: #6b7280;
+        line-height: 1.6;
+        margin-bottom: 1.5rem;
+      }
+
+      .widget-demo {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 32px;
+        background: #f9fafb;
+        border-radius: 12px;
+        margin-bottom: 24px;
+        min-height: 150px;
+      }
+
+      .code-block {
+        background: #1f2937;
+        color: #10b981;
+        padding: 20px;
+        border-radius: 8px;
+        overflow-x: auto;
+        font-family: "Courier New", monospace;
+        font-size: 0.875rem;
+        line-height: 1.6;
+      }
+
+      .code-block .comment {
+        color: #9ca3af;
+      }
+
+      .code-block .tag {
+        color: #60a5fa;
+      }
+
+      .code-block .attr {
+        color: #fbbf24;
+      }
+
+      .code-block .string {
+        color: #34d399;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 24px;
+        margin-bottom: 24px;
+      }
+
+      .style-card {
+        background: #f9fafb;
+        border: 2px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 24px;
+        text-align: center;
+      }
+
+      .style-card h3 {
+        font-size: 1.125rem;
+        margin-bottom: 0.5rem;
+        color: #1f2937;
+      }
+
+      .style-card p {
+        font-size: 0.875rem;
+        color: #6b7280;
+        margin-bottom: 1.5rem;
+      }
+
+      footer {
+        text-align: center;
+        color: #e0e7ff;
+        margin-top: 48px;
+        padding-top: 24px;
+        border-top: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      footer a {
+        color: #ffffff;
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>⭐ StellarVeriphy Widget</h1>
+      <p class="subtitle">
+        Embeddable verification badges for your website — Issue #218
+      </p>
+
+      <!-- Minimal Style -->
+      <div class="demo-section">
+        <h2>Minimal Badge</h2>
+        <p>
+          Compact badge with verified checkmark. Perfect for sidebars and
+          footers.
+        </p>
+        <div class="widget-demo">
+          <div
+            data-sv-cert-id="123"
+            data-sv-style="minimal"
+            data-sv-size="medium"
+          ></div>
+        </div>
+        <div class="code-block">
+          <span class="comment"
+            >&lt;!-- Add this to your HTML --&gt;</span
+          ><br />
+          <span class="tag">&lt;div</span>
+          <span class="attr">data-sv-cert-id</span>=<span class="string"
+            >"123"</span
+          >
+          <span class="attr">data-sv-style</span>=<span class="string"
+            >"minimal"</span
+          >
+          <span class="attr">data-sv-size</span>=<span class="string"
+            >"medium"</span
+          ><span class="tag">&gt;&lt;/div&gt;</span>
+        </div>
+      </div>
+
+      <!-- Standard Style -->
+      <div class="demo-section">
+        <h2>Standard Badge</h2>
+        <p>
+          Full-featured badge with gradient background and certificate number.
+        </p>
+        <div class="widget-demo">
+          <div
+            data-sv-cert-id="456"
+            data-sv-style="standard"
+            data-sv-size="medium"
+          ></div>
+        </div>
+        <div class="code-block">
+          <span class="tag">&lt;div</span>
+          <span class="attr">data-sv-cert-id</span>=<span class="string"
+            >"456"</span
+          >
+          <span class="attr">data-sv-style</span>=<span class="string"
+            >"standard"</span
+          >
+          <span class="attr">data-sv-size</span>=<span class="string"
+            >"large"</span
+          ><span class="tag">&gt;&lt;/div&gt;</span>
+        </div>
+      </div>
+
+      <!-- Detailed Style -->
+      <div class="demo-section">
+        <h2>Detailed Badge</h2>
+        <p>
+          Rich information card showing certificate details, creator, and
+          certification date.
+        </p>
+        <div class="widget-demo">
+          <div
+            data-sv-cert-id="789"
+            data-sv-style="detailed"
+            data-sv-size="medium"
+          ></div>
+        </div>
+        <div class="code-block">
+          <span class="tag">&lt;div</span>
+          <span class="attr">data-sv-cert-id</span>=<span class="string"
+            >"789"</span
+          >
+          <span class="attr">data-sv-style</span>=<span class="string"
+            >"detailed"</span
+          ><span class="tag">&gt;&lt;/div&gt;</span>
+        </div>
+      </div>
+
+      <!-- Shield Style -->
+      <div class="demo-section">
+        <h2>Shield Badge</h2>
+        <p>
+          Eye-catching shield icon badge — ideal for hero sections and prominent
+          placements.
+        </p>
+        <div class="widget-demo">
+          <div
+            data-sv-cert-id="101112"
+            data-sv-style="shield"
+            data-sv-size="large"
+          ></div>
+        </div>
+        <div class="code-block">
+          <span class="tag">&lt;div</span>
+          <span class="attr">data-sv-cert-id</span>=<span class="string"
+            >"101112"</span
+          >
+          <span class="attr">data-sv-style</span>=<span class="string"
+            >"shield"</span
+          ><span class="tag">&gt;&lt;/div&gt;</span>
+        </div>
+      </div>
+
+      <!-- All Styles Grid -->
+      <div class="demo-section">
+        <h2>All Badge Styles</h2>
+        <p>Compare all available badge styles side-by-side.</p>
+        <div class="grid">
+          <div class="style-card">
+            <h3>Minimal</h3>
+            <p>Small, inline badge</p>
+            <div data-sv-cert-id="1" data-sv-style="minimal"></div>
+          </div>
+          <div class="style-card">
+            <h3>Standard</h3>
+            <p>Full-featured</p>
+            <div data-sv-cert-id="2" data-sv-style="standard"></div>
+          </div>
+          <div class="style-card">
+            <h3>Detailed</h3>
+            <p>Information card</p>
+            <div data-sv-cert-id="3" data-sv-style="detailed"></div>
+          </div>
+          <div class="style-card">
+            <h3>Shield</h3>
+            <p>Large icon badge</p>
+            <div data-sv-cert-id="4" data-sv-style="shield"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Custom Colors -->
+      <div class="demo-section">
+        <h2>Custom Colors</h2>
+        <p>
+          Customize badge colors to match your brand using
+          <code>data-sv-primary-color</code> and
+          <code>data-sv-text-color</code> attributes.
+        </p>
+        <div class="widget-demo">
+          <div
+            data-sv-cert-id="999"
+            data-sv-style="standard"
+            data-sv-primary-color="#10b981"
+            data-sv-text-color="#ffffff"
+          ></div>
+        </div>
+        <div class="code-block">
+          <span class="tag">&lt;div</span>
+          <span class="attr">data-sv-cert-id</span>=<span class="string"
+            >"999"</span
+          >
+          <span class="attr">data-sv-style</span>=<span class="string"
+            >"standard"</span
+          ><br />
+          &nbsp;&nbsp;&nbsp;&nbsp;<span class="attr"
+            >data-sv-primary-color</span
+          >=<span class="string">"#10b981"</span><br />
+          &nbsp;&nbsp;&nbsp;&nbsp;<span class="attr">data-sv-text-color</span
+          >=<span class="string">"#ffffff"</span
+          ><span class="tag">&gt;&lt;/div&gt;</span>
+        </div>
+      </div>
+
+      <!-- Installation -->
+      <div class="demo-section">
+        <h2>Installation</h2>
+        <p>Add the widget script to your HTML before the closing body tag:</p>
+        <div class="code-block">
+          <span class="comment"
+            >&lt;!-- 1. Add widget elements --&gt;</span
+          ><br />
+          <span class="tag">&lt;div</span>
+          <span class="attr">data-sv-cert-id</span>=<span class="string"
+            >"YOUR_CERT_ID"</span
+          >
+          <span class="attr">data-sv-style</span>=<span class="string"
+            >"standard"</span
+          ><span class="tag">&gt;&lt;/div&gt;</span><br /><br />
+          <span class="comment"
+            >&lt;!-- 2. Load the widget script --&gt;</span
+          ><br />
+          <span class="tag">&lt;script</span>
+          <span class="attr">src</span>=<span class="string"
+            >"https://cdn.stellarveriphy.com/widget.js"</span
+          ><span class="tag">&gt;&lt;/script&gt;</span><br /><br />
+          <span class="comment">&lt;!-- 3. Initialize widgets --&gt;</span
+          ><br />
+          <span class="tag">&lt;script&gt;</span><br />
+          &nbsp;&nbsp;StellarVeriphyWidget.init();<br />
+          <span class="tag">&lt;/script&gt;</span>
+        </div>
+      </div>
+
+      <footer>
+        <p>
+          Made with 💜 by
+          <a href="https://stellarveriphy.com" target="_blank"
+            >StellarVeriphy</a
+          >
+        </p>
+        <p style="margin-top: 8px; font-size: 0.875rem">
+          Widget v1.0.0 — Open source, MIT License
+        </p>
+      </footer>
+    </div>
+
+    <!-- Load the widget script -->
+    <script src="/widget.js"></script>
+  </body>
+</html>

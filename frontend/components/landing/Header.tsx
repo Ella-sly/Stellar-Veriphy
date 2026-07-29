@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 export function Header() {
   return (
     <header className="fixed top-0 w-full bg-slate-900/95 backdrop-blur border-b border-slate-700 z-50">
@@ -15,6 +17,9 @@ export function Header() {
           <a href="#ecosystem" className="text-gray-300 hover:text-white transition">
             Ecosystem
           </a>
+          <Link href="/tools" className="text-blue-400 hover:text-blue-300 transition font-medium">
+            Tools
+          </Link>
         </nav>
       </div>
     </header>
