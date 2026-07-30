@@ -11,7 +11,7 @@
 import { useState, useEffect } from "react";
 import { cn } from "@/utils/cn";
 import { copyToClipboard } from "@/utils/validation";
-import { auditLogger } from "@/lib/security/auditLogger";
+import { auditLogger, hashValue } from "@/lib/security/auditLogger";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -26,7 +26,10 @@ export type ApiKeyScope =
 export interface ApiKey {
   id: string;
   name: string;
-  key: string;
+  /** SHA-256 hash of the full key. The raw key is shown once at creation and never persisted. */
+  keyHash: string;
+  /** Short, non-secret prefix/suffix used to identify the key in the UI (e.g. "sv_AbC1...9xYz"). */
+  keyPrefix: string;
   scopes: ApiKeyScope[];
   rateLimitPerMinute: number;
   createdAt: string;
@@ -100,6 +103,10 @@ function generateRandomKey(): string {
   return result;
 }
 
+function keyPrefixOf(rawKey: string): string {
+  return `${rawKey.slice(0, 7)}...${rawKey.slice(-4)}`;
+}
+
 // ---------------------------------------------------------------------------
 // Main component
 // ---------------------------------------------------------------------------
@@ -128,7 +135,7 @@ export function APIKeyManagement({ userAddress, className }: ApiKeyManagementPro
     saveKeys(userAddress, updated);
   };
 
-  const handleCreateKey = () => {
+  const handleCreateKey = async () => {
     if (!newKeyName.trim()) {
       alert("Please provide a key name.");
       return;
@@ -145,10 +152,13 @@ export function APIKeyManagement({ userAddress, className }: ApiKeyManagementPro
           now.getTime() + newKeyExpiration * 24 * 60 * 60 * 1000
         ).toISOString();
 
+    const rawKey = generateRandomKey();
+
     const newKey: ApiKey = {
       id: `key_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
       name: newKeyName.trim(),
-      key: generateRandomKey(),
+      keyHash: await hashValue(rawKey),
+      keyPrefix: keyPrefixOf(rawKey),
       scopes: Array.from(newKeyScopes),
       rateLimitPerMinute: newKeyRateLimit,
       createdAt: now.toISOString(),
@@ -168,8 +178,9 @@ export function APIKeyManagement({ userAddress, className }: ApiKeyManagementPro
       details: `Key "${newKey.name}" (${newKey.id}) with scopes: ${newKey.scopes.join(", ")}`,
     });
 
-    // Reveal the newly generated key
-    setRevealedKey(newKey.key);
+    // Reveal the newly generated raw key once. It is never persisted —
+    // only its hash and a short display prefix are stored (see keyHash/keyPrefix).
+    setRevealedKey(rawKey);
 
     // Reset form
     setNewKeyName("");
@@ -459,8 +470,8 @@ export function APIKeyManagement({ userAddress, className }: ApiKeyManagementPro
                     <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
                       {key.name}
                     </h4>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      ID: {key.id}
+                    <p className="text-xs text-gray-500 dark:text-gray-400 font-mono">
+                      {key.keyPrefix}
                     </p>
                   </div>
                   <div className="flex gap-2">

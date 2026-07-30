@@ -11,6 +11,7 @@ import { TutorialOverlay } from "@/components/ui/TutorialOverlay";
 import { ScrollToTop } from "@/components/ui/ScrollToTop";
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 import { PWAUpdatePrompt } from "@/components/PWAUpdatePrompt";
+import { ConsentBanner } from "@/components/ConsentBanner";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import { SkipToContentLink } from "@/utils/accessibility";
@@ -61,6 +62,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                       <TutorialOverlay />
                       <PWAInstallPrompt />
                       <PWAUpdatePrompt />
+                      <ConsentBanner />
                     </ToastProvider>
                   </KeyboardShortcutsProvider>
                 </HelpProvider>
