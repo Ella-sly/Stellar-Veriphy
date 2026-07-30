@@ -93,7 +93,7 @@ export default function TransactionsPage() {
         try {
             const result = await fetchTransactionHistory(
                 publicKey,
-                { ...filters, searchQuery: searchQuery || undefined },
+                { ...filters, ...(searchQuery ? { searchQuery } : {}) },
                 { page: currentPage, limit: itemsPerPage }
             );
 

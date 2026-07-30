@@ -47,7 +47,7 @@ export default function OfflinePage() {
 
                 {/* Title */}
                 <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-3">
-                    You're Offline
+                    You&apos;re Offline
                 </h1>
 
                 {/* Description */}
@@ -96,7 +96,7 @@ export default function OfflinePage() {
                 {/* Cached Pages Info */}
                 <div className="mt-12 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
                     <p className="text-sm text-blue-800 dark:text-blue-200">
-                        <strong>Tip:</strong> Some pages you've visited may still be available
+                        <strong>Tip:</strong> Some pages you&apos;ve visited may still be available
                         offline. Try navigating using the menu.
                     </p>
                 </div>
