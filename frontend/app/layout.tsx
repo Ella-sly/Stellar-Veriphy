@@ -9,6 +9,8 @@ import { KeyboardShortcutsProvider } from "@/components/KeyboardShortcutsProvide
 import { HelpSearchOverlay } from "@/components/ui/HelpSearchOverlay";
 import { TutorialOverlay } from "@/components/ui/TutorialOverlay";
 import { ScrollToTop } from "@/components/ui/ScrollToTop";
+import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
+import { PWAUpdatePrompt } from "@/components/PWAUpdatePrompt";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import { SkipToContentLink } from "@/utils/accessibility";
@@ -19,9 +21,17 @@ export const metadata: Metadata = {
   description: "Decentralized content verification on the Stellar blockchain",
   viewport: "width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover",
   robots: "index, follow",
-  themeColor: "#000000",
+  themeColor: "#3b82f6",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "StellarVeriphy",
+  },
   other: {
     "darkreader-lock": "true",
+    "mobile-web-app-capable": "yes",
+    "apple-mobile-web-app-capable": "yes",
   },
 };
 
@@ -49,6 +59,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                       <ScrollToTop />
                       <HelpSearchOverlay />
                       <TutorialOverlay />
+                      <PWAInstallPrompt />
+                      <PWAUpdatePrompt />
                     </ToastProvider>
                   </KeyboardShortcutsProvider>
                 </HelpProvider>
