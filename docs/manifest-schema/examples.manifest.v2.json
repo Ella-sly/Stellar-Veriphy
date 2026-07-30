@@ -1,0 +1,16 @@
+{
+  "schemaVersion": "2.0.0",
+  "contentHash": "b5f7a2f1b4c97890a1c3e5f709ab34567890abcdef1234567890abcdef123457",
+  "creator": "GDRXE2BQUC3AZNPVFSCEZ76DV3LW64R3Q5JMB6G3ZP4U7OV6GCFYXFGH",
+  "timestamp": "2026-07-29T20:50:00Z",
+  "metadata": {
+    "device": "Sony A7 IV",
+    "location": "Abuja, NG",
+    "aiModel": "Stable Diffusion XL 1.0"
+  },
+  "media": {
+    "fileName": "product-shot-001.png",
+    "fileType": "image/png",
+    "fileSizeBytes": 5421179
+  }
+}

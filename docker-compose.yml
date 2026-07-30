@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  # ============================================================================
+  # Stellar-Veriphy Application
+  # ============================================================================
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: stellarveriphy-app
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_NETWORK=testnet
+      - NEXT_PUBLIC_TESTNET_RPC_URL=https://soroban-testnet.stellar.org
+      - NEXT_PUBLIC_MAINNET_RPC_URL=https://mainnet.stellar.validationcloud.io/v1/soroban/rpc
+      - NEXT_PUBLIC_FUTURENET_RPC_URL=https://rpc-futurenet.stellar.org
+    volumes:
+      # Mount contracts for easy access
+      - ./contracts:/app/contracts:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - stellarveriphy-network
+
+  # ============================================================================
+  # Development Service (with hot reload)
+  # ============================================================================
+  dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+      target: development
+    container_name: stellarveriphy-dev
+    ports:
+      - "3001:3000"
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_NETWORK=testnet
+      - NEXT_PUBLIC_TESTNET_RPC_URL=https://soroban-testnet.stellar.org
+    volumes:
+      # Mount source code for hot reload
+      - ./frontend:/app/frontend
+      - ./packages:/app/packages
+      - ./contracts:/app/contracts
+      # Exclude node_modules
+      - /app/node_modules
+      - /app/frontend/node_modules
+    command: pnpm dev:frontend
+    networks:
+      - stellarveriphy-network
+    profiles:
+      - dev
+
+networks:
+  stellarveriphy-network:
+    driver: bridge

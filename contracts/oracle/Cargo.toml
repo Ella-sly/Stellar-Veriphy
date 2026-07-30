@@ -4,7 +4,11 @@ version = "0.1.0"
 edition = "2021"
 
 [lib]
-crate-type = ["cdylib"]
+crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-soroban-sdk = { version = "21.0.0", features = ["alloc"] }
+soroban-sdk = { version = "21.7.7", features = ["alloc"] }
+
+[dev-dependencies]
+soroban-sdk = { version = "21.7.7", features = ["alloc", "testutils"] }
+ed25519-dalek = { version = "2.1.1", features = ["rand_core"] }
