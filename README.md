@@ -91,11 +91,17 @@ StellarVeriphy/
 │       ├── src/lib.rs
 │       └── Cargo.toml
 │
-└── packages/
-    └── shared/                   # Shared types and utilities
-        ├── types/index.ts
-        ├── utils/hash.ts
-        └── package.json
+├── packages/
+│   └── shared/                   # Shared types and utilities
+│       ├── types/index.ts
+│       ├── utils/hash.ts
+│       └── package.json
+│
+└── docs/                         # Documentation (onboarding, deployment, user guide, ADRs)
+    ├── onboarding.md
+    ├── deployment.md
+    ├── user-guide.md
+    └── adr/
 ```
 
 ---
@@ -211,6 +217,8 @@ stellar contract deploy \
   --network testnet
 ```
 
+For network setup, initialization, verification, and rollback, see the full [Contract Deployment Process](docs/deployment.md).
+
 ---
 
 ## 🌍 Use Cases
@@ -238,7 +246,18 @@ stellar contract deploy \
 
 ---
 
+## 📚 Documentation
+
+| Guide | Covers |
+|---|---|
+| [Developer Onboarding Guide](docs/onboarding.md) | Environment setup, dependency install, local dev workflow, testing, code style, contribution process, common issues |
+| [Contract Deployment Process](docs/deployment.md) | Deploying `oracle`, `provenance`, and `registry` — network config, initialization, verification, rollback |
+| [User Guide and Tutorials](docs/user-guide.md) | Using StellarVeriphy — what works today vs. the target verification/certificate workflow, troubleshooting, FAQ |
+| [Architecture Decision Records](docs/adr/README.md) | Why the system is built the way it is — Soroban, the monorepo layout, the TEE trust model, storage abstraction |
+
 ## 🤝 Contributing
+
+See the [Developer Onboarding Guide](docs/onboarding.md) for full setup and contribution details. Short version:
 
 1. Fork the repository.
 2. Create a feature branch: `git checkout -b feature/my-feature`
