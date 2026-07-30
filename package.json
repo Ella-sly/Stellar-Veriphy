@@ -7,6 +7,10 @@
     "build:frontend": "pnpm --filter frontend build",
     "build:contracts": "cd contracts/oracle && stellar contract build && cd ../provenance && stellar contract build && cd ../registry && stellar contract build",
     "check:frontend": "pnpm --filter frontend lint",
+    "typecheck": "pnpm -r --if-present run typecheck",
+    "test": "pnpm -r --if-present run test",
+    "test:coverage": "pnpm -r --if-present run test:coverage",
+    "test:mutation": "pnpm --filter @stellarveriphy/shared run test:mutation",
     "prepare": "husky"
   },
   "keywords": [
