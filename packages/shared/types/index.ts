@@ -26,7 +26,6 @@ export interface ProvenanceCert {
 
 export type VerificationStatus = "pending" | "processing" | "certified" | "failed";
 
-<<<<<<< HEAD
 // ---------------------------------------------------------------------------
 // Verification mode
 // ---------------------------------------------------------------------------

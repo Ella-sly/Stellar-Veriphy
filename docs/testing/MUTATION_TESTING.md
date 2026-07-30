@@ -11,11 +11,12 @@ test ("killed") means the suite is doing its job.
 
 Mutation testing currently covers `packages/shared` — the pure, dependency-free
 logic (`utils/hash.ts`, `factories/index.ts`) that the rest of the monorepo
-builds on. It is not yet wired up for the frontend's Next.js route handlers or
-the Rust contracts:
+builds on. It is not yet wired up for the frontend or the Rust contracts:
 
-- The frontend routes are mostly I/O glue around this shared logic; Stryker's
-  vitest runner doesn't need to mutate them for the suite to be meaningful yet.
+- The frontend test suite runs on Jest, not Vitest; extending Stryker there
+  would use `@stryker-mutator/jest-runner` instead of the vitest-runner used
+  here, as a separate config (frontend code and test conventions are owned by
+  a different set of contributors than this change).
 - Rust mutation testing would use a separate tool ([`cargo-mutants`](https://mutants.rs/))
   and is tracked as follow-up work, not part of this setup.
 
@@ -48,6 +49,10 @@ As of this setup, a full run reports:
 | `utils/hash.ts`               | 100%           |
 | `factories/index.ts`          | 40%            |
 | **Overall (`packages/shared`)** | **~42%**     |
+
+(Re-run `pnpm run test:mutation` for the exact current number — it moves
+slightly as factories are added or adjusted; 40–42% has been stable across
+the factory additions made in this change.)
 
 `hash.ts` is fully covered because it's pure and small. The surviving mutants
 in `factories/index.ts` are mostly in the randomized fields the factories

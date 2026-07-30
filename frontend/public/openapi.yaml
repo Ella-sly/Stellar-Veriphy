@@ -16,7 +16,9 @@ tags:
   - name: Health
     description: Service health checks
   - name: Verification
-    description: Submit content manifests for verification and check job status
+    description: Submit a content manifest for verification
+  - name: Security
+    description: Browser-reported security events
 
 paths:
   /health:
@@ -35,81 +37,118 @@ paths:
                 status: ok
                 service: stellarveriphy
 
-  /verify/submit:
+  /verification:
     post:
       operationId: submitVerification
       tags: [Verification]
-      summary: Submit a content manifest for verification
+      summary: Submit a verification request
       description: >
-        Accepts a content manifest and enqueues it for verification. Returns
-        immediately with a job id and `pending` status; poll
-        `GET /verify/status/{jobId}` for updates.
+        Validates and rate-limits an incoming verification request. Rate
+        limiting is keyed by `address` (falling back to the
+        `x-wallet-address` header, then `x-forwarded-for`, then
+        `"anonymous"`) with an exponential backoff on repeated violations.
+        Every response carries `X-RateLimit-*` headers; a 429 additionally
+        carries `Retry-After`.
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/SubmitVerificationRequest"
+              $ref: "#/components/schemas/VerificationRequestPayload"
             example:
+              address: "GABCD1234EXAMPLE5678STELLARPUBLICKEY0000000000000000000"
+              contentHash: "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"
+              fileName: "artwork.png"
+              fileType: "image/png"
+              fileSizeBytes: 204800
               manifest:
                 contentHash: "sha256:9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"
-                creator: "GABCD1234EXAMPLE5678STELLARPUBLICKEY000000000000000000"
+                creator: "GABCD1234EXAMPLE5678STELLARPUBLICKEY0000000000000000000"
                 timestamp: "2026-07-29T12:00:00Z"
-                metadata:
-                  device: "Camera Model X"
-                  aiModel: "None"
       responses:
         "202":
-          description: The verification job was accepted and is pending.
+          description: The request passed validation and was accepted for processing.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/SubmitVerificationResponse"
               example:
-                id: "6f2b4b0e-9a3e-4b8a-9a0a-2f7e4c1d9b10"
-                status: pending
+                success: true
+                data:
+                  accepted: true
+                  message: "Verification request accepted for processing."
+                  request:
+                    address: "GABCD1234EXAMPLE5678STELLARPUBLICKEY0000000000000000000"
+                    contentHash: "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"
+                    fileName: "artwork.png"
+                    fileType: "image/png"
+                    fileSizeBytes: 204800
+                    manifest: {}
         "400":
-          description: The request body was malformed or the manifest was invalid.
+          description: Malformed JSON, or the payload failed validation.
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
               examples:
-                invalidJson:
-                  value: { error: invalid_json, message: "Request body must be valid JSON." }
-                invalidManifest:
+                malformedJson:
+                  value: { success: false, error: "Malformed JSON payload." }
+                validationFailed:
                   value:
-                    error: invalid_manifest
-                    message: "manifest.contentHash, manifest.creator and manifest.timestamp are required strings."
+                    success: false
+                    error: "Request validation failed."
+                    details:
+                      - "address must be a valid Stellar public key."
+                      - "contentHash must be a valid SHA-256 hex string."
+        "429":
+          description: Rate limit exceeded for this address.
+          headers:
+            Retry-After:
+              schema: { type: integer }
+              description: Seconds until the caller may retry.
+            X-RateLimit-Limit: { schema: { type: integer } }
+            X-RateLimit-Remaining: { schema: { type: integer } }
+            X-RateLimit-Reset: { schema: { type: integer }, description: Unix seconds when the window resets. }
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RateLimitErrorResponse"
+              example:
+                success: false
+                error: "Rate limit exceeded. Please retry after the backoff period."
+                retryAfterSeconds: 5
 
-  /verify/status/{jobId}:
-    get:
-      operationId: getVerificationStatus
-      tags: [Verification]
-      summary: Get the status of a verification job
-      parameters:
-        - name: jobId
-          in: path
-          required: true
-          schema:
-            type: string
-          description: The job id returned by `POST /verify/submit`.
+  /csp-report:
+    post:
+      operationId: reportCsp
+      tags: [Security]
+      summary: Receive a browser Content-Security-Policy violation report
+      description: >
+        Endpoint configured as the CSP `report-uri`/`report-to` target;
+        browsers POST a violation report here automatically. Not intended to
+        be called directly by API consumers.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Browser-generated CSP report (shape varies by browser).
       responses:
         "200":
-          description: The verification job.
+          description: Report accepted (logged server-side).
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/VerificationRequest"
-        "404":
-          description: No job exists with the given id.
+                type: object
+                properties: { received: { type: boolean, enum: [true] } }
+        "400":
+          description: The report body could not be parsed.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ErrorResponse"
-              example:
-                error: not_found
-                message: "No verification job with id unknown."
+                type: object
+                properties: { received: { type: boolean, enum: [false] } }
 
 components:
   schemas:
@@ -123,77 +162,66 @@ components:
         service:
           type: string
 
-    ContentManifest:
+    VerificationRequestPayload:
       type: object
-      required: [contentHash, creator, timestamp]
+      required: [address, contentHash, fileName, fileType, fileSizeBytes, manifest]
       properties:
+        address:
+          type: string
+          description: Stellar public key (G...) of the submitter.
         contentHash:
           type: string
-          description: sha256 hash of the media file, formatted as `sha256:<hex>`.
-        creator:
+          description: SHA-256 hex digest of the media file.
+        fileName:
           type: string
-          description: Stellar public key (G...) of the content creator.
-        timestamp:
+          maxLength: 128
+        fileType:
           type: string
-          format: date-time
-        metadata:
-          type: object
-          properties:
-            device:
-              type: string
-            location:
-              type: string
-            aiModel:
-              type: string
-
-    SubmitVerificationRequest:
-      type: object
-      required: [manifest]
-      properties:
+          description: MIME type; must be in the configured allow-list.
+        fileSizeBytes:
+          type: integer
+          minimum: 1
         manifest:
-          $ref: "#/components/schemas/ContentManifest"
+          type: object
+          description: A ContentManifest; validated and sanitized server-side.
 
     SubmitVerificationResponse:
       type: object
-      required: [id, status]
+      required: [success, data]
       properties:
-        id:
-          type: string
-          format: uuid
-        status:
-          type: string
-          enum: [pending]
-
-    VerificationRequest:
-      type: object
-      required: [id, storageRef, manifestHash, requester, status]
-      properties:
-        id:
-          type: string
-          format: uuid
-        storageRef:
-          type: string
-          description: Reference to the stored content (e.g. an IPFS CID).
-        manifestHash:
-          type: string
-          description: sha256 hash of the submitted manifest.
-        requester:
-          type: string
-          description: Stellar public key of the submitter.
-        status:
-          $ref: "#/components/schemas/VerificationStatus"
-
-    VerificationStatus:
-      type: string
-      enum: [pending, processing, certified, failed]
+        success:
+          type: boolean
+          enum: [true]
+        data:
+          type: object
+          properties:
+            accepted: { type: boolean, enum: [true] }
+            message: { type: string }
+            request:
+              $ref: "#/components/schemas/VerificationRequestPayload"
 
     ErrorResponse:
       type: object
-      required: [error, message]
+      required: [success, error]
       properties:
+        success:
+          type: boolean
+          enum: [false]
         error:
           type: string
-          description: Machine-readable error code.
-        message:
+        details:
+          type: array
+          items: { type: string }
+          description: Present when validation fails; one message per failed rule.
+
+    RateLimitErrorResponse:
+      type: object
+      required: [success, error, retryAfterSeconds]
+      properties:
+        success:
+          type: boolean
+          enum: [false]
+        error:
           type: string
-          description: Human-readable explanation.
+        retryAfterSeconds:
+          type: integer

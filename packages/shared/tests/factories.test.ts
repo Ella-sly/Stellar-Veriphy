@@ -2,11 +2,12 @@ import { beforeEach, describe, expect, it } from "vitest";
 import {
   AI_MODEL_OPTIONS,
   DEVICE_OPTIONS,
+  certificateDetailsFactory,
   contentManifestFactory,
   fakeStellarPublicKey,
   provenanceCertFactory,
   seedFactories,
-  verificationRequestFactory,
+  verificationJobFactory,
   verificationStatusFactory,
 } from "../factories";
 import { buildManifestHash } from "../utils/hash";
@@ -23,6 +24,8 @@ describe("contentManifestFactory", () => {
     const manifest = contentManifestFactory();
     expect(manifest.contentHash).toMatch(/^sha256:[0-9a-f]{64}$/);
     expect(manifest.creator).toMatch(/^G/);
+    expect(manifest.schemaVersion).toMatch(/^\d+\.\d+\.\d+$/);
+    expect(manifest.media?.fileSizeBytes).toBeGreaterThan(0);
     expect(() => new Date(manifest.timestamp).toISOString()).not.toThrow();
   });
 
@@ -47,12 +50,19 @@ describe("relationship handling", () => {
     expect(cert.creator).toBe(manifest.creator);
   });
 
-  it("derives verificationRequest fields from the linked manifest", () => {
+  it("derives certificateDetails fields from the linked manifest", () => {
     const manifest = contentManifestFactory();
-    const request = verificationRequestFactory({}, { manifest });
-    expect(request.manifestHash).toBe(buildManifestHash(manifest));
-    expect(request.requester).toBe(manifest.creator);
-    expect(request.status).toBe("pending");
+    const details = certificateDetailsFactory({}, { manifest });
+    expect(details.manifestHash).toBe(buildManifestHash(manifest));
+    expect(details.creator).toBe(manifest.creator);
+  });
+
+  it("derives verificationJob fields from the linked manifest", () => {
+    const manifest = contentManifestFactory();
+    const job = verificationJobFactory({}, { manifest });
+    expect(job.manifestHash).toBe(buildManifestHash(manifest));
+    expect(job.contentHash).toBe(manifest.contentHash);
+    expect(job.status).toBe("pending");
   });
 
   it("still overrides explicit fields even when a manifest is linked", () => {

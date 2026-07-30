@@ -7,7 +7,6 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit",
     "test": "jest",
     "test:unit": "jest --testPathPattern=\"src/|utils/\"",
     "test:coverage": "jest --coverage",
