@@ -24,7 +24,7 @@ function createId(): string {
   return `audit-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
-async function hashValue(value: string): Promise<string> {
+export async function hashValue(value: string): Promise<string> {
   if (typeof crypto !== "undefined" && crypto.subtle) {
     const digest = await crypto.subtle.digest(
       "SHA-256",

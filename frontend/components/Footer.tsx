@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 export function Footer() {
   const currentYear = new Date().getFullYear();
 
@@ -64,6 +66,11 @@ export function Footer() {
                 <a href="#license" className="hover:text-white transition">
                   License
                 </a>
+              </li>
+              <li>
+                <Link href="/privacy" className="hover:text-white transition">
+                  Privacy Policy
+                </Link>
               </li>
             </ul>
           </div>

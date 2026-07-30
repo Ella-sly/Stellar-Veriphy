@@ -189,6 +189,10 @@ The contracts use the **Soroban SDK** (Rust → WASM). The important building bl
 |---|---|
 | [Developer Onboarding Guide](docs/onboarding.md) | Environment setup, dependency install, local dev workflow, testing, code style, contribution process, common issues |
 | [Contract Deployment Process](docs/deployment.md) | Deploying `oracle`, `provenance`, and `registry` — network config, initialization, verification, rollback |
+| [CI/CD Pipeline](docs/deployment/ci-cd-pipeline.md) | Frontend build/deploy pipeline — GHCR image, staging/production GitHub Environments, blue-green deploy, rollback, notifications |
+| [Security Headers](docs/security/security-headers.md) | The HTTP security header set applied to every response and why |
+| [Key Management](docs/security/key-management.md) | Custody, rotation, storage, access control, backup, and auditing for every key category in the system |
+| [Privacy Policy](docs/legal/privacy-policy.md) | What StellarVeriphy stores, where, and your GDPR/CCPA rights — see also [Data Retention Policy](docs/legal/data-retention-policy.md) |
 | [User Guide and Tutorials](docs/user-guide.md) | Using StellarVeriphy — what works today vs. the target verification/certificate workflow, troubleshooting, FAQ |
 | [Architecture Decision Records](docs/adr/README.md) | Why the system is built the way it is — Soroban, the monorepo layout, the TEE trust model, storage abstraction |
 
