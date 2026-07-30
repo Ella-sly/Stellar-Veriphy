@@ -7,6 +7,7 @@ import { NotificationBell } from "@/components/notifications";
 import { walletService } from "@/services/wallet";
 import { useHelp } from "@/context/HelpContext";
 import { Tooltip } from "@/components/ui/Tooltip";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -31,6 +32,7 @@ export function Header() {
     { href: "/verify", label: "Verify" },
     { href: "/manifest", label: "Manifest" },
     { href: "/builder", label: "Builder" },
+    { href: "/transactions", label: "Transactions" },
     { href: "/tools", label: "Tools" },
   ];
 
@@ -93,19 +95,19 @@ export function Header() {
   }, [mobileMenuOpen]);
 
   return (
-    <header 
+    <header
       className="sticky top-0 z-50 backdrop-blur-md bg-black/50 border-b border-white/10"
       role="banner"
       aria-label="Main navigation"
     >
-      <nav 
+      <nav
         className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4"
         aria-label="Primary navigation"
       >
         <div className="flex items-center justify-between">
           {/* Logo */}
-          <Link 
-            href="/" 
+          <Link
+            href="/"
             className="flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-black rounded"
             aria-label="StellarVeriphy - Home"
           >
@@ -115,7 +117,7 @@ export function Header() {
           </Link>
 
           {/* Desktop Navigation */}
-          <div 
+          <div
             className="hidden md:flex items-center gap-8"
             role="navigation"
             aria-label="Desktop navigation"
@@ -133,11 +135,12 @@ export function Header() {
           </div>
 
           {/* Right Section */}
-          <div 
+          <div
             className="hidden md:flex items-center gap-4"
             role="group"
             aria-label="User actions"
           >
+            <ThemeToggle />
             <NotificationBell />
             <button
               onClick={handleWalletClick}
@@ -189,11 +192,10 @@ export function Header() {
           role="menu"
           aria-label="Mobile navigation"
           aria-hidden={!mobileMenuOpen}
-          className={`md:hidden transition-all duration-200 ease-in-out ${
-            mobileMenuOpen
-              ? "mt-4 space-y-3 pb-4 opacity-100 visible"
-              : "h-0 opacity-0 invisible"
-          }`}
+          className={`md:hidden transition-all duration-200 ease-in-out ${mobileMenuOpen
+            ? "mt-4 space-y-3 pb-4 opacity-100 visible"
+            : "h-0 opacity-0 invisible"
+            }`}
         >
           {mobileMenuOpen && (
             <>
@@ -209,6 +211,10 @@ export function Header() {
                   {link.label}
                 </Link>
               ))}
+              <div className="flex items-center justify-between py-2">
+                <span className="text-gray-300">Theme</span>
+                <ThemeToggle />
+              </div>
               <button
                 onClick={() => {
                   handleWalletClick();
