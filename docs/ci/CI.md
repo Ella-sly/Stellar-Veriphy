@@ -69,8 +69,16 @@ cargo fmt --check && cargo clippy --target wasm32-unknown-unknown --release -- -
 At the time of writing, `frontend-unit-tests` and `build-contracts` are
 **already red on `main`**, independent of anything in this change:
 
-- `pnpm build:frontend` fails: `components/HeroSection.tsx` imports
-  `framer-motion`, which isn't declared in `frontend/package.json`.
+- `pnpm build:frontend` failed outright: `components/HeroSection.tsx` imports
+  `framer-motion`, which was never declared in `frontend/package.json`. Fixed
+  in this PR (pinned to v10.x — v12's stricter `Variants`/`Easing` types don't
+  accept the existing untyped `ease: "easeOut"` object literal). With that
+  fixed, the build gets further and now fails on a **different**,
+  pre-existing type error in `components/Navigation.tsx` (`noUncheckedIndexedAccess`
+  — one of upstream's own strict tsconfig flags — catching a possibly-undefined
+  array destructure in an `IntersectionObserver` callback). Also out of scope
+  here; the point of fixing framer-motion was only to unblock this branch's
+  push, not to chase every pre-existing type error transitively.
 - `pnpm check:frontend` reports parser errors in `utils/responsive.ts` (JSX
   in a `.ts` file — should be `.tsx`) and `public/widget.js`.
 - Several Jest suites (`utils/__tests__/rateLimiter.test.ts`,
