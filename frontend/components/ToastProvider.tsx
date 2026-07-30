@@ -101,9 +101,9 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       id,
       message,
       type,
-      title,
-      action,
       duration,
+      ...(title !== undefined ? { title } : {}),
+      ...(action !== undefined ? { action } : {}),
     };
 
     setToasts((prev) => [...prev, newToast]);
@@ -198,10 +198,10 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                       className={cn(
                         "px-3 py-1 text-xs font-medium rounded-md transition-colors",
                         "focus:outline-none focus:ring-2 focus:ring-offset-2",
-                        type === "success" && "bg-green-100 text-green-700 hover:bg-green-200 focus:ring-green-500",
-                        type === "error" && "bg-red-100 text-red-700 hover:bg-red-200 focus:ring-red-500",
-                        type === "info" && "bg-blue-100 text-blue-700 hover:bg-blue-200 focus:ring-blue-500",
-                        type === "warning" && "bg-yellow-100 text-yellow-700 hover:bg-yellow-200 focus:ring-yellow-500"
+                        toast.type === "success" && "bg-green-100 text-green-700 hover:bg-green-200 focus:ring-green-500",
+                        toast.type === "error" && "bg-red-100 text-red-700 hover:bg-red-200 focus:ring-red-500",
+                        toast.type === "info" && "bg-blue-100 text-blue-700 hover:bg-blue-200 focus:ring-blue-500",
+                        toast.type === "warning" && "bg-yellow-100 text-yellow-700 hover:bg-yellow-200 focus:ring-yellow-500"
                       )}
                       aria-label={`Perform action: ${toast.action.label}`}
                     >
