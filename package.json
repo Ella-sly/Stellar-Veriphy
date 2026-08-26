@@ -6,6 +6,7 @@
     "dev:frontend": "pnpm --filter frontend dev",
     "build:frontend": "pnpm --filter frontend build",
     "build:contracts": "cd contracts/oracle && stellar contract build && cd ../provenance && stellar contract build && cd ../registry && stellar contract build",
+    "docs:contracts": "cargo doc --manifest-path contracts/oracle/Cargo.toml --no-deps && cargo doc --manifest-path contracts/provenance/Cargo.toml --no-deps && cargo doc --manifest-path contracts/registry/Cargo.toml --no-deps",
     "check:frontend": "pnpm --filter frontend lint",
     "typecheck": "pnpm -r --if-present run typecheck",
     "test": "pnpm -r --if-present run test",
