@@ -20,6 +20,10 @@ interface UseKeyboardShortcutsOptions {
 const STORAGE_KEY = "sv-keyboard-shortcuts";
 
 function getDefaultShortcuts(): Record<string, string[]> {
+  if (typeof window === "undefined") {
+    return {};
+  }
+
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) return JSON.parse(stored);
@@ -37,7 +41,7 @@ export function useKeyboardShortcuts({ shortcuts, enabled = true }: UseKeyboardS
   const getEffectiveKeys = useCallback((action: ShortcutAction): string[] => {
     const custom = customBindingsRef.current[action.id];
     if (custom && custom.length > 0) return custom;
-    if (navigator.platform?.includes("Mac")) {
+    if (typeof navigator !== "undefined" && navigator.platform?.includes("Mac")) {
       return action.macKeys || action.keys;
     }
     return action.keys;

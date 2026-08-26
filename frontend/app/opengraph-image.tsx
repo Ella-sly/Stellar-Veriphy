@@ -1,5 +1,6 @@
 import { ImageResponse } from "next/og";
-import { SocialImage, SOCIAL_IMAGE_SIZE } from "@/lib/og/socialImage";
+
+import { SOCIAL_IMAGE_SIZE, SocialImage } from "@/lib/og/socialImage";
 
 export const alt = "StellarVeriphy — Decentralized Content Verification";
 export const size = SOCIAL_IMAGE_SIZE;

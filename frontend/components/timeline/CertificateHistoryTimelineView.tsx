@@ -1,16 +1,8 @@
 "use client";
 
-import { 
-  ArrowRight,
-  Calendar,
-  ChevronDown,
-  ChevronUp,
-  Download, 
-  Filter} from "lucide-react";
-import { useRef,useState } from "react";
+import { ArrowRight, Calendar, ChevronDown, ChevronUp, Download, Filter } from "lucide-react";
+import { useRef, useState } from "react";
 
-import { useState, useRef } from "react";
-import { Download, Filter, Calendar, ArrowRight, ChevronDown, ChevronUp } from "lucide-react";
 import { HistoryEvent } from "../certificates/CertificateHistoryTimeline";
 
 // ---------------------------------------------------------------------------
