@@ -25,7 +25,7 @@ export function useFocusManager() {
     focusableElements.current = Array.from(focusable);
 
     if (focusable.length > 0) {
-      focusable[0].focus();
+      focusable[0]?.focus();
     }
   };
 
@@ -214,13 +214,16 @@ export function checkColorContrast(
   // In production, use a proper contrast checking library
   const hexToRgb = (hex: string) => {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    return result
-      ? {
-          r: parseInt(result[1], 16),
-          g: parseInt(result[2], 16),
-          b: parseInt(result[3], 16),
-        }
-      : null;
+    if (!result) return null;
+    const r = result[1];
+    const g = result[2];
+    const b = result[3];
+    if (!r || !g || !b) return null;
+    return {
+      r: parseInt(r, 16),
+      g: parseInt(g, 16),
+      b: parseInt(b, 16),
+    };
   };
 
   const fgRgb = hexToRgb(foreground);
@@ -233,7 +236,10 @@ export function checkColorContrast(
       v /= 255;
       return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
     });
-    return a[0] * 0.2126 + a[1] * 0.7152 + a[2] * 0.0722;
+    const a0 = a[0] ?? 0;
+    const a1 = a[1] ?? 0;
+    const a2 = a[2] ?? 0;
+    return a0 * 0.2126 + a1 * 0.7152 + a2 * 0.0722;
   };
 
   const lum1 = luminance(fgRgb.r, fgRgb.g, fgRgb.b);

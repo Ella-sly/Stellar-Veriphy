@@ -1,11 +1,11 @@
 "use client";
 
-import { useWizard } from "@/context/WizardContext";
+import { useWizardStore } from "../store/wizard.store";
 
 const STEP_LABELS = ["Mode", "Media", "Manifest", "Options", "Results"];
 
 export function WizardStepper() {
-  const { currentStep, steps } = useWizard();
+  const currentStep = useWizardStore((state) => state.currentStep);
 
   return (
     <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">

@@ -5,10 +5,10 @@ import { WizardNavigation } from "./WizardNavigation";
 
 interface WizardPageShellProps {
   title: string;
-  description?: string;
+  description?: string | undefined;
   children: React.ReactNode;
-  onSubmit?: () => void | Promise<void>;
-  isLoading?: boolean;
+  onSubmit?: (() => void | Promise<void>) | undefined;
+  isLoading?: boolean | undefined;
 }
 
 export function WizardPageShell({

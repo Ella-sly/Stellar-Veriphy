@@ -53,7 +53,7 @@ export async function hashFile(
 
   // Concatenate all chunks into one buffer and hash once
   const combined = mergeChunks(chunks, total);
-  const digest = await crypto.subtle.digest("SHA-256", combined);
+  const digest = await crypto.subtle.digest("SHA-256", combined as unknown as BufferSource);
   return bufferToHex(digest);
 }
 

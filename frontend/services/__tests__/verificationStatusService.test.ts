@@ -27,9 +27,9 @@ describe("watch — initial 'submitted' status", () => {
     verificationStatusService.watch("job-1", { onUpdate: (s) => updates.push(s) });
 
     expect(updates.length).toBe(1);
-    expect(updates[0].phase).toBe("submitted");
-    expect(updates[0].jobId).toBe("job-1");
-    expect(updates[0].terminal).toBe(false);
+    expect(updates[0]?.phase).toBe("submitted");
+    expect(updates[0]?.jobId).toBe("job-1");
+    expect(updates[0]?.terminal).toBe(false);
   });
 
   it("initial status has progress of 10", () => {

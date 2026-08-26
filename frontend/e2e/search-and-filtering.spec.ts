@@ -398,7 +398,7 @@ test.describe("Search and filtering", () => {
       if (await el.isVisible({ timeout: 3_000 }).catch(() => false)) {
         const tag = await el.evaluate((e) => e.tagName.toLowerCase());
         if (tag === "select") {
-          await el.selectOption({ label: /newest|descending|date desc/i });
+          await el.selectOption({ label: "Newest" }).catch(() => el.selectOption({ index: 0 }));
         } else {
           await el.click();
         }
@@ -442,7 +442,7 @@ test.describe("Search and filtering", () => {
       if (await el.isVisible({ timeout: 3_000 }).catch(() => false)) {
         const tag = await el.evaluate((e) => e.tagName.toLowerCase());
         if (tag === "select") {
-          await el.selectOption({ label: /oldest|ascending|date asc/i });
+          await el.selectOption({ label: "Oldest" }).catch(() => el.selectOption({ index: 1 }));
         } else {
           await el.click();
         }

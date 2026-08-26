@@ -34,6 +34,7 @@ export function LiveRegion({
                 return () => clearTimeout(timer);
             }
         }
+        return undefined;
     }, [message, clearAfter]);
 
     return (
@@ -57,6 +58,7 @@ export function useLoadingAnnouncement(isLoading: boolean, loadingText = "Loadin
     useEffect(() => {
         if (isLoading) {
             setAnnouncement(loadingText);
+            return undefined;
         } else {
             setAnnouncement(loadedText);
             // Clear after a short delay

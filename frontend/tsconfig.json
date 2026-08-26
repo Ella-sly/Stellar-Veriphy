@@ -6,6 +6,7 @@
       "dom.iterable",
       "esnext"
     ],
+    "strict": true,
     "jsx": "preserve",
     "incremental": true,
     "plugins": [

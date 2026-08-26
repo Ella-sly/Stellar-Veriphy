@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
-import { LoadingSpinner } from "./index";
+import { Spinner } from "@/components/ui/Spinner";
 
 interface PageTransitionLoaderProps {
   delay?: number;
@@ -72,7 +72,7 @@ export function PageTransitionLoader({
       aria-label="Page transition in progress"
     >
       <div className="relative">
-        <LoadingSpinner size="lg" label="Loading page..." />
+        <Spinner size="lg" label="Loading page..." />
         
         {/* Animated border */}
         <div className="absolute inset-0 border-4 border-transparent border-t-blue-500 border-r-blue-500 rounded-full animate-spin"></div>

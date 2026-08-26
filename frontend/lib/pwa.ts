@@ -81,7 +81,7 @@ export async function subscribeToPushNotifications(
 
         const subscription = await registration.pushManager.subscribe({
             userVisibleOnly: true,
-            applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
+            applicationServerKey: urlBase64ToUint8Array(vapidPublicKey) as unknown as BufferSource,
         });
 
         console.log("Push subscription created:", subscription);
@@ -172,7 +172,7 @@ export function isPWAInstalled(): boolean {
 
     return (
         window.matchMedia("(display-mode: standalone)").matches ||
-        (window.navigator as any).standalone === true ||
+        (window.navigator as unknown as { standalone?: boolean }).standalone === true ||
         document.referrer.includes("android-app://")
     );
 }
@@ -217,7 +217,7 @@ export async function registerBackgroundSync(
     }
 
     try {
-        await (registration as any).sync.register(tag);
+        await (registration as unknown as { sync: { register(t: string): Promise<void> } }).sync.register(tag);
         console.log("Background sync registered:", tag);
     } catch (error) {
         console.error("Background sync registration failed:", error);
@@ -230,10 +230,11 @@ export function setAppBadge(count: number): void {
         return;
     }
 
+    const nav = navigator as unknown as { setAppBadge(c: number): Promise<void>; clearAppBadge(): Promise<void> };
     if (count > 0) {
-        (navigator as any).setAppBadge(count);
+        nav.setAppBadge(count);
     } else {
-        (navigator as any).clearAppBadge();
+        nav.clearAppBadge();
     }
 }
 
@@ -242,5 +243,6 @@ export function clearAppBadge(): void {
         return;
     }
 
-    (navigator as any).clearAppBadge();
+    const nav = navigator as unknown as { clearAppBadge(): Promise<void> };
+    nav.clearAppBadge();
 }

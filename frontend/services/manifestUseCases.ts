@@ -23,7 +23,7 @@ import type { ContentManifest } from "../../packages/shared/types";
 /** Parameters accepted by generateManifest. */
 export interface GenerateManifestParams {
   /** Manifest schema version (semver), defaults to 2.0.0 */
-  schemaVersion?: string;
+  schemaVersion?: string | undefined;
   /** SHA-256 hex digest of the media file. */
   contentHash: string;
   /** Stellar public key of the content creator. */
@@ -32,19 +32,19 @@ export interface GenerateManifestParams {
    * ISO 8601 creation timestamp.
    * Defaults to the current UTC time when omitted.
    */
-  timestamp?: string;
+  timestamp?: string | undefined;
   /** Optional device / location / AI-model metadata. */
   metadata?: {
-    device?: string;
-    location?: string;
-    aiModel?: string;
-  };
+    device?: string | undefined;
+    location?: string | undefined;
+    aiModel?: string | undefined;
+  } | undefined;
   /** Optional media metadata used by schema v2+ */
   media?: {
-    fileName?: string;
-    fileType?: string;
-    fileSizeBytes?: number;
-  };
+    fileName?: string | undefined;
+    fileType?: string | undefined;
+    fileSizeBytes?: number | undefined;
+  } | undefined;
 }
 
 /** Supported export formats. */

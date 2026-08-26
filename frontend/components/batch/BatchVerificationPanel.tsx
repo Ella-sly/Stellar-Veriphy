@@ -12,9 +12,9 @@ export interface BatchFile {
   file: File;
   status: "pending" | "processing" | "completed" | "failed";
   progress: number;
-  error?: string;
-  certificateId?: string;
-  metadata?: Record<string, string>;
+  error?: string | undefined;
+  certificateId?: string | undefined;
+  metadata?: Record<string, string> | undefined;
 }
 
 interface BatchVerificationPanelProps {
@@ -85,23 +85,35 @@ export function BatchVerificationPanel({ onVerify }: BatchVerificationPanelProps
       
       if (lines.length < 2) return; // Need header + at least one row
       
-      const headers = lines[0].split(",").map((h) => h.trim());
+      const headerLine = lines[0];
+      if (!headerLine) return;
+      const headers = headerLine.split(",").map((h) => h.trim());
       
       // Update existing files with metadata from CSV
       const updatedFiles = [...files];
       
       for (let i = 1; i < lines.length; i++) {
-        const values = lines[i].split(",").map((v) => v.trim());
+        const line = lines[i];
+        if (!line) continue;
+        const values = line.split(",").map((v) => v.trim());
         const filename = values[0];
+        if (!filename) continue;
         
         const fileIndex = updatedFiles.findIndex((f) => f.file.name === filename);
         
         if (fileIndex !== -1) {
           const metadata: Record<string, string> = {};
           for (let j = 1; j < headers.length && j < values.length; j++) {
-            metadata[headers[j]] = values[j];
+            const h = headers[j];
+            const v = values[j];
+            if (h !== undefined && v !== undefined) {
+              metadata[h] = v;
+            }
           }
-          updatedFiles[fileIndex].metadata = metadata;
+          const target = updatedFiles[fileIndex];
+          if (target) {
+            target.metadata = metadata;
+          }
         }
       }
       
