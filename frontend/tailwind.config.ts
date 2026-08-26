@@ -131,7 +131,7 @@ module.exports = {
   },
   plugins: [
     require('tailwindcss-animate'),
-    function({ addUtilities }) {
+    function({ addUtilities }: { addUtilities: (utilities: Record<string, unknown>) => void }) {
       addUtilities({
         '.touch-target': {
           'min-width': '44px',

@@ -58,12 +58,15 @@ export function KeyValueBuilder({
 
     const draggedIndex = pairs.findIndex((p) => p.id === draggedId);
     const targetIndex = pairs.findIndex((p) => p.id === targetId);
+    if (draggedIndex < 0 || targetIndex < 0) return;
+
+    const itemA = pairs[draggedIndex];
+    const itemB = pairs[targetIndex];
+    if (!itemA || !itemB) return;
 
     const updated = [...pairs];
-    [updated[draggedIndex], updated[targetIndex]] = [
-      updated[targetIndex],
-      updated[draggedIndex],
-    ];
+    updated[draggedIndex] = itemB;
+    updated[targetIndex] = itemA;
 
     setPairs(updated);
     onChange(updated);

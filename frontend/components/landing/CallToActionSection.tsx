@@ -16,7 +16,7 @@ export function CallToActionSection() {
           Join the decentralized verification revolution on Stellar
         </p>
         <button
-          onClick={connect}
+          onClick={() => connect("freighter")}
           disabled={connected}
           className="inline-flex items-center gap-2 px-8 py-4 bg-white hover:bg-gray-100 disabled:bg-green-400 disabled:hover:bg-green-400 text-blue-600 font-semibold rounded-lg transition-colors"
         >

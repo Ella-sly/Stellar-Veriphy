@@ -17,15 +17,16 @@ export function ManifestStep() {
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
-    const files = e.dataTransfer.files;
-    if (files.length > 0) {
-      processFile(files[0]);
+    const file = e.dataTransfer.files[0];
+    if (file) {
+      processFile(file);
     }
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      processFile(e.target.files[0]);
+    const file = e.target.files?.[0];
+    if (file) {
+      processFile(file);
     }
   };
 
@@ -50,9 +51,9 @@ export function ManifestStep() {
       setManifestHash(fileHash);
 
       const content = await file.text();
-      let parsed: object;
+      let parsed: Record<string, unknown>;
       if (file.name.endsWith(".json")) {
-        parsed = JSON.parse(content);
+        parsed = JSON.parse(content) as Record<string, unknown>;
       } else {
         // For XML, store as string representation
         parsed = { xml: content };

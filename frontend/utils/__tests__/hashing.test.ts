@@ -12,7 +12,7 @@ import { hashFile } from "../hashing";
 /** Create a File from a Buffer (Node.js test environment). */
 function makeFile(content: Buffer | string, name = "test.bin"): File {
   const buf = typeof content === "string" ? Buffer.from(content, "utf8") : content;
-  return new File([buf], name, { type: "application/octet-stream" });
+  return new File([buf as unknown as BlobPart], name, { type: "application/octet-stream" });
 }
 
 // ---------------------------------------------------------------------------

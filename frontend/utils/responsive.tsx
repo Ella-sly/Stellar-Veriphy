@@ -88,7 +88,7 @@ export function useTouchDetection(): boolean {
       return (
         "ontouchstart" in window ||
         navigator.maxTouchPoints > 0 ||
-        (navigator as any).msMaxTouchPoints > 0
+        ((navigator as unknown as { msMaxTouchPoints?: number }).msMaxTouchPoints ?? 0) > 0
       );
     };
 
@@ -221,13 +221,7 @@ export function ResponsiveGrid({
 /**
  * Hook to optimize images for different screen sizes
  */
-export function useResponsiveImage(src: string, options?: {
-  sm?: string;
-  md?: string;
-  lg?: string;
-  xl?: string;
-  "2xl"?: string;
-}): string {
+export function useResponsiveImage(src: string, options?: Partial<Record<Breakpoint, string>>): string {
   const breakpoint = useBreakpoint();
   
   if (options?.[breakpoint]) {

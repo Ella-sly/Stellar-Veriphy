@@ -13,16 +13,18 @@ import { cn } from "@/lib/utils";
 // Base Skeleton Component
 // ---------------------------------------------------------------------------
 
-interface SkeletonProps {
-  className?: string;
-  animate?: boolean;
-  rounded?: "none" | "sm" | "md" | "lg" | "full";
+interface SkeletonProps extends React.HTMLAttributes<HTMLDivElement> {
+  className?: string | undefined;
+  animate?: boolean | undefined;
+  rounded?: "none" | "sm" | "md" | "lg" | "full" | undefined;
 }
 
 export function Skeleton({
   className,
   animate = true,
   rounded = "md",
+  style,
+  ...props
 }: SkeletonProps) {
   const roundedClass = {
     none: "",
@@ -44,6 +46,8 @@ export function Skeleton({
       aria-live="polite"
       aria-busy="true"
       aria-label="Loading content"
+      style={style}
+      {...props}
     >
       <span className="sr-only">Loading...</span>
     </div>

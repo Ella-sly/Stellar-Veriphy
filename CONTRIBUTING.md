@@ -1,392 +1,383 @@
-# Contributing to StellarVeriphy
+# Contributing to Stellar-Veriphy
 
-Thank you for your interest in contributing to StellarVeriphy! This guide will help you set up your development environment and understand our contribution workflow.
+Thank you for your interest in contributing to Stellar-Veriphy! We are building a decentralized content verification and provenance platform on the Stellar blockchain with Soroban smart contracts.
 
-## Table of Contents
-
-- [Prerequisites](#prerequisites)
-- [Development Setup](#development-setup)
-- [Running the Project](#running-the-project)
-- [Building Contracts](#building-contracts)
-- [Running Tests](#running-tests)
-- [Code Style and Linting](#code-style-and-linting)
-- [Branch Naming Conventions](#branch-naming-conventions)
-- [Pull Request Process](#pull-request-process)
-- [Project Structure](#project-structure)
-- [Getting Help](#getting-help)
+This document provides complete guidelines and standards for contributing to the project.
 
 ---
 
-## Prerequisites
+## Table of Contents
 
-Before you begin, ensure you have the following tools installed:
+1. [Code of Conduct](#code-of-conduct)
+2. [How to Report Bugs](#how-to-report-bugs)
+3. [How to Suggest Features](#how-to-suggest-features)
+4. [Development Setup](#development-setup)
+   - [Prerequisites](#prerequisites)
+   - [Environment Setup](#environment-setup)
+   - [Running the Project](#running-the-project)
+5. [Coding Standards](#coding-standards)
+   - [TypeScript & React Standards](#typescript--react-standards)
+   - [Rust & Soroban Contract Standards](#rust--soroban-contract-standards)
+   - [Formatting and Linting](#formatting-and-linting)
+6. [Commit Message Guidelines](#commit-message-guidelines)
+7. [Branch Naming Conventions](#branch-naming-conventions)
+8. [Pull Request Process](#pull-request-process)
+9. [Issue Labeling Guide](#issue-labeling-guide)
+10. [Project Structure](#project-structure)
+11. [Getting Help](#getting-help)
+12. [License](#license)
 
-### Required Tools
+---
 
-1. **Node.js 20+**
-   - Download from [nodejs.org](https://nodejs.org/)
-   - Verify installation: `node --version`
+## Code of Conduct
 
-2. **pnpm 10.18.2+**
-   - Install: `npm install -g pnpm`
-   - Verify installation: `pnpm --version`
-   - This project uses pnpm workspaces for monorepo management
+We are committed to providing a welcoming, inclusive, and harassment-free experience for everyone, regardless of background, experience level, gender identity, sexual orientation, disability, personal appearance, race, ethnicity, age, religion, or nationality.
 
-3. **Rust (stable)**
-   - Install via [rustup](https://rustup.rs/): `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`
-   - Verify installation: `rustc --version`
-   - Add wasm32 target: `rustup target add wasm32-unknown-unknown`
+### Our Standards
 
-4. **Stellar CLI**
-   - Install: `cargo install --locked stellar-cli --features opt`
-   - Verify installation: `stellar --version`
-   - Used for building and deploying Soroban smart contracts
+- **Be respectful and inclusive**: Use welcoming and inclusive language. Respect differing viewpoints and constructive criticism.
+- **Collaborate with empathy**: Focus on what is best for the community and users. Show empathy towards fellow contributors.
+- **Maintain professionalism**: Keep discussions productive and focused on technical merit and project goals.
 
-5. **Freighter Wallet** (for frontend testing)
-   - Install the [Freighter browser extension](https://www.freighter.app/)
-   - Create a testnet account and fund it via [Stellar Laboratory](https://laboratory.stellar.org/#account-creator?network=test)
+### Reporting Unacceptable Behavior
 
-### Optional Tools
+If you experience or witness unacceptable behavior, please contact the maintainers or report it via repository channels. All reports will be reviewed promptly and treated confidentially.
 
-- **Git** (for version control)
-- **VS Code** or your preferred IDE
-- **Rust Analyzer** extension (for Rust development)
+---
+
+## How to Report Bugs
+
+Bug reports help us maintain high quality and reliability. When reporting a bug, follow these steps:
+
+### 1. Before Submitting
+
+- **Search Existing Issues**: Check existing open and closed GitHub issues to see if the bug has already been reported.
+- **Verify on Latest Main**: Ensure the bug reproduces on the latest commit of the `main` branch.
+
+### 2. Submitting a Bug Report
+
+Open a new issue using the **Bug Report** template and provide the following details:
+
+- **Clear Title**: A concise, descriptive summary of the problem (e.g., `[Bug]: Manifest hash calculation fails on empty metadata`).
+- **Description**: A clear summary of the bug and the context in which it occurs.
+- **Steps to Reproduce**: Detailed step-by-step instructions to reproduce the issue:
+  1. Go to '...'
+  2. Click on '....'
+  3. Scroll down to '....'
+  4. See error
+- **Expected Behavior**: What you expected to happen.
+- **Actual Behavior**: What actually happened, including exact error messages and stack traces.
+- **Environment**:
+  - OS & Version (e.g., Ubuntu 22.04, macOS Sonoma 14.5, Windows 11 WSL2)
+  - Node.js & pnpm versions (`node -v`, `pnpm -v`)
+  - Rust & Stellar CLI versions (`rustc -v`, `stellar --version`)
+  - Browser & Wallet extension version (e.g., Chrome 128, Freighter 6.0.1)
+- **Screenshots / Recordings**: Visual evidence if the bug is UI-related.
+
+---
+
+## How to Suggest Features
+
+We welcome ideas for new features and enhancements! To submit a feature proposal:
+
+### 1. Before Submitting
+
+- Search existing issues and discussions to avoid duplicate suggestions.
+- Ensure the proposal aligns with Stellar-Veriphy's mission of decentralized content provenance and verification.
+
+### 2. Submitting a Feature Request
+
+Open a new issue using the **Feature Request** template including:
+
+- **Feature Title**: A clear, concise name for the proposed feature.
+- **Problem Statement**: What problem does this solve? What use cases does it address?
+- **Proposed Solution**: A detailed description of how the feature should work, including suggested UI flows or API/contract changes.
+- **Alternatives Considered**: Other approaches or workarounds you considered and why the proposed solution is preferred.
+- **Additional Context**: Any mockups, diagrams, code snippets, or reference links.
 
 ---
 
 ## Development Setup
 
-### 1. Clone the Repository
+### Prerequisites
 
+Ensure you have the following tools installed:
+
+| Tool | Required Version | Purpose |
+|------|------------------|---------|
+| **Node.js** | `>= 20.0.0` | Frontend and shared tooling |
+| **pnpm** | `>= 10.18.2` | Workspace package manager |
+| **Rust** | `stable` (`wasm32-unknown-unknown` target) | Soroban smart contracts |
+| **Stellar CLI** | `latest` | Contract compilation and deployment |
+| **Freighter Wallet** | `latest` | Browser extension for Stellar wallet interactions |
+
+Install Rust WASM target:
 ```bash
-git clone https://github.com/your-org/Stellar-Veriphy.git
-cd Stellar-Veriphy
+rustup target add wasm32-unknown-unknown
 ```
 
-### 2. Install Dependencies
-
-Install all workspace dependencies using pnpm:
-
+Install Stellar CLI:
 ```bash
-pnpm install
+cargo install --locked stellar-cli --features opt
 ```
 
-This will install dependencies for:
-- Root workspace
-- Frontend (`frontend/`)
-- Shared packages (`packages/shared/`)
+### Environment Setup
 
-### 3. Configure Environment Variables
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/Stellar-Veriphy/Stellar-Veriphy.git
+   cd Stellar-Veriphy
+   ```
 
-#### Frontend Configuration
+2. **Install dependencies**:
+   ```bash
+   pnpm install
+   ```
 
-Copy the example environment file and configure it:
+3. **Configure environment variables**:
+   ```bash
+   cd frontend
+   cp .env.local.example .env.local
+   ```
 
-```bash
-cd frontend
-cp .env.local.example .env.local
-```
+   Update `.env.local` with the appropriate network RPC URLs and contract IDs.
 
-Edit `.env.local` and set the following variables:
+### Running the Project
 
-```env
-# Stellar Network RPC URLs
-NEXT_PUBLIC_TESTNET_RPC_URL=https://soroban-testnet.stellar.org
-NEXT_PUBLIC_MAINNET_RPC_URL=https://mainnet.stellar.validationcloud.io/v1/soroban/rpc
-NEXT_PUBLIC_FUTURENET_RPC_URL=https://rpc-futurenet.stellar.org
-
-# Active network (testnet | mainnet | futurenet)
-NEXT_PUBLIC_NETWORK=testnet
-
-# Soroban contract addresses (leave empty for local development)
-NEXT_PUBLIC_ORACLE_CONTRACT_ID=
-NEXT_PUBLIC_PROVENANCE_CONTRACT_ID=
-NEXT_PUBLIC_REGISTRY_CONTRACT_ID=
-```
-
-#### Stellar CLI Configuration
-
-Configure your Stellar CLI for testnet:
+#### Frontend
 
 ```bash
-stellar network add testnet \
-  --rpc-url https://soroban-testnet.stellar.org \
-  --network-passphrase "Test SDF Network ; September 2015"
-
-# Create or import an identity
-stellar keys generate alice --network testnet
-```
-
----
-
-## Running the Project
-
-### Frontend Development Server
-
-Start the Next.js development server:
-
-```bash
-# From the root directory
+# Start development server
 pnpm dev:frontend
 
-# Or from the frontend directory
-cd frontend
-pnpm dev
-```
-
-The frontend will be available at [http://localhost:3000](http://localhost:3000).
-
-### Building the Frontend
-
-To create a production build:
-
-```bash
+# Build for production
 pnpm build:frontend
-```
 
----
-
-## Building Contracts
-
-### Build All Contracts
-
-From the root directory:
-
-```bash
-pnpm build:contracts
-```
-
-This will build all three Soroban contracts:
-- `contracts/oracle/`
-- `contracts/provenance/`
-- `contracts/registry/`
-
-### Build Individual Contracts
-
-To build a specific contract:
-
-```bash
-cd contracts/oracle
-stellar contract build
-
-# Or for provenance
-cd contracts/provenance
-stellar contract build
-
-# Or for registry
-cd contracts/registry
-stellar contract build
-```
-
-The compiled WASM files will be in `target/wasm32-unknown-unknown/release/`.
-
-### Deploy Contracts (Optional)
-
-For deployment instructions, see [DEPLOYMENT.md](./DEPLOYMENT.md).
-
----
-
-## Running Tests
-
-### Frontend Tests
-
-Run Jest tests for the frontend:
-
-```bash
-cd frontend
-pnpm test
-
-# Watch mode for development
-pnpm test:watch
-```
-
-### Contract Tests
-
-Each contract has its own test suite. Run tests for a specific contract:
-
-```bash
-# Oracle contract tests
-cd contracts/oracle
-cargo test
-
-# Provenance contract tests
-cd contracts/provenance
-cargo test
-
-# Registry contract tests
-cd contracts/registry
-cargo test
-```
-
-To run all contract tests:
-
-```bash
-# From the root directory
-cd contracts/oracle && cargo test && \
-cd ../provenance && cargo test && \
-cd ../registry && cargo test
-```
-
-### Test Coverage
-
-For Rust contracts, you can generate coverage reports:
-
-```bash
-cargo install cargo-tarpaulin
-cd contracts/oracle
-cargo tarpaulin --out Html
-```
-
----
-
-## Code Style and Linting
-
-### Frontend Linting
-
-The project uses ESLint for TypeScript/JavaScript code:
-
-```bash
-cd frontend
-pnpm lint
-
-# Or from root
+# Run linting
 pnpm check:frontend
 ```
 
-### Rust Formatting
+The frontend will run at `http://localhost:3000`.
 
-Format Rust code using `rustfmt`:
-
-```bash
-cd contracts/oracle
-cargo fmt
-
-# Check formatting without modifying files
-cargo fmt -- --check
-```
-
-### Pre-commit Hooks
-
-This project uses Husky and lint-staged for pre-commit hooks. They will automatically run when you commit:
-
-- ESLint on staged frontend files
-- Rustfmt on staged Rust files
-
-To manually run pre-commit checks:
+#### Smart Contracts
 
 ```bash
-pnpm prepare
+# Build all contracts (oracle, provenance, registry)
+pnpm build:contracts
+
+# Run contract tests
+cd contracts/oracle && cargo test
+cd ../provenance && cargo test
+cd ../registry && cargo test
 ```
 
-### Pre-commit Hooks
+---
 
-This project uses Husky and lint-staged for pre-commit hooks. They will automatically run when you commit:
+## Coding Standards
 
-- ESLint on staged frontend files
-- Rustfmt on staged Rust files
+For detailed conventions, please consult [STYLE-GUIDE.md](./STYLE-GUIDE.md).
 
-To manually run pre-commit checks:
+### TypeScript & React Standards
 
+- **Strict Typing**: TypeScript strict mode is enabled. **Do not use `any`**. Use `unknown` with type guards, specific interfaces, or generics instead.
+- **Naming Conventions**:
+  - **PascalCase**: Components (`CertificateCard.tsx`), Interfaces/Types (`ContentManifest`, `VerificationResult`), Enums.
+  - **camelCase**: Functions (`verifyManifest`), variables, custom hooks (`useWallet`), service files (`transactionService.ts`).
+  - **UPPER_SNAKE_CASE**: Constants (`DEFAULT_TIMEOUT_MS`).
+- **Component Design**:
+  - Place hooks first, followed by derived state, event handlers, and finally return JSX.
+  - Explicitly type component props using `interface Props` or `type Props`.
+  - Use Tailwind CSS for utility-first styling.
+  - Ensure accessibility: use semantic HTML, ARIA attributes, keyboard navigation support, and descriptive alt text.
+- **Imports**: Group imports cleanly:
+  1. Framework / Next / React imports
+  2. External dependencies (`lucide-react`, `zustand`, etc.)
+  3. Internal aliases (`@/...`, `@stellarveriphy/shared/...`)
+  4. Relative imports (`./`, `../`)
+  5. Type-only imports with `import type { ... }`
+
+### Rust & Soroban Contract Standards
+
+- **Safety & Quality**: All Soroban contracts must avoid unsafe blocks, unhandled panics, and arithmetic overflows (use checked or saturating math).
+- **Naming Conventions**:
+  - **PascalCase**: Structs, enums, traits (`OracleContract`, `AttestationRecord`).
+  - **snake_case**: Functions, module names, variables (`verify_proof`, `token_id`).
+  - **UPPER_SNAKE_CASE**: Module constants (`MAX_EXPIRY_LEDGERS`).
+- **Documentation**: Document all public contract functions and data structures with Rustdoc `///` comments.
+- **Gas & Footprint Optimization**: Keep state storage footprints minimal and avoid unbounded loops.
+
+### Formatting and Linting
+
+We enforce automatic formatting and linting via pre-commit hooks (`husky` + `lint-staged`):
+
+- **Frontend**: ESLint with TypeScript rules.
+- **Contracts**: `rustfmt --edition 2021` and `cargo clippy`.
+
+Run manual checks before submitting:
 ```bash
-pnpm prepare
+# Check frontend
+pnpm check:frontend
+
+# Check Rust formatting
+cd contracts/oracle && cargo fmt -- --check
 ```
 
-**Note**: The hooks are automatically installed when you run `pnpm install`.
+---
+
+## Commit Message Guidelines
+
+We follow the [Conventional Commits](https://www.conventionalcommits.org/) specification.
+
+### Structure
+
+```
+<type>(<scope>): <short summary>
+
+[optional body]
+
+[optional footer(s)]
+```
+
+### Commit Types
+
+| Type | Description |
+|------|-------------|
+| `feat` | A new feature or capability |
+| `fix` | A bug fix |
+| `docs` | Documentation changes only |
+| `style` | Code style/formatting changes (no logic change) |
+| `refactor` | Code refactoring without fixing a bug or adding a feature |
+| `perf` | Performance improvement |
+| `test` | Adding or updating tests |
+| `build` | Changes to build system or dependencies |
+| `ci` | Changes to CI/CD workflows and configuration |
+| `chore` | Routine maintenance tasks |
+| `revert` | Reverting a previous commit |
+
+### Scopes (Optional)
+
+Common scopes include:
+- `frontend`
+- `oracle`
+- `provenance`
+- `registry`
+- `shared`
+- `ui`
+- `wallet`
+- `docs`
+
+### Examples
+
+```
+feat(ui): add loading spinner component with size and color props
+fix(oracle): validate attestation expiration before signature check
+docs(readme): add build, license, and version badges
+refactor(frontend): enable typescript strict mode and eliminate any types
+```
 
 ---
 
 ## Branch Naming Conventions
 
-Use the following naming conventions for branches:
+Prefix branch names with the type of change and reference the relevant issue number:
 
-- **Feature branches**: `feature/<issue-number>-<short-description>`
-  - Example: `feature/121-add-contributing-guide`
-
-- **Bug fix branches**: `fix/<issue-number>-<short-description>`
-  - Example: `fix/45-oracle-signature-validation`
-
-- **Documentation branches**: `docs/<issue-number>-<short-description>`
-  - Example: `docs/121-contributing-guide`
-
-- **Refactoring branches**: `refactor/<issue-number>-<short-description>`
-  - Example: `refactor/78-simplify-manifest-hashing`
-
-- **Hotfix branches**: `hotfix/<issue-number>-<short-description>`
-  - Example: `hotfix/99-critical-security-patch`
+| Branch Type | Pattern | Example |
+|-------------|---------|---------|
+| Feature | `feature/<issue-number>-<description>` | `feature/364-loading-spinner` |
+| Bugfix | `fix/<issue-number>-<description>` | `fix/367-strict-ts-warnings` |
+| Documentation | `docs/<issue-number>-<description>` | `docs/366-contributing-guidelines` |
+| Refactor | `refactor/<issue-number>-<description>` | `refactor/120-wallet-context` |
+| Hotfix | `hotfix/<issue-number>-<description>` | `hotfix/911-security-patch` |
 
 ---
 
 ## Pull Request Process
 
-### Before Submitting a PR
+### 1. Create a Topic Branch
 
-Complete this checklist before submitting your pull request:
+Always create a new branch from an up-to-date `main`:
+```bash
+git checkout main
+git pull origin main
+git checkout -b feature/364-loading-spinner
+```
 
-- [ ] **Code Quality**
-  - [ ] Code follows the project's style guidelines
-  - [ ] All linting checks pass (`pnpm lint` for frontend, `cargo fmt --check` for contracts)
-  - [ ] No unnecessary console.logs or debug statements
+### 2. Implement Changes
 
-- [ ] **Testing**
-  - [ ] All existing tests pass
-  - [ ] New tests added for new features or bug fixes
-  - [ ] Test coverage is maintained or improved
+- Follow the coding standards and commit guidelines.
+- Keep commits granular and focused on single logical changes.
 
-- [ ] **Documentation**
-  - [ ] Code is properly commented where necessary
-  - [ ] README or other docs updated if needed
-  - [ ] API changes are documented
+### 3. Pre-PR Checklist
 
-- [ ] **Contracts (if applicable)**
-  - [ ] Contract builds successfully (`stellar contract build`)
-  - [ ] Contract tests pass (`cargo test`)
-  - [ ] No panics or unsafe operations introduced
-  - [ ] Gas optimization considered
+Before opening your pull request, verify:
+- [ ] Code builds without errors (`pnpm build:frontend`, `pnpm build:contracts`)
+- [ ] Type checks pass without warnings
+- [ ] Linting checks pass
+- [ ] No `console.log` or temporary debug code left behind
+- [ ] Documentation updated where relevant
+- [ ] Branch is rebased or merged with latest `main`
 
-- [ ] **Frontend (if applicable)**
-  - [ ] UI is responsive and accessible
-  - [ ] No TypeScript errors (`pnpm build`)
-  - [ ] Freighter wallet integration tested (if applicable)
+### 4. Submitting the PR
 
-- [ ] **Git Hygiene**
-  - [ ] Branch is up to date with `main`
-  - [ ] Commits are logical and well-described
-  - [ ] No merge conflicts
-  - [ ] Pre-commit hooks pass (lint-staged)
-  - [ ] Pre-push hook passes (frontend build)
-
-### Submitting the PR
-
-1. **Push your branch** to the remote repository:
+1. Push your branch to your remote repository:
    ```bash
-   git push origin feature/121-add-contributing-guide
+   git push origin feature/364-loading-spinner
    ```
+2. Open a Pull Request on GitHub against `main`.
+3. Fill out the PR template completely:
+   - Provide a clear title using Conventional Commits.
+   - Describe what changed and why.
+   - Link related issues (e.g., `Closes #364`).
+   - Include screenshots or GIFs for UI changes.
 
-2. **Create a Pull Request** on GitHub with:
-   - **Title**: Clear, concise description (e.g., "Add CONTRIBUTING.md with development setup guide")
-   - **Description**: Include:
-     - Summary of changes
-     - Related issue number (e.g., "Closes #121")
-     - Testing performed
-     - Screenshots (for UI changes)
-     - Breaking changes (if any)
+### 5. Review & Merging
 
-3. **Request Review**: Tag relevant maintainers or team members
+- Maintainers and reviewers will review your PR and may suggest improvements.
+- Address comments promptly by pushing additional commits to the same branch.
+- Once all reviews and CI checks pass, a maintainer will merge the PR.
 
-4. **Address Feedback**: Respond to review comments and make necessary changes
+---
 
-5. **Merge**: Once approved, a maintainer will merge your PR
+## Issue Labeling Guide
 
-### PR Title Format
+We use GitHub labels to categorize issues and pull requests:
 
-Use conventional commit format for PR titles:
+### Type Labels
 
-- `feat: Add new feature`
-- `fix: Fix bug in oracle contract`
-- `docs: Update contributing guide`
-- `refactor: Simplify manifest hashing`
-- `test: Add tests for provenance contract`
-- `chore: Update dependencies`
+| Label | Description |
+|-------|-------------|
+| `bug` | Something isn't working as expected |
+| `enhancement` | New feature or improvement proposal |
+| `documentation` | Improvements or additions to documentation |
+| `refactor` | Code restructuring without behavioral changes |
+| `security` | Vulnerabilities or security improvements |
+| `question` | Inquiries regarding setup, architecture, or usage |
+
+### Area Labels
+
+| Label | Description |
+|-------|-------------|
+| `frontend` | Web UI, Next.js components, styling |
+| `contracts` | Soroban smart contracts (`oracle`, `provenance`, `registry`) |
+| `shared` | Shared TypeScript library (`@stellarveriphy/shared`) |
+| `UI` | User interface and visual design |
+| `typescript` | TypeScript types, strictness, compiler config |
+| `ci/cd` | GitHub Actions, deployment workflows, scripts |
+
+### Contributor Experience
+
+| Label | Description |
+|-------|-------------|
+| `good-first-issue` | Great for newcomers; well-scoped with clear requirements |
+| `help-wanted` | Tasks where extra community assistance is welcomed |
+
+### Priority Labels
+
+| Label | Description |
+|-------|-------------|
+| `priority: high` | Critical bugs, security issues, or release blockers |
+| `priority: medium` | Normal priority features and bug fixes |
+| `priority: low` | Minor enhancements, cosmetic fixes, non-urgent tasks |
 
 ---
 
@@ -394,58 +385,39 @@ Use conventional commit format for PR titles:
 
 ```
 Stellar-Veriphy/
-├── contracts/              # Soroban smart contracts
-│   ├── oracle/            # Oracle contract (TEE attestation verification)
-│   ├── provenance/        # Provenance certificate minting
-│   └── registry/          # TEE hash and provider registry
-├── frontend/              # Next.js frontend application
-│   ├── app/              # Next.js app directory
-│   ├── components/       # React components
-│   └── lib/              # Utility functions
+├── contracts/                  # Soroban smart contracts (Rust)
+│   ├── oracle/                 # TEE attestation verification oracle
+│   ├── provenance/             # Content provenance certificate minting
+│   └── registry/               # Provider and algorithm registry
+├── frontend/                   # Next.js 15 web application (React, Tailwind)
+│   ├── app/                    # Next.js App Router pages and routes
+│   ├── components/             # Reusable UI components
+│   │   └── ui/                 # Core design system components
+│   ├── context/                # React context providers
+│   ├── hooks/                  # Custom React hooks
+│   ├── lib/                    # Helper libraries and utilities
+│   ├── services/               # Blockchain and backend services
+│   └── types/                  # TypeScript type definitions
 ├── packages/
-│   └── shared/           # Shared TypeScript types and utilities
-├── CONTRIBUTING.md       # This file
-├── DEPLOYMENT.md         # Deployment instructions
-├── README.md             # Project overview
-└── package.json          # Root workspace configuration
+│   └── shared/                 # Shared TypeScript types and validators
+├── docs/                       # Project architecture and technical documentation
+├── CONTRIBUTING.md             # Contribution guidelines (this file)
+├── STYLE-GUIDE.md              # Code style reference
+├── DEPLOYMENT.md               # Smart contract deployment guide
+├── README.md                   # Project overview and badges
+└── package.json                # Root monorepo configuration
 ```
 
 ---
 
 ## Getting Help
 
-If you need help or have questions:
-
-1. **Check existing documentation**:
-   - [README.md](./README.md) - Project overview
-   - [DEPLOYMENT.md](./DEPLOYMENT.md) - Deployment guide
-   - [IMPLEMENTATION.md](./IMPLEMENTATION.md) - Implementation details
-
-2. **Search existing issues** on GitHub
-
-3. **Open a new issue** with:
-   - Clear description of the problem
-   - Steps to reproduce
-   - Expected vs actual behavior
-   - Environment details (OS, Node version, etc.)
-
-4. **Join the community** (if applicable):
-   - Discord server
-   - Telegram group
-   - Developer forum
-
----
-
-## Code of Conduct
-
-Please note that this project adheres to a Code of Conduct. By participating, you are expected to uphold this code. Please report unacceptable behavior to the project maintainers.
+- **Documentation**: Explore guides in the [`docs/`](./docs/) directory.
+- **Discussions & Issues**: Check [GitHub Issues](https://github.com/Stellar-Veriphy/Stellar-Veriphy/issues) for ongoing discussions.
+- **Maintainers**: Tag `@Stellar-Veriphy/maintainers` in issues or PR comments when you need assistance.
 
 ---
 
 ## License
 
-By contributing to StellarVeriphy, you agree that your contributions will be licensed under the MIT License.
-
----
-
-Thank you for contributing to StellarVeriphy! 🚀⭐
+By contributing to Stellar-Veriphy, you agree that your contributions are licensed under the [MIT License](./LICENSE) (or repository root license).

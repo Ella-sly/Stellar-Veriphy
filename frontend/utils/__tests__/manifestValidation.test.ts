@@ -8,7 +8,7 @@ import {
   containsScriptOrHtml,
   validateAndSanitizeField,
   sanitizeManifest,
-} from "../../../utils/manifestValidation";
+} from "../manifestValidation";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // escapeHtml
@@ -131,7 +131,7 @@ describe("sanitizeManifest", () => {
       timestamp: "2024-01-15T10:30:00Z",
       metadata: { device: "<iPhone>" },
     });
-    expect(result.metadata.device).toBe("&lt;iPhone&gt;");
+    expect(result.metadata?.device).toBe("&lt;iPhone&gt;");
   });
 
   it("escapes HTML in metadata.location", () => {
@@ -141,7 +141,7 @@ describe("sanitizeManifest", () => {
       timestamp: "2024-01-15T10:30:00Z",
       metadata: { location: "<New York>" },
     });
-    expect(result.metadata.location).toBe("&lt;New York&gt;");
+    expect(result.metadata?.location).toBe("&lt;New York&gt;");
   });
 
   it("escapes HTML in metadata.aiModel", () => {
@@ -151,7 +151,7 @@ describe("sanitizeManifest", () => {
       timestamp: "2024-01-15T10:30:00Z",
       metadata: { aiModel: "<GPT-4>" },
     });
-    expect(result.metadata.aiModel).toBe("&lt;GPT-4&gt;");
+    expect(result.metadata?.aiModel).toBe("&lt;GPT-4&gt;");
   });
 
   it("handles undefined metadata gracefully", () => {

@@ -39,9 +39,9 @@ export interface VerificationStatus {
   /** Human-readable description for the current phase. */
   message:       string;
   /** Stellar transaction hash, if known. */
-  txHash?:       string;
+  txHash?:       string | undefined;
   /** Oracle request ID (u64 as string), if known. */
-  requestId?:    string;
+  requestId?:    string | undefined;
   /** ISO timestamp of the last status change. */
   updatedAt:     string;
   /** Whether the status is terminal (polling should stop). */
@@ -50,21 +50,21 @@ export interface VerificationStatus {
 
 export interface WatchOptions {
   /** Stellar transaction hash to follow (optional if requestId is supplied). */
-  txHash?:         string;
+  txHash?:         string | undefined;
   /** Oracle request ID to poll (optional if txHash is supplied). */
-  requestId?:      string;
+  requestId?:      string | undefined;
   /** Horizon base URL.  Defaults to testnet. */
-  horizonUrl?:     string;
+  horizonUrl?:     string | undefined;
   /** How often to poll, in ms.  Default 3 000. */
-  intervalMs?:     number;
+  intervalMs?:     number | undefined;
   /** Stop polling after this many ms.  Default 5 min. */
-  timeoutMs?:      number;
+  timeoutMs?:      number | undefined;
   /** Called on every status update. */
   onUpdate:        (status: VerificationStatus) => void;
   /** Called once when a terminal status is reached. */
-  onTerminal?:     (status: VerificationStatus) => void;
+  onTerminal?:     ((status: VerificationStatus) => void) | undefined;
   /** Called when polling fails (network error, etc.). */
-  onError?:        (err: Error, jobId: string) => void;
+  onError?:        ((err: Error, jobId: string) => void) | undefined;
 }
 
 // ---------------------------------------------------------------------------
@@ -100,7 +100,11 @@ const TERMINAL_PHASES = new Set<VerificationPhase>([
 function makeStatus(
   jobId:   string,
   phase:   VerificationPhase,
-  extras?: Partial<Pick<VerificationStatus, "txHash" | "requestId" | "message">>
+  extras?: {
+    txHash?: string | undefined;
+    requestId?: string | undefined;
+    message?: string | undefined;
+  }
 ): VerificationStatus {
   return {
     jobId,
@@ -168,15 +172,15 @@ class VerificationStatusService {
     // Stop any existing poll for this job before starting a fresh one
     this.unwatch(jobId);
 
-    const fullOpts: Required<WatchOptions> = {
+    const fullOpts = {
       txHash:      opts.txHash      ?? "",
       requestId:   opts.requestId   ?? "",
       horizonUrl:  opts.horizonUrl  ?? DEFAULT_HORIZON,
       intervalMs:  opts.intervalMs  ?? 3_000,
       timeoutMs:   opts.timeoutMs   ?? 5 * 60 * 1_000,
       onUpdate:    opts.onUpdate,
-      onTerminal:  opts.onTerminal  ?? (() => {}),
-      onError:     opts.onError     ?? (() => {}),
+      onTerminal:  opts.onTerminal,
+      onError:     opts.onError,
     };
 
     // Emit the initial "submitted" status immediately
@@ -188,14 +192,18 @@ class VerificationStatusService {
 
     const record: PollRecord = {
       jobId,
-      opts:      fullOpts,
+      opts:      fullOpts as Required<WatchOptions>,
       timerId:   0 as unknown as ReturnType<typeof setInterval>,
       timeoutId: 0 as unknown as ReturnType<typeof setTimeout>,
       lastPhase: "submitted",
       cancelled: false,
     };
 
-    const emit = (phase: VerificationPhase, extras?: Partial<Pick<VerificationStatus, "txHash" | "requestId" | "message">>) => {
+    const emit = (phase: VerificationPhase, extras?: {
+      txHash?: string | undefined;
+      requestId?: string | undefined;
+      message?: string | undefined;
+    }) => {
       if (record.cancelled) return;
       if (phase === record.lastPhase) return; // debounce identical updates
       record.lastPhase = phase;
@@ -206,7 +214,7 @@ class VerificationStatusService {
       });
       fullOpts.onUpdate(status);
       if (status.terminal) {
-        fullOpts.onTerminal(status);
+        fullOpts.onTerminal?.(status);
         this.unwatch(jobId);
       }
     };
@@ -240,7 +248,7 @@ class VerificationStatusService {
           return;
         }
       } catch (err) {
-        fullOpts.onError(
+        fullOpts.onError?.(
           err instanceof Error ? err : new Error(String(err)),
           jobId
         );

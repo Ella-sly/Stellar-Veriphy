@@ -23,7 +23,7 @@ export interface WalletNetworkDetails {
   network: string;
   networkUrl: string;
   networkPassphrase: string;
-  sorobanRpcUrl?: string;
+  sorobanRpcUrl?: string | undefined;
 }
 
 export interface WalletAdapter {

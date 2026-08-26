@@ -190,10 +190,10 @@ interface AutoCompleteInputProps {
   id: string;
   value: string;
   onChange: (val: string) => void;
-  suggestions?: string[];
-  placeholder?: string;
-  hasError?: boolean;
-  "aria-describedby"?: string;
+  suggestions?: string[] | undefined;
+  placeholder?: string | undefined;
+  hasError?: boolean | undefined;
+  "aria-describedby"?: string | undefined;
 }
 
 function AutoCompleteInput({
@@ -231,7 +231,10 @@ function AutoCompleteInput({
       setHighlighted((h) => Math.max(h - 1, 0));
     } else if (e.key === "Enter" && highlighted >= 0) {
       e.preventDefault();
-      select(filtered[highlighted]);
+      const item = filtered[highlighted];
+      if (item) {
+        select(item);
+      }
     } else if (e.key === "Escape") {
       setShowSuggestions(false);
     }
@@ -334,7 +337,7 @@ export function AdvancedManifestEditor({
       // Required fields from schema
       for (const fieldCfg of FIELD_CONFIGS) {
         if (!schema.requiredFields.includes(fieldCfg.key)) continue;
-        const raw = (current as Record<string, unknown>)[fieldCfg.key];
+        const raw = (current as unknown as Record<string, unknown>)[fieldCfg.key];
         const val = typeof raw === "string" ? raw : "";
         const err = fieldCfg.validate(val);
         if (err) errors[fieldCfg.key] = err;
@@ -358,8 +361,9 @@ export function AdvancedManifestEditor({
       const fullResult = validateManifest(current);
       if (!fullResult.valid) {
         fullResult.errors.forEach((e) => {
-          const key = e.split(" ")[0].replace(".", "");
-          if (!errors[key]) errors[key] = e;
+          const firstPart = e.split(" ")[0];
+          const key = firstPart ? firstPart.replace(".", "") : "";
+          if (key && !errors[key]) errors[key] = e;
         });
       }
 
@@ -551,7 +555,7 @@ export function AdvancedManifestEditor({
                     id={field.key}
                     type="text"
                     value={
-                      (values as Record<string, unknown>)[field.key] as string ?? ""
+                      ((values as unknown as Record<string, unknown>)[field.key] as string) ?? ""
                     }
                     placeholder={field.placeholder}
                     aria-required="true"

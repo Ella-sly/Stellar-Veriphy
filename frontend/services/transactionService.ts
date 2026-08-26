@@ -56,10 +56,10 @@ function generateMockTransactions(count: number): Transaction[] {
     ];
 
     for (let i = 0; i < count; i++) {
-        const type = TRANSACTION_TYPES[Math.floor(Math.random() * TRANSACTION_TYPES.length)];
+        const type: TransactionType = TRANSACTION_TYPES[Math.floor(Math.random() * TRANSACTION_TYPES.length)] ?? "certificate_mint";
         const status = Math.random() > 0.95 ? "failed" : Math.random() > 0.9 ? "pending" : "success";
         const timestamp = now - Math.floor(Math.random() * 30 * 24 * 60 * 60 * 1000); // Random within last 30 days
-        const address = mockAddresses[Math.floor(Math.random() * mockAddresses.length)];
+        const address = mockAddresses[Math.floor(Math.random() * mockAddresses.length)] ?? "GBRPYHIL2CI3WHZDTOOQFC6EB4RRJC3XNSOLXAUJVLVWXVVNQNYWGLZ";
         const txHash = `${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 10)}`;
 
         transactions.push({
@@ -70,7 +70,7 @@ function generateMockTransactions(count: number): Transaction[] {
             userAddress: address,
             certificateId: type.includes("certificate") ? `CERT-${Math.random().toString(36).substring(2, 9).toUpperCase()}` : undefined,
             amount: Math.random() > 0.7 ? (Math.random() * 10).toFixed(4) : undefined,
-            description: TYPE_DESCRIPTIONS[type],
+            description: TYPE_DESCRIPTIONS[type] ?? "Transaction",
             metadata: {
                 network: "testnet",
                 operations: Math.floor(Math.random() * 3) + 1,

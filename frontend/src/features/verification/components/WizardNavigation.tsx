@@ -1,17 +1,35 @@
 "use client";
 
-import { useWizard } from "@/context/WizardContext";
+import { useWizardStore } from "../store/wizard.store";
 
 interface WizardNavigationProps {
-  onSubmit?: () => void | Promise<void>;
-  isLoading?: boolean;
+  onSubmit?: (() => void | Promise<void>) | undefined;
+  isLoading?: boolean | undefined;
 }
 
+const TOTAL_STEPS = 5;
+
 export function WizardNavigation({ onSubmit, isLoading = false }: WizardNavigationProps) {
-  const { currentStep, steps, nextStep, prevStep, reset, isStepComplete } = useWizard();
-  const isLastStep = currentStep === steps.length - 1;
+  const currentStep = useWizardStore((state) => state.currentStep);
+  const completedSteps = useWizardStore((state) => state.completedSteps);
+  const setStep = useWizardStore((state) => state.setStep);
+  const reset = useWizardStore((state) => state.reset);
+
+  const isLastStep = currentStep === TOTAL_STEPS - 1;
   const isFirstStep = currentStep === 0;
-  const canProceed = isStepComplete(currentStep);
+  const canProceed = Boolean(completedSteps[currentStep]);
+
+  const prevStep = () => {
+    if (currentStep > 0) {
+      setStep(currentStep - 1);
+    }
+  };
+
+  const nextStep = () => {
+    if (currentStep < TOTAL_STEPS - 1) {
+      setStep(currentStep + 1);
+    }
+  };
 
   const handleSubmit = async () => {
     if (onSubmit) {

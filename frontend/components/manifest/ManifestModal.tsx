@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ContentManifest } from "@stellar-veriphy/shared/types";
+import { ContentManifest } from "@stellarveriphy/shared/types";
 import { FormatToggle } from "./FormatToggle";
 import { ManifestPreview } from "./ManifestPreview";
 import { jsonToXml } from "@/utils/manifestConverter";
@@ -63,7 +63,14 @@ export function ManifestModal({
             </button>
           </div>
 
-          <ManifestPreview manifest={manifest} format={format} />
+          <ManifestPreview
+            content={
+              format === "json"
+                ? JSON.stringify(manifest, null, 2)
+                : jsonToXml(manifest, "manifest")
+            }
+            format={format}
+          />
         </div>
       </div>
     </div>

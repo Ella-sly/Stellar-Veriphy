@@ -125,7 +125,8 @@ class AuditLogger {
       bySeverity,
       tamperProof: this.entries.every((entry, index) => {
         if (index === 0) return true;
-        return entry.previousHash === this.entries[index - 1].chainHash;
+        const prev = this.entries[index - 1];
+        return Boolean(prev && entry.previousHash === prev.chainHash);
       }),
     };
   }

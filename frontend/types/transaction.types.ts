@@ -31,13 +31,13 @@ export interface Transaction {
     /** User's public key involved in transaction */
     userAddress: string;
     /** Related certificate ID (if applicable) */
-    certificateId?: string;
+    certificateId?: string | undefined;
     /** Transaction amount in XLM (if applicable) */
-    amount?: string;
+    amount?: string | undefined;
     /** Brief description */
     description: string;
     /** Additional metadata */
-    metadata?: Record<string, unknown>;
+    metadata?: Record<string, unknown> | undefined;
     /** Stellar Horizon transaction hash */
     stellarTxHash: string;
     /** Source account */
@@ -50,12 +50,12 @@ export interface Transaction {
 
 // Filters for transaction queries
 export interface TransactionFilters {
-    type?: TransactionType;
-    status?: TransactionStatus;
-    startDate?: Date;
-    endDate?: Date;
-    certificateId?: string;
-    searchQuery?: string;
+    type?: TransactionType | undefined;
+    status?: TransactionStatus | undefined;
+    startDate?: Date | undefined;
+    endDate?: Date | undefined;
+    certificateId?: string | undefined;
+    searchQuery?: string | undefined;
 }
 
 // Pagination
@@ -78,6 +78,6 @@ export type ExportFormat = "csv" | "json";
 
 export interface ExportOptions {
     format: ExportFormat;
-    filters?: TransactionFilters;
-    includeMetadata?: boolean;
+    filters?: TransactionFilters | undefined;
+    includeMetadata?: boolean | undefined;
 }
