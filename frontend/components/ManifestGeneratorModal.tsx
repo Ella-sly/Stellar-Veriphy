@@ -10,11 +10,7 @@ interface ManifestGeneratorModalProps {
   onClose: () => void;
 }
 
-export function ManifestGeneratorModal({
-  manifest,
-  isOpen,
-  onClose,
-}: ManifestGeneratorModalProps) {
+export function ManifestGeneratorModal({ manifest, isOpen, onClose }: ManifestGeneratorModalProps) {
   const [copied, setCopied] = useState(false);
 
   if (!isOpen) return null;
@@ -32,9 +28,7 @@ export function ManifestGeneratorModal({
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-2xl w-full mx-4">
-        <h2 className="text-xl font-bold mb-4 text-black dark:text-white">
-          Manifest Preview
-        </h2>
+        <h2 className="text-xl font-bold mb-4 text-black dark:text-white">Manifest Preview</h2>
         <pre className="bg-gray-100 dark:bg-gray-900 p-4 rounded overflow-auto max-h-64 text-sm text-black dark:text-white mb-4">
           {JSON.stringify(manifest, null, 2)}
         </pre>

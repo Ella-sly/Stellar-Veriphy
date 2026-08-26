@@ -54,11 +54,7 @@ export interface WalletAdapter {
    * `networkPassphrase` and `address` are provided by the context for
    * wallets that require them explicitly.
    */
-  signTransaction(
-    xdr: string,
-    networkPassphrase: string,
-    address: string
-  ): Promise<string>;
+  signTransaction(xdr: string, networkPassphrase: string, address: string): Promise<string>;
 }
 
 // ---------------------------------------------------------------------------
@@ -68,8 +64,7 @@ export interface WalletAdapter {
 export const freighterAdapter: WalletAdapter = {
   name: "Freighter",
   type: "freighter",
-  installUrl:
-    "https://chromewebstore.google.com/detail/freighter/bcacfldlkkdogcffnhejadgmjllaphlm",
+  installUrl: "https://chromewebstore.google.com/detail/freighter/bcacfldlkkdogcffnhejadgmjllaphlm",
 
   async isAvailable() {
     try {
@@ -146,10 +141,7 @@ declare global {
     };
     rabet?: {
       connect(): Promise<{ publicKey: string; network: string }>;
-      sign(
-        xdr: string,
-        network: string
-      ): Promise<{ xdr: string }>;
+      sign(xdr: string, network: string): Promise<{ xdr: string }>;
     };
   }
 }
@@ -188,8 +180,7 @@ export const albedoAdapter: WalletAdapter = {
     // Albedo does not surface network info in the window API;
     // read from env or fall back to testnet.
     const passphrase =
-      process.env.NEXT_PUBLIC_NETWORK_PASSPHRASE ??
-      ALBEDO_TESTNET_DETAILS.networkPassphrase;
+      process.env.NEXT_PUBLIC_NETWORK_PASSPHRASE ?? ALBEDO_TESTNET_DETAILS.networkPassphrase;
     const isMainnet = passphrase.includes("Public Global");
     return isMainnet
       ? {
@@ -237,14 +228,11 @@ export const xBullAdapter: WalletAdapter = {
     // xBull doesn't expose a network-details call via the global SDK.
     // Fall back to reading the env variable or defaulting to testnet.
     const passphrase =
-      process.env.NEXT_PUBLIC_NETWORK_PASSPHRASE ??
-      "Test SDF Network ; September 2015";
+      process.env.NEXT_PUBLIC_NETWORK_PASSPHRASE ?? "Test SDF Network ; September 2015";
     const isMainnet = passphrase.includes("Public Global");
     return {
       network: isMainnet ? "PUBLIC" : "TESTNET",
-      networkUrl: isMainnet
-        ? "https://horizon.stellar.org"
-        : "https://horizon-testnet.stellar.org",
+      networkUrl: isMainnet ? "https://horizon.stellar.org" : "https://horizon-testnet.stellar.org",
       networkPassphrase: passphrase,
       sorobanRpcUrl: isMainnet
         ? "https://mainnet.stellar.validationcloud.io/v1/soroban/rpc"
@@ -270,8 +258,7 @@ export const xBullAdapter: WalletAdapter = {
 export const rabetAdapter: WalletAdapter = {
   name: "Rabet",
   type: "rabet",
-  installUrl:
-    "https://chromewebstore.google.com/detail/rabet/hgmoaheomcjnaheggkfafnjilfcefbmo",
+  installUrl: "https://chromewebstore.google.com/detail/rabet/hgmoaheomcjnaheggkfafnjilfcefbmo",
 
   async isAvailable() {
     return typeof window !== "undefined" && typeof window.rabet !== "undefined";
@@ -295,9 +282,7 @@ export const rabetAdapter: WalletAdapter = {
     const isMainnet = network === "mainnet";
     return {
       network: isMainnet ? "PUBLIC" : "TESTNET",
-      networkUrl: isMainnet
-        ? "https://horizon.stellar.org"
-        : "https://horizon-testnet.stellar.org",
+      networkUrl: isMainnet ? "https://horizon.stellar.org" : "https://horizon-testnet.stellar.org",
       networkPassphrase: isMainnet
         ? "Public Global Stellar Network ; September 2015"
         : "Test SDF Network ; September 2015",

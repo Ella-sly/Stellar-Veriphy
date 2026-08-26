@@ -84,7 +84,8 @@ export default function NotFound() {
               Lost in the Stellar Cosmos
             </h1>
             <p className="text-base sm:text-lg text-slate-400 leading-relaxed">
-              We queried the entire distributed ledger across the galaxy, but this block seems to have drifted into an uncharted wormhole or was never minted on-chain.
+              We queried the entire distributed ledger across the galaxy, but this block seems to
+              have drifted into an uncharted wormhole or was never minted on-chain.
             </p>
           </div>
 

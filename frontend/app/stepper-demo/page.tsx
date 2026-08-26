@@ -7,9 +7,7 @@ const STEPS = ["Upload", "Verify", "Confirm", "Complete"];
 
 export default function StepperDemoPage() {
   const [currentStep, setCurrentStep] = useState(0);
-  const [orientation, setOrientation] = useState<"horizontal" | "vertical">(
-    "horizontal"
-  );
+  const [orientation, setOrientation] = useState<"horizontal" | "vertical">("horizontal");
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-950 p-8">
@@ -69,11 +67,7 @@ export default function StepperDemoPage() {
 
         {/* Stepper */}
         <div className="p-8 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800">
-          <Stepper
-            steps={STEPS}
-            currentStep={currentStep}
-            orientation={orientation}
-          />
+          <Stepper steps={STEPS} currentStep={currentStep} orientation={orientation} />
         </div>
 
         {/* Step Content */}
@@ -82,8 +76,8 @@ export default function StepperDemoPage() {
             {STEPS[currentStep]}
           </h2>
           <p className="text-blue-800 dark:text-blue-200">
-            This is step {currentStep + 1} of {STEPS.length}. Use the slider
-            above to navigate through the steps.
+            This is step {currentStep + 1} of {STEPS.length}. Use the slider above to navigate
+            through the steps.
           </p>
         </div>
 

@@ -91,7 +91,11 @@ export function CertificateVerificationPanel() {
       setLookupState({ status: "loaded", result });
       // Populate mock history
       setHistoryEvents(
-        generateMockHistory(result.certificate.id, result.certificate.creator, result.certificate.timestamp)
+        generateMockHistory(
+          result.certificate.id,
+          result.certificate.creator,
+          result.certificate.timestamp
+        )
       );
     } else {
       // Multiple results (creator search)
@@ -157,9 +161,7 @@ export function CertificateVerificationPanel() {
       </div>
 
       {/* ── Loading state ── */}
-      {lookupState.status === "loading" && (
-        <CertificateCardSkeleton />
-      )}
+      {lookupState.status === "loading" && <CertificateCardSkeleton />}
 
       {/* ── Single result ── */}
       {lookupState.status === "loaded" && (
@@ -249,8 +251,19 @@ export function CertificateVerificationPanel() {
             viewBox="0 0 24 24"
             aria-hidden="true"
           >
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+            <circle
+              className="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="4"
+            />
+            <path
+              className="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+            />
           </svg>
           <p className="text-sm">Verifying certificate authenticity...</p>
         </div>
@@ -274,7 +287,10 @@ export function CertificateVerificationPanel() {
           </div>
           <ul className="space-y-2">
             {lookupState.details.map((detail, idx) => (
-              <li key={idx} className="flex items-start gap-2 text-sm text-emerald-700 dark:text-emerald-300">
+              <li
+                key={idx}
+                className="flex items-start gap-2 text-sm text-emerald-700 dark:text-emerald-300"
+              >
                 <span className="shrink-0 mt-0.5">✓</span>
                 <span>{detail}</span>
               </li>
@@ -285,4 +301,3 @@ export function CertificateVerificationPanel() {
     </div>
   );
 }
-

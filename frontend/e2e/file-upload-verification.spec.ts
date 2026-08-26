@@ -85,11 +85,7 @@ async function attachOversizedFile(page: Page): Promise<void> {
 }
 
 /** Fill a manifest form field if visible, then assert the value. */
-async function fillField(
-  page: Page,
-  selectors: string[],
-  value: string
-): Promise<boolean> {
+async function fillField(page: Page, selectors: string[], value: string): Promise<boolean> {
   for (const sel of selectors) {
     const el = page.locator(sel).first();
     if (await el.isVisible({ timeout: 3_000 }).catch(() => false)) {
@@ -120,7 +116,7 @@ test.describe("File upload and verification", () => {
           '[data-testid="file-upload"]',
           'input[type="file"]',
           '[aria-label*="upload" i]',
-          'text=/drag.*(drop|file)|upload.*file/i',
+          "text=/drag.*(drop|file)|upload.*file/i",
           'label:has(input[type="file"])',
         ].join(", ")
       )
@@ -140,7 +136,7 @@ test.describe("File upload and verification", () => {
     const feedbackSelectors = [
       '[data-testid="file-name"]',
       '[data-testid="file-selected"]',
-      'text=/sample\\.png/i',
+      "text=/sample\\.png/i",
       // A loading spinner is also acceptable while the hash is computing
       '[data-testid="hashing"], [aria-label*="computing" i], .animate-spin',
     ];
@@ -193,7 +189,7 @@ test.describe("File upload and verification", () => {
     const hashFields = [
       '[data-testid="content-hash-input"]',
       'input[name="contentHash"]',
-      'input[readonly]',
+      "input[readonly]",
       `input[value*="${SHA256_PATTERN.source}"]`,
     ];
 
@@ -239,7 +235,11 @@ test.describe("File upload and verification", () => {
     );
     const locationFilled = await fillField(
       page,
-      ['[data-testid="location-input"]', 'input[name="location"]', 'input[placeholder*="location" i]'],
+      [
+        '[data-testid="location-input"]',
+        'input[name="location"]',
+        'input[placeholder*="location" i]',
+      ],
       "New York, USA"
     );
     const aiModelFilled = await fillField(
@@ -344,7 +344,9 @@ test.describe("File upload and verification", () => {
 
   // ── 8. Submit without wallet shows connect prompt ─────────────────────────
 
-  test("submitting without a connected wallet shows a wallet-connection prompt", async ({ page }) => {
+  test("submitting without a connected wallet shows a wallet-connection prompt", async ({
+    page,
+  }) => {
     // Ensure no wallet is connected
     await page.addInitScript(() => {
       (window as any).__mockWalletConnected = false;
@@ -374,7 +376,7 @@ test.describe("File upload and verification", () => {
         [
           '[data-testid="wallet-modal"]',
           '[role="dialog"]',
-          'text=/connect.*wallet|wallet.*required|please connect/i',
+          "text=/connect.*wallet|wallet.*required|please connect/i",
           '[role="alert"]',
         ].join(", ")
       )

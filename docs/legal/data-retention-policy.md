@@ -4,13 +4,13 @@ Companion to [`privacy-policy.md`](privacy-policy.md). States how long each cate
 
 ## Local browser data (client-side, `localStorage`)
 
-| Data | Retention | Enforced by |
-|---|---|---|
-| Security audit log entries | 90 days, then auto-pruned on next app load | `RETENTION_DAYS` in `frontend/lib/security/auditLogger.ts` (`pruneExpiredEntries`) |
+| Data                                                                                         | Retention                                                              | Enforced by                                                                                                                             |
+| -------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Security audit log entries                                                                   | 90 days, then auto-pruned on next app load                             | `RETENTION_DAYS` in `frontend/lib/security/auditLogger.ts` (`pruneExpiredEntries`)                                                      |
 | Mock API keys (hash + prefix only, see [`key-management.md`](../security/key-management.md)) | Until the user revokes/deletes it, or its configured expiration passes | User action in `frontend/components/APIKeyManagement.tsx`; expired keys are not auto-purged from storage today, only treated as invalid |
-| Form drafts (manifest builder, issue report) | Until the form is submitted or the user clears browser storage | `frontend/hooks/useAutoSave.ts` |
-| Theme / keyboard-shortcut / notification preferences | Indefinite, until changed or storage is cleared | Respective context/hook |
-| Consent banner acknowledgment | Indefinite, until storage is cleared | `frontend/components/ConsentBanner.tsx` |
+| Form drafts (manifest builder, issue report)                                                 | Until the form is submitted or the user clears browser storage         | `frontend/hooks/useAutoSave.ts`                                                                                                         |
+| Theme / keyboard-shortcut / notification preferences                                         | Indefinite, until changed or storage is cleared                        | Respective context/hook                                                                                                                 |
+| Consent banner acknowledgment                                                                | Indefinite, until storage is cleared                                   | `frontend/components/ConsentBanner.tsx`                                                                                                 |
 
 All of the above is deletable on demand via "Delete all my data" on [`/privacy`](../../frontend/app/privacy/page.tsx), which clears this origin's entire `localStorage` — see [`privacy-policy.md`](privacy-policy.md#manage-your-data).
 

@@ -18,10 +18,7 @@ const CHUNK_SIZE = 2 * 1024 * 1024; // 2 MB
  * @param onProgress Optional callback receiving progress in [0, 100].
  * @returns          Lowercase hex-encoded SHA-256 digest.
  */
-export async function hashFile(
-  file: File,
-  onProgress?: ProgressCallback
-): Promise<string> {
+export async function hashFile(file: File, onProgress?: ProgressCallback): Promise<string> {
   // --- Node.js fallback (used in Jest tests) ---
   if (typeof crypto === "undefined" || !crypto.subtle) {
     return hashFileNode(file, onProgress);
@@ -78,10 +75,7 @@ function mergeChunks(chunks: Uint8Array[], totalBytes: number): Uint8Array {
 }
 
 /** Node.js fallback — used only in test environments. */
-async function hashFileNode(
-  file: File,
-  onProgress?: ProgressCallback
-): Promise<string> {
+async function hashFileNode(file: File, onProgress?: ProgressCallback): Promise<string> {
   // Dynamic import so the browser bundle never includes Node's `crypto`.
   const { createHash } = await import("crypto");
   const hash = createHash("sha256");

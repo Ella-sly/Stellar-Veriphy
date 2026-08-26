@@ -67,8 +67,8 @@ workflow rather than inside the existing `ci.yml` PR gate:
 
 ## Suggested Tooling
 
-| Purpose | Tool |
-|---|---|
-| Fuzz harness | `cargo-fuzz` (libFuzzer) |
-| Structured input generation | `arbitrary` |
-| Input minimization | `cargo fuzz tmin` |
+| Purpose                     | Tool                     |
+| --------------------------- | ------------------------ |
+| Fuzz harness                | `cargo-fuzz` (libFuzzer) |
+| Structured input generation | `arbitrary`              |
+| Input minimization          | `cargo fuzz tmin`        |

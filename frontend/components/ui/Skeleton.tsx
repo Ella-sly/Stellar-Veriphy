@@ -327,6 +327,11 @@ export function TextLineSkeleton({ width = "full" }: { width?: string | number }
   const widthStyle = typeof width === "number" ? { width: `${width}px` } : {};
 
   return (
-    <Skeleton className={`h-4 ${widthClass}`} style={widthStyle} role="status" aria-label="Loading text" />
+    <Skeleton
+      className={`h-4 ${widthClass}`}
+      style={widthStyle}
+      role="status"
+      aria-label="Loading text"
+    />
   );
 }

@@ -78,12 +78,14 @@ open http://localhost:3001
 Multi-stage production Dockerfile with three stages:
 
 **Stage 1: Contract Builder**
+
 - Base: `rust:1.75-slim`
 - Installs Rust toolchain and wasm32 target
 - Builds all three Soroban contracts (oracle, provenance, registry)
 - Outputs optimized WASM files
 
 **Stage 2: Frontend Builder**
+
 - Base: `node:20-slim`
 - Installs Node.js 20 and pnpm 10.18.2
 - Installs dependencies with `pnpm install`
@@ -91,6 +93,7 @@ Multi-stage production Dockerfile with three stages:
 - Copies compiled contracts from Stage 1
 
 **Stage 3: Production Runtime**
+
 - Base: `node:20-slim`
 - Minimal production image
 - Installs only production dependencies
@@ -101,6 +104,7 @@ Multi-stage production Dockerfile with three stages:
 ### `Dockerfile.dev`
 
 Development Dockerfile with:
+
 - Full development environment (Git, Curl, Rust, Stellar CLI)
 - All dependencies (including dev dependencies)
 - Hot reload support via volume mounts
@@ -109,6 +113,7 @@ Development Dockerfile with:
 ### `.dockerignore`
 
 Excludes unnecessary files from Docker build context:
+
 - `node_modules/` (reinstalled in container)
 - `target/` (rebuilt in container)
 - `.git/` (not needed in container)
@@ -119,6 +124,7 @@ Excludes unnecessary files from Docker build context:
 ### `docker-compose.yml`
 
 Orchestrates multiple services:
+
 - **app**: Production service on port 3000
 - **dev**: Development service on port 3001 (with hot reload)
 
@@ -260,6 +266,7 @@ docker compose --profile dev up dev
 ```
 
 This starts a development container with:
+
 - Hot reload enabled
 - Source code mounted from host
 - All development tools available
@@ -307,18 +314,22 @@ docker compose build dev
 ### Available Services
 
 **Production Service (`app`)**:
+
 ```bash
 docker compose up app
 ```
+
 - Production-optimized build
 - Port 3000
 - No source code mounts
 - Minimal dependencies
 
 **Development Service (`dev`)**:
+
 ```bash
 docker compose --profile dev up dev
 ```
+
 - Development build
 - Port 3001
 - Source code mounted for hot reload
@@ -389,32 +400,35 @@ None. The application has defaults for all variables.
 
 ### Optional Variables
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `NODE_ENV` | `production` | Node environment |
-| `PORT` | `3000` | Application port |
-| `HOSTNAME` | `0.0.0.0` | Bind hostname |
-| `NEXT_PUBLIC_NETWORK` | `testnet` | Stellar network |
-| `NEXT_PUBLIC_TESTNET_RPC_URL` | `https://soroban-testnet.stellar.org` | Testnet RPC |
-| `NEXT_PUBLIC_MAINNET_RPC_URL` | `https://mainnet.stellar.validationcloud.io/v1/soroban/rpc` | Mainnet RPC |
-| `NEXT_PUBLIC_FUTURENET_RPC_URL` | `https://rpc-futurenet.stellar.org` | Futurenet RPC |
-| `NEXT_PUBLIC_ORACLE_CONTRACT_ID` | - | Oracle contract address |
-| `NEXT_PUBLIC_PROVENANCE_CONTRACT_ID` | - | Provenance contract address |
-| `NEXT_PUBLIC_REGISTRY_CONTRACT_ID` | - | Registry contract address |
+| Variable                             | Default                                                     | Description                 |
+| ------------------------------------ | ----------------------------------------------------------- | --------------------------- |
+| `NODE_ENV`                           | `production`                                                | Node environment            |
+| `PORT`                               | `3000`                                                      | Application port            |
+| `HOSTNAME`                           | `0.0.0.0`                                                   | Bind hostname               |
+| `NEXT_PUBLIC_NETWORK`                | `testnet`                                                   | Stellar network             |
+| `NEXT_PUBLIC_TESTNET_RPC_URL`        | `https://soroban-testnet.stellar.org`                       | Testnet RPC                 |
+| `NEXT_PUBLIC_MAINNET_RPC_URL`        | `https://mainnet.stellar.validationcloud.io/v1/soroban/rpc` | Mainnet RPC                 |
+| `NEXT_PUBLIC_FUTURENET_RPC_URL`      | `https://rpc-futurenet.stellar.org`                         | Futurenet RPC               |
+| `NEXT_PUBLIC_ORACLE_CONTRACT_ID`     | -                                                           | Oracle contract address     |
+| `NEXT_PUBLIC_PROVENANCE_CONTRACT_ID` | -                                                           | Provenance contract address |
+| `NEXT_PUBLIC_REGISTRY_CONTRACT_ID`   | -                                                           | Registry contract address   |
 
 ### Setting Environment Variables
 
 **Method 1: Command Line**
+
 ```bash
 docker run -e NEXT_PUBLIC_NETWORK=testnet stellarveriphy:latest
 ```
 
 **Method 2: Environment File**
+
 ```bash
 docker run --env-file .env.docker stellarveriphy:latest
 ```
 
 **Method 3: Docker Compose**
+
 ```yaml
 services:
   app:
@@ -423,6 +437,7 @@ services:
 ```
 
 **Method 4: .env File with Docker Compose**
+
 ```bash
 # Create .env in project root
 echo "NEXT_PUBLIC_NETWORK=testnet" > .env
@@ -438,6 +453,7 @@ docker compose up
 **Issue**: Docker build fails during contract compilation
 
 **Solution**:
+
 ```bash
 # Clear build cache
 docker builder prune -a
@@ -453,6 +469,7 @@ docker build --no-cache -t stellarveriphy:latest .
 **Issue**: Container exits immediately after starting
 
 **Diagnosis**:
+
 ```bash
 # Check logs
 docker logs stellarveriphy
@@ -462,11 +479,13 @@ docker inspect stellarveriphy --format='{{.State.ExitCode}}'
 ```
 
 **Common Causes**:
+
 - Port 3000 already in use
 - Invalid environment variables
 - Missing dependencies
 
 **Solution**:
+
 ```bash
 # Use different port
 docker run -p 3001:3000 stellarveriphy:latest
@@ -482,6 +501,7 @@ lsof -i :3000
 **Issue**: Next.js build fails in Docker
 
 **Solution**:
+
 ```bash
 # Increase Docker memory limit (Docker Desktop → Settings → Resources)
 # Minimum: 4GB RAM
@@ -498,6 +518,7 @@ docker build -t stellarveriphy:latest .
 **Issue**: Docker build takes too long
 
 **Optimization**:
+
 ```bash
 # Use BuildKit
 export DOCKER_BUILDKIT=1
@@ -514,6 +535,7 @@ docker build --build-arg BUILDKIT_INLINE_CACHE=1 -t stellarveriphy:latest .
 **Issue**: Application running but not accessible
 
 **Diagnosis**:
+
 ```bash
 # Check if container is running
 docker ps
@@ -526,6 +548,7 @@ docker inspect stellarveriphy --format='{{.State.Health.Status}}'
 ```
 
 **Solution**:
+
 ```bash
 # Ensure correct port binding
 docker run -p 3000:3000 stellarveriphy:latest
@@ -543,6 +566,7 @@ curl http://<container-ip>:3000
 **Issue**: Container health check shows unhealthy
 
 **Diagnosis**:
+
 ```bash
 # View health check logs
 docker inspect stellarveriphy --format='{{json .State.Health}}' | jq
@@ -552,6 +576,7 @@ docker logs stellarveriphy
 ```
 
 **Solution**:
+
 ```bash
 # Disable health check temporarily
 docker run -p 3000:3000 --no-healthcheck stellarveriphy:latest
@@ -569,6 +594,7 @@ docker run -p 3000:3000 \
 **Issue**: Changes not reflected in development container
 
 **Solution**:
+
 ```bash
 # Ensure correct volume syntax
 docker compose --profile dev up dev
@@ -710,6 +736,7 @@ docker run -d \
 ### Deploy with Orchestration
 
 **Kubernetes**:
+
 ```bash
 # Create deployment
 kubectl create deployment stellarveriphy --image=stellarveriphy:latest
@@ -719,6 +746,7 @@ kubectl expose deployment stellarveriphy --port=3000 --type=LoadBalancer
 ```
 
 **Docker Swarm**:
+
 ```bash
 # Initialize swarm
 docker swarm init

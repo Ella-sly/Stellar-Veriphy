@@ -99,16 +99,12 @@ export function TutorialOverlay() {
         style={tooltipStyle}
       >
         <div className="flex items-center justify-between mb-2">
-          <span className="text-xs font-medium text-blue-600 dark:text-blue-400">
-            {step.title}
-          </span>
+          <span className="text-xs font-medium text-blue-600 dark:text-blue-400">{step.title}</span>
           <span className="text-[10px] text-gray-400">
             {currentTutorialStep + 1} / {tutorialSteps.length}
           </span>
         </div>
-        <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
-          {step.content}
-        </p>
+        <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">{step.content}</p>
         <div className="flex items-center justify-between">
           <div className="flex gap-1.5">
             {tutorialSteps.map((_, i) => (
@@ -116,9 +112,7 @@ export function TutorialOverlay() {
                 key={i}
                 className={cn(
                   "w-1.5 h-1.5 rounded-full transition-colors",
-                  i === currentTutorialStep
-                    ? "bg-blue-500"
-                    : "bg-gray-300 dark:bg-gray-600"
+                  i === currentTutorialStep ? "bg-blue-500" : "bg-gray-300 dark:bg-gray-600"
                 )}
               />
             ))}

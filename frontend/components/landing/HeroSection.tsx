@@ -7,7 +7,7 @@ export function HeroSection() {
   const { connect, connected } = useWallet();
 
   return (
-    <section 
+    <section
       className="min-h-[100svh] flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 px-4 py-12"
       aria-label="Hero section"
     >
@@ -20,9 +20,8 @@ export function HeroSection() {
           The Truth Engine for the Stellar Ecosystem
         </p>
         <p className="text-base sm:text-lg text-gray-400 mb-8 sm:mb-12 max-w-2xl mx-auto px-2 sm:px-0 leading-relaxed">
-          Decentralized digital content verification and provenance on the
-          Stellar blockchain. Cryptographically prove the authenticity and
-          origin of any digital asset.
+          Decentralized digital content verification and provenance on the Stellar blockchain.
+          Cryptographically prove the authenticity and origin of any digital asset.
         </p>
         <button
           onClick={() => connect("freighter")}
@@ -34,7 +33,7 @@ export function HeroSection() {
           {connected ? "Wallet Connected" : "Connect Wallet"}
           <FiArrowRight className="w-4 h-4 sm:w-5 sm:h-5" aria-hidden="true" />
         </button>
-        
+
         {/* Decorative background elements for different screen sizes */}
         <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
           <div className="absolute top-1/4 left-1/4 w-64 h-64 sm:w-80 sm:h-80 bg-blue-500/10 rounded-full blur-3xl"></div>

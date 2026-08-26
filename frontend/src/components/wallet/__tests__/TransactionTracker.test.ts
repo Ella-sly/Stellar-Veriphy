@@ -19,9 +19,7 @@ jest.mock("@/utils/transaction", () => ({
 // Import AFTER the mock is registered so we get the mocked version
 import { fetchTransactionStatus } from "@/utils/transaction";
 
-const mockFetch = fetchTransactionStatus as jest.MockedFunction<
-  typeof fetchTransactionStatus
->;
+const mockFetch = fetchTransactionStatus as jest.MockedFunction<typeof fetchTransactionStatus>;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -86,9 +84,7 @@ describe("TransactionTracker polling logic", () => {
 
   it("transitions from PENDING to CONFIRMED and stops polling", async () => {
     // First call → PENDING, second call → CONFIRMED
-    mockFetch
-      .mockResolvedValueOnce("PENDING")
-      .mockResolvedValueOnce("CONFIRMED");
+    mockFetch.mockResolvedValueOnce("PENDING").mockResolvedValueOnce("CONFIRMED");
 
     const statuses: TransactionStatus[] = [];
     createPoller(TX_HASH, (s) => statuses.push(s));
@@ -156,8 +152,6 @@ describe("getExplorerUrl (component-level)", () => {
     const txHash = "abc123def456";
     // Mirror the URL construction in TransactionTracker.tsx
     const explorerUrl = `https://stellar.expert/explorer/public/tx/${txHash}`;
-    expect(explorerUrl).toBe(
-      "https://stellar.expert/explorer/public/tx/abc123def456"
-    );
+    expect(explorerUrl).toBe("https://stellar.expert/explorer/public/tx/abc123def456");
   });
 });

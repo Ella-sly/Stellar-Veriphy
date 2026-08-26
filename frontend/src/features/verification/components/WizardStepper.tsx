@@ -32,9 +32,7 @@ export function WizardStepper() {
           {index < STEP_LABELS.length - 1 && (
             <div
               className={`mx-4 h-1 flex-1 transition-colors ${
-                index < currentStep
-                  ? "bg-blue-600"
-                  : "bg-gray-200 dark:bg-gray-700"
+                index < currentStep ? "bg-blue-600" : "bg-gray-200 dark:bg-gray-700"
               }`}
               style={{ minWidth: "40px" }}
             />

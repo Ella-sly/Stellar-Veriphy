@@ -1,22 +1,23 @@
-'use client';
+"use client";
 
 // import { motion } from 'framer-motion';
 
 const features = [
   {
-    title: 'Ingest',
-    description: 'Upload your digital content and metadata to begin the verification process.',
-    icon: '📤',
+    title: "Ingest",
+    description: "Upload your digital content and metadata to begin the verification process.",
+    icon: "📤",
   },
   {
-    title: 'Store',
-    description: 'Content is securely stored with cryptographic hashing for integrity verification.',
-    icon: '💾',
+    title: "Store",
+    description:
+      "Content is securely stored with cryptographic hashing for integrity verification.",
+    icon: "💾",
   },
   {
-    title: 'Certify',
-    description: 'Receive an immutable on-chain certificate proving authenticity and provenance.',
-    icon: '✅',
+    title: "Certify",
+    description: "Receive an immutable on-chain certificate proving authenticity and provenance.",
+    icon: "✅",
   },
 ];
 
@@ -35,7 +36,8 @@ export default function About() {
             About StellarVeriphy
           </h2>
           <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-            A decentralized platform for digital content verification and provenance on the Stellar blockchain.
+            A decentralized platform for digital content verification and provenance on the Stellar
+            blockchain.
           </p>
         </div>
 
@@ -53,9 +55,7 @@ export default function About() {
               <h3 className="text-xl font-semibold mb-3 text-gray-900 dark:text-white">
                 {feature.title}
               </h3>
-              <p className="text-gray-600 dark:text-gray-300">
-                {feature.description}
-              </p>
+              <p className="text-gray-600 dark:text-gray-300">{feature.description}</p>
             </div>
           ))}
         </div>

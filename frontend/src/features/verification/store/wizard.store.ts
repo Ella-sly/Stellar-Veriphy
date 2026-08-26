@@ -96,11 +96,9 @@ export const useWizardStore = create<WizardState & WizardActions>()(
 
       setHashProgress: (hashProgress) => set({ hashProgress }),
 
-      setAdvancedContentHash: (advancedContentHash) =>
-        set({ advancedContentHash }),
+      setAdvancedContentHash: (advancedContentHash) => set({ advancedContentHash }),
 
-      setAdvancedManifestHash: (advancedManifestHash) =>
-        set({ advancedManifestHash }),
+      setAdvancedManifestHash: (advancedManifestHash) => set({ advancedManifestHash }),
 
       setManifest: (manifest) => set({ manifest }),
 

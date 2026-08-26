@@ -19,11 +19,13 @@ This guide helps you diagnose and fix common CI failures in the StellarVeriphy p
 **Symptom**: `lint-and-build-frontend` job fails with ESLint errors
 
 **Example Error**:
+
 ```
 Error: 'useState' is not defined  no-undef
 ```
 
 **Solution**:
+
 ```bash
 # Run lint locally
 cd frontend
@@ -46,11 +48,13 @@ git commit -m "fix: resolve ESLint errors"
 **Symptom**: `build:frontend` fails with TypeScript errors
 
 **Example Error**:
+
 ```
 Type 'string | undefined' is not assignable to type 'string'
 ```
 
 **Solution**:
+
 ```bash
 # Run build locally to see errors
 pnpm build:frontend
@@ -63,6 +67,7 @@ pnpm build:frontend
 ```
 
 **Common Fixes**:
+
 - Add null checks: `if (value) { ... }`
 - Use optional chaining: `value?.property`
 - Add type assertions: `value as string`
@@ -75,6 +80,7 @@ pnpm build:frontend
 **Symptom**: `pnpm --filter frontend test` fails
 
 **Example Error**:
+
 ```
 FAIL app/components/Button.test.tsx
   ● Button › renders correctly
@@ -82,6 +88,7 @@ FAIL app/components/Button.test.tsx
 ```
 
 **Solution**:
+
 ```bash
 # Run tests locally
 cd frontend
@@ -105,6 +112,7 @@ git commit -m "fix: update failing tests"
 **Symptom**: Build succeeds but runtime errors expected
 
 **Example Error**:
+
 ```
 Warning: NEXT_PUBLIC_NETWORK is not defined
 ```
@@ -131,11 +139,13 @@ For build-time variables, ensure they have defaults in the code.
 **Symptom**: `cargo fmt -- --check` fails
 
 **Example Error**:
+
 ```
 Diff in /home/runner/work/Stellar-Veriphy/contracts/oracle/src/lib.rs
 ```
 
 **Solution**:
+
 ```bash
 # Format all contracts
 cd contracts/oracle
@@ -161,6 +171,7 @@ git commit -m "style: format Rust code"
 **Symptom**: `cargo clippy` fails with warnings (treated as errors in CI)
 
 **Example Error**:
+
 ```
 warning: unused variable: `env`
   --> src/lib.rs:42:9
@@ -170,6 +181,7 @@ warning: unused variable: `env`
 ```
 
 **Solution**:
+
 ```bash
 # Run Clippy locally
 cd contracts/oracle
@@ -184,6 +196,7 @@ cargo clippy --target wasm32-unknown-unknown --release -- -D warnings
 ```
 
 **Common Clippy Fixes**:
+
 - Unused variables: Prefix with `_` or remove
 - Unnecessary clones: Remove `.clone()` if not needed
 - Inefficient string operations: Use `&str` instead of `String`
@@ -196,12 +209,14 @@ cargo clippy --target wasm32-unknown-unknown --release -- -D warnings
 **Symptom**: `cargo build` fails
 
 **Example Error**:
+
 ```
 error[E0425]: cannot find value `DataKey` in this scope
   --> src/lib.rs:45:30
 ```
 
 **Solution**:
+
 ```bash
 # Build locally to see full error
 cd contracts/oracle
@@ -215,6 +230,7 @@ cargo build --target wasm32-unknown-unknown --release
 ```
 
 **Common Issues**:
+
 - Missing imports: Add `use` statements
 - Type mismatches: Check function signatures
 - Missing dependencies: Update `Cargo.toml`
@@ -226,6 +242,7 @@ cargo build --target wasm32-unknown-unknown --release
 **Symptom**: `cargo test` fails
 
 **Example Error**:
+
 ```
 test test_init ... FAILED
 
@@ -236,6 +253,7 @@ test result: FAILED. 0 passed; 1 failed
 ```
 
 **Solution**:
+
 ```bash
 # Run tests locally
 cd contracts/oracle
@@ -258,6 +276,7 @@ cargo test -- --nocapture
 **Symptom**: Build fails with target error
 
 **Example Error**:
+
 ```
 error: target 'wasm32-unknown-unknown' not found
 ```
@@ -315,6 +334,7 @@ Caches are automatically managed, but if issues persist:
 **Symptom**: `pnpm install` fails or installs wrong versions
 
 **Example Error**:
+
 ```
 ERR_PNPM_OUTDATED_LOCKFILE  Cannot install with "frozen-lockfile"
 ```
@@ -357,6 +377,7 @@ git commit -m "chore: update Cargo lock file"
 **Symptom**: Build fails with version conflict errors
 
 **Example Error**:
+
 ```
 error: failed to select a version for `soroban-sdk`
 ```
@@ -394,15 +415,18 @@ cargo build --target wasm32-unknown-unknown --release
 **Solutions**:
 
 **Slow Frontend Build**:
+
 - Ensure pnpm cache is working (check cache hit/miss in logs)
 - Consider splitting lint and build into separate jobs
 
 **Slow Contract Build**:
+
 - Ensure Cargo cache is working
 - Check if all three contracts are building in parallel (matrix strategy)
 - Consider using `cargo build --release` without `--target` for tests
 
 **Slow Tests**:
+
 - Run tests in parallel: `cargo test -- --test-threads=4`
 - Skip slow tests in CI: `#[ignore]` attribute
 
@@ -415,6 +439,7 @@ cargo build --target wasm32-unknown-unknown --release
 **Diagnosis**:
 
 Check CI logs for:
+
 ```
 Cache not found for input keys: ...
 ```
@@ -450,6 +475,7 @@ Cache not found for input keys: ...
 **Symptom**: Workflow fails with permission errors
 
 **Example Error**:
+
 ```
 Error: Resource not accessible by integration
 ```
@@ -469,6 +495,7 @@ Error: Resource not accessible by integration
 **Symptom**: Contract artifacts not uploaded
 
 **Example Error**:
+
 ```
 Error: No files were found with the provided path
 ```
@@ -539,6 +566,7 @@ Add this step to workflow for debugging:
 **Last Updated**: June 1, 2026
 
 **Related Documentation**:
+
 - [CI Quick Reference](./CI_QUICK_REFERENCE.md)
 - [Workflow README](./workflows/README.md)
 - [Contributing Guide](../CONTRIBUTING.md)

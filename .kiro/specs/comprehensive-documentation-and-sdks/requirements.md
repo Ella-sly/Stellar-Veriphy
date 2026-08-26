@@ -231,4 +231,3 @@ This document specifies the requirements for comprehensive documentation and SDK
 5. THE Documentation_System SHALL provide responsive design for mobile and desktop viewing
 6. THE Documentation_System SHALL include a feedback mechanism for documentation improvements
 7. THE Documentation_System SHALL automatically rebuild and redeploy when documentation changes are merged
-

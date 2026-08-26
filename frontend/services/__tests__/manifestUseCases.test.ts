@@ -3,11 +3,7 @@
  * Covers: generateManifest, exportManifestAsJSON, exportManifestAsXML
  */
 
-import {
-  generateManifest,
-  exportManifestAsJSON,
-  exportManifestAsXML,
-} from "../manifestUseCases";
+import { generateManifest, exportManifestAsJSON, exportManifestAsXML } from "../manifestUseCases";
 
 const VALID_HASH = "a3f5c2e1b4d6789012345678901234567890abcdef1234567890abcdef123456";
 const VALID_CREATOR = "GBRPYHIL2CI3WHZDTOOQFC6EB4RRJC3XNSOLXAUJVLVWXVVNQNYWGLZ";
@@ -44,7 +40,8 @@ describe("generateManifest", () => {
 
   it("omits the metadata block when all metadata fields are empty strings", () => {
     const m = generateManifest({
-      contentHash: VALID_HASH, creator: VALID_CREATOR,
+      contentHash: VALID_HASH,
+      creator: VALID_CREATOR,
       metadata: { device: "", location: "", aiModel: "" },
     });
     expect(m.metadata).toBeUndefined();
@@ -52,7 +49,8 @@ describe("generateManifest", () => {
 
   it("includes metadata when at least one field is non-empty", () => {
     const m = generateManifest({
-      contentHash: VALID_HASH, creator: VALID_CREATOR,
+      contentHash: VALID_HASH,
+      creator: VALID_CREATOR,
       metadata: { device: "iPhone 15" },
     });
     expect(m.metadata).toBeDefined();
@@ -61,7 +59,8 @@ describe("generateManifest", () => {
 
   it("only includes non-empty metadata fields", () => {
     const m = generateManifest({
-      contentHash: VALID_HASH, creator: VALID_CREATOR,
+      contentHash: VALID_HASH,
+      creator: VALID_CREATOR,
       metadata: { device: "Camera", location: "", aiModel: undefined },
     });
     expect(m.metadata!.device).toBe("Camera");
@@ -71,7 +70,8 @@ describe("generateManifest", () => {
 
   it("includes all three metadata fields when all are non-empty", () => {
     const m = generateManifest({
-      contentHash: VALID_HASH, creator: VALID_CREATOR,
+      contentHash: VALID_HASH,
+      creator: VALID_CREATOR,
       metadata: { device: "D", location: "L", aiModel: "A" },
     });
     expect(m.metadata?.device).toBe("D");
@@ -163,7 +163,11 @@ describe("exportManifestAsXML", () => {
 // ---------------------------------------------------------------------------
 
 describe("exportManifestAsJSON", () => {
-  const manifest = { contentHash: VALID_HASH, creator: VALID_CREATOR, timestamp: "2024-01-15T10:30:00Z" };
+  const manifest = {
+    contentHash: VALID_HASH,
+    creator: VALID_CREATOR,
+    timestamp: "2024-01-15T10:30:00Z",
+  };
 
   it("returns valid JSON that round-trips", () => {
     const parsed = JSON.parse(exportManifestAsJSON(manifest));
@@ -186,7 +190,11 @@ describe("exportManifestAsJSON", () => {
 // ---------------------------------------------------------------------------
 
 describe("exportManifestAsXML", () => {
-  const manifest = { contentHash: VALID_HASH, creator: VALID_CREATOR, timestamp: "2024-01-15T10:30:00Z" };
+  const manifest = {
+    contentHash: VALID_HASH,
+    creator: VALID_CREATOR,
+    timestamp: "2024-01-15T10:30:00Z",
+  };
 
   it("starts with the XML declaration", () => {
     expect(exportManifestAsXML(manifest).trimStart()).toMatch(/^<\?xml/);

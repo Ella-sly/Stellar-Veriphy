@@ -52,7 +52,7 @@ The SSH host referenced by `DEPLOY_HOST` must have:
 
 ## Blue-green strategy
 
-See [`scripts/deploy/blue-green-deploy.sh`](../../scripts/deploy/blue-green-deploy.sh) for the implementation. Summary: two containers, `stellarveriphy-blue` and `stellarveriphy-green`, run on fixed host ports (8081/8082 by default). Each deploy starts the *inactive* color, waits for Docker's own healthcheck (already defined in the `Dockerfile`, hitting `/api/health`) to report `healthy`, and only then flips the nginx upstream + a state file to point at it. If the health check times out, the new container is torn down and the previously-active color is never touched — so a bad deploy never reaches live traffic in the first place.
+See [`scripts/deploy/blue-green-deploy.sh`](../../scripts/deploy/blue-green-deploy.sh) for the implementation. Summary: two containers, `stellarveriphy-blue` and `stellarveriphy-green`, run on fixed host ports (8081/8082 by default). Each deploy starts the _inactive_ color, waits for Docker's own healthcheck (already defined in the `Dockerfile`, hitting `/api/health`) to report `healthy`, and only then flips the nginx upstream + a state file to point at it. If the health check times out, the new container is torn down and the previously-active color is never touched — so a bad deploy never reaches live traffic in the first place.
 
 ## Rollback
 

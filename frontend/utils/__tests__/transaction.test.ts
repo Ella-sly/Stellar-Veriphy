@@ -65,8 +65,6 @@ describe("fetchTransactionStatus", () => {
 
     await fetchTransactionStatus("txhash999");
 
-    expect(spy).toHaveBeenCalledWith(
-      expect.stringContaining("txhash999")
-    );
+    expect(spy).toHaveBeenCalledWith(expect.stringContaining("txhash999"));
   });
 });

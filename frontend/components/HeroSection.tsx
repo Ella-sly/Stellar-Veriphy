@@ -55,9 +55,8 @@ export function HeroSection() {
           className="text-xl sm:text-2xl text-gray-300 mb-8 max-w-2xl mx-auto leading-relaxed"
           variants={itemVariants}
         >
-          Verify digital content authenticity and provenance on the Stellar
-          blockchain. Cryptographic proof that your media is genuine and
-          unaltered.
+          Verify digital content authenticity and provenance on the Stellar blockchain.
+          Cryptographic proof that your media is genuine and unaltered.
         </motion.p>
 
         {/* CTA Buttons */}
@@ -80,10 +79,7 @@ export function HeroSection() {
         </motion.div>
 
         {/* Stats or Features */}
-        <motion.div
-          className="mt-16 grid grid-cols-1 sm:grid-cols-3 gap-8"
-          variants={itemVariants}
-        >
+        <motion.div className="mt-16 grid grid-cols-1 sm:grid-cols-3 gap-8" variants={itemVariants}>
           <div className="p-4">
             <div className="text-3xl font-bold text-blue-400">100%</div>
             <div className="text-gray-400">Immutable</div>

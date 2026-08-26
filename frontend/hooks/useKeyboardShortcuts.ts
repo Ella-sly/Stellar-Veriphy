@@ -29,10 +29,7 @@ function getDefaultShortcuts(): Record<string, string[]> {
   return {};
 }
 
-export function useKeyboardShortcuts({
-  shortcuts,
-  enabled = true,
-}: UseKeyboardShortcutsOptions) {
+export function useKeyboardShortcuts({ shortcuts, enabled = true }: UseKeyboardShortcutsOptions) {
   const customBindingsRef = useRef<Record<string, string[]>>(getDefaultShortcuts());
   const shortcutsRef = useRef(shortcuts);
   shortcutsRef.current = shortcuts;
@@ -46,20 +43,14 @@ export function useKeyboardShortcuts({
     return action.keys;
   }, []);
 
-  const updateCustomBinding = useCallback(
-    (actionId: string, newKeys: string[]) => {
-      customBindingsRef.current[actionId] = newKeys;
-      try {
-        localStorage.setItem(
-          STORAGE_KEY,
-          JSON.stringify(customBindingsRef.current)
-        );
-      } catch {
-        /* noop */
-      }
-    },
-    []
-  );
+  const updateCustomBinding = useCallback((actionId: string, newKeys: string[]) => {
+    customBindingsRef.current[actionId] = newKeys;
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(customBindingsRef.current));
+    } catch {
+      /* noop */
+    }
+  }, []);
 
   const resetCustomBindings = useCallback(() => {
     customBindingsRef.current = {};
@@ -85,8 +76,7 @@ export function useKeyboardShortcuts({
           if (!key) return false;
 
           const ctrlOrCmd =
-            (hasCtrl && (e.ctrlKey || e.metaKey)) ||
-            (hasCmd && (e.metaKey || e.ctrlKey));
+            (hasCtrl && (e.ctrlKey || e.metaKey)) || (hasCmd && (e.metaKey || e.ctrlKey));
 
           if (hasCtrl || hasCmd) {
             if (!ctrlOrCmd) return false;
@@ -97,8 +87,7 @@ export function useKeyboardShortcuts({
           if (hasShift && !e.shiftKey) return false;
           if (hasAlt && !e.altKey) return false;
 
-          const targetKey =
-            key.length === 1 ? key : key === "escape" ? "Escape" : key;
+          const targetKey = key.length === 1 ? key : key === "escape" ? "Escape" : key;
           return e.key.toLowerCase() === targetKey.toLowerCase();
         });
 

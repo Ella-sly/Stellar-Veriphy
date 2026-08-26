@@ -20,13 +20,13 @@ StellarVeriphy is a monorepo with two toolchains: **Node.js/pnpm** for the front
 
 Install these before touching the repo:
 
-| Tool | Version | Why |
-|---|---|---|
-| [Node.js](https://nodejs.org/) | 20+ | Runs the Next.js frontend and shared TS packages |
-| [pnpm](https://pnpm.io/installation) | 10.18.2 (pinned via `packageManager` in `package.json`) | Monorepo package manager — see [ADR-0003](adr/0003-pnpm-monorepo.md) for why pnpm specifically |
-| [Rust](https://rustup.rs/) | latest stable, plus the `wasm32-unknown-unknown` target | Builds the Soroban contracts |
-| [Stellar CLI](https://developers.stellar.org/docs/tools/developer-tools/cli/stellar-cli) | latest | Build/deploy/invoke Soroban contracts |
-| [Freighter wallet](https://www.freighter.app/) | latest browser extension | Sign transactions against Stellar testnet while testing the frontend |
+| Tool                                                                                     | Version                                                 | Why                                                                                            |
+| ---------------------------------------------------------------------------------------- | ------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| [Node.js](https://nodejs.org/)                                                           | 20+                                                     | Runs the Next.js frontend and shared TS packages                                               |
+| [pnpm](https://pnpm.io/installation)                                                     | 10.18.2 (pinned via `packageManager` in `package.json`) | Monorepo package manager — see [ADR-0003](adr/0003-pnpm-monorepo.md) for why pnpm specifically |
+| [Rust](https://rustup.rs/)                                                               | latest stable, plus the `wasm32-unknown-unknown` target | Builds the Soroban contracts                                                                   |
+| [Stellar CLI](https://developers.stellar.org/docs/tools/developer-tools/cli/stellar-cli) | latest                                                  | Build/deploy/invoke Soroban contracts                                                          |
+| [Freighter wallet](https://www.freighter.app/)                                           | latest browser extension                                | Sign transactions against Stellar testnet while testing the frontend                           |
 
 Enable the wasm target once Rust is installed:
 
@@ -122,7 +122,7 @@ If your change is a good candidate for introducing the first real test harness (
 3. **Make your change**, keeping it scoped — prefer several small PRs over one large one when the work naturally splits.
 4. **Verify manually** per the [Testing](#testing) section above; run `cargo fmt`/`cargo clippy` for contract changes and `pnpm --filter frontend lint` for frontend changes.
 5. **Commit** with a clear, imperative message.
-6. **Push** and **open a Pull Request** against `main`. Describe *why* the change is needed, not just what it does — link the issue it closes if there is one.
+6. **Push** and **open a Pull Request** against `main`. Describe _why_ the change is needed, not just what it does — link the issue it closes if there is one.
 7. **Respond to review feedback.** For anything architecturally significant (new contract, new trust boundary, new storage backend), consider whether it warrants an [ADR](adr/README.md).
 
 ## Common issues and solutions

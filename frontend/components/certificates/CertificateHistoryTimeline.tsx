@@ -86,12 +86,14 @@ const EVENT_STYLES: Record<string, EventStyle> = {
 };
 
 function getEventStyle(action: string): EventStyle {
-  return EVENT_STYLES[action] || {
-    icon: "●",
-    bg: "bg-gray-100 dark:bg-gray-800",
-    ring: "ring-gray-400",
-    label: action,
-  };
+  return (
+    EVENT_STYLES[action] || {
+      icon: "●",
+      bg: "bg-gray-100 dark:bg-gray-800",
+      ring: "ring-gray-400",
+      label: action,
+    }
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -234,4 +236,3 @@ export function generateMockHistory(
 
   return events;
 }
-

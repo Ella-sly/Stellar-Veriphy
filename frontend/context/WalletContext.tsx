@@ -15,14 +15,7 @@
  * adapter reports it is still available.
  */
 
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import {
   ALL_ADAPTERS,
   getAdapter,
@@ -36,8 +29,8 @@ import { auditLogger } from "@/lib/security/auditLogger";
 // Storage keys
 // ---------------------------------------------------------------------------
 const STORAGE_KEY_TYPE = "sv_wallet_type";
-const STORAGE_KEY_KEY  = "sv_wallet_key";
-const POLL_INTERVAL    = 4_000; // ms
+const STORAGE_KEY_KEY = "sv_wallet_key";
+const POLL_INTERVAL = 4_000; // ms
 
 // ---------------------------------------------------------------------------
 // Context shape
@@ -73,18 +66,18 @@ interface WalletContextValue {
 }
 
 const WalletContext = createContext<WalletContextValue>({
-  publicKey:     null,
-  network:       null,
-  connected:     false,
-  walletType:    null,
-  adapter:       null,
-  adapters:      ALL_ADAPTERS,
-  error:         null,
-  connect:       async () => {},
-  disconnect:    () => {},
-  switchWallet:  async () => {},
-  signTx:        async () => "",
-  clearError:    () => {},
+  publicKey: null,
+  network: null,
+  connected: false,
+  walletType: null,
+  adapter: null,
+  adapters: ALL_ADAPTERS,
+  error: null,
+  connect: async () => {},
+  disconnect: () => {},
+  switchWallet: async () => {},
+  signTx: async () => "",
+  clearError: () => {},
   refreshNetwork: async () => {},
 });
 
@@ -93,10 +86,10 @@ const WalletContext = createContext<WalletContextValue>({
 // ---------------------------------------------------------------------------
 
 export function WalletProvider({ children }: { children: React.ReactNode }) {
-  const [publicKey,  setPublicKey]  = useState<string | null>(null);
-  const [network,    setNetwork]    = useState<WalletNetworkDetails | null>(null);
+  const [publicKey, setPublicKey] = useState<string | null>(null);
+  const [network, setNetwork] = useState<WalletNetworkDetails | null>(null);
   const [walletType, setWalletType] = useState<WalletType | null>(null);
-  const [error,      setError]      = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Derived: the active adapter instance
@@ -130,7 +123,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const savedType = localStorage.getItem(STORAGE_KEY_TYPE) as WalletType | null;
-    const savedKey  = localStorage.getItem(STORAGE_KEY_KEY);
+    const savedKey = localStorage.getItem(STORAGE_KEY_KEY);
     if (!savedType || !savedKey) return;
 
     const tryReconnect = async () => {
@@ -169,37 +162,38 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
 
   // ── Connect ────────────────────────────────────────────────────────────────
 
-  const connect = useCallback(async (type: WalletType) => {
-    try {
-      const adpt = getAdapter(type);
-      const available = await adpt.isAvailable();
-      if (!available) {
-        throw new Error(
-          `${adpt.name} is not installed. Install it from: ${adpt.installUrl}`
-        );
+  const connect = useCallback(
+    async (type: WalletType) => {
+      try {
+        const adpt = getAdapter(type);
+        const available = await adpt.isAvailable();
+        if (!available) {
+          throw new Error(`${adpt.name} is not installed. Install it from: ${adpt.installUrl}`);
+        }
+        const address = await adpt.connect();
+        const details = await adpt.getNetwork();
+
+        localStorage.setItem(STORAGE_KEY_TYPE, type);
+        localStorage.setItem(STORAGE_KEY_KEY, address);
+
+        setWalletType(type);
+        setPublicKey(address);
+        setNetwork(details);
+        setError(null);
+        startPolling();
+
+        void auditLogger.logEvent({
+          actor: address,
+          category: "auth",
+          action: "wallet connected",
+          details: `Connected via ${adpt.name}`,
+        });
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Failed to connect wallet");
       }
-      const address = await adpt.connect();
-      const details = await adpt.getNetwork();
-
-      localStorage.setItem(STORAGE_KEY_TYPE, type);
-      localStorage.setItem(STORAGE_KEY_KEY,  address);
-
-      setWalletType(type);
-      setPublicKey(address);
-      setNetwork(details);
-      setError(null);
-      startPolling();
-
-      void auditLogger.logEvent({
-        actor: address,
-        category: "auth",
-        action: "wallet connected",
-        details: `Connected via ${adpt.name}`,
-      });
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to connect wallet");
-    }
-  }, [startPolling]);
+    },
+    [startPolling]
+  );
 
   // ── Disconnect ─────────────────────────────────────────────────────────────
 
@@ -224,39 +218,45 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
 
   // ── Switch wallet ──────────────────────────────────────────────────────────
 
-  const switchWallet = useCallback(async (type: WalletType) => {
-    disconnect();
-    await connect(type);
-  }, [connect, disconnect]);
+  const switchWallet = useCallback(
+    async (type: WalletType) => {
+      disconnect();
+      await connect(type);
+    },
+    [connect, disconnect]
+  );
 
   // ── Sign transaction ───────────────────────────────────────────────────────
 
-  const signTx = useCallback(async (xdr: string): Promise<string> => {
-    if (!adapter || !publicKey) throw new Error("Wallet not connected");
-    try {
-      const signed = await adapter.signTransaction(
-        xdr,
-        network?.networkPassphrase ?? "",
-        publicKey
-      );
-      void auditLogger.logEvent({
-        actor: publicKey,
-        category: "contract",
-        action: "transaction signed",
-        details: `Network: ${network?.network ?? "unknown"}`,
-      });
-      return signed;
-    } catch (e) {
-      void auditLogger.logEvent({
-        actor: publicKey,
-        category: "contract",
-        action: "transaction signing failed",
-        severity: "warning",
-        details: e instanceof Error ? e.message : "Unknown error",
-      });
-      throw e;
-    }
-  }, [adapter, publicKey, network]);
+  const signTx = useCallback(
+    async (xdr: string): Promise<string> => {
+      if (!adapter || !publicKey) throw new Error("Wallet not connected");
+      try {
+        const signed = await adapter.signTransaction(
+          xdr,
+          network?.networkPassphrase ?? "",
+          publicKey
+        );
+        void auditLogger.logEvent({
+          actor: publicKey,
+          category: "contract",
+          action: "transaction signed",
+          details: `Network: ${network?.network ?? "unknown"}`,
+        });
+        return signed;
+      } catch (e) {
+        void auditLogger.logEvent({
+          actor: publicKey,
+          category: "contract",
+          action: "transaction signing failed",
+          severity: "warning",
+          details: e instanceof Error ? e.message : "Unknown error",
+        });
+        throw e;
+      }
+    },
+    [adapter, publicKey, network]
+  );
 
   // ── Clear error ────────────────────────────────────────────────────────────
 
@@ -267,10 +267,10 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       value={{
         publicKey,
         network,
-        connected:  !!publicKey,
+        connected: !!publicKey,
         walletType,
         adapter,
-        adapters:   ALL_ADAPTERS,
+        adapters: ALL_ADAPTERS,
         error,
         connect,
         disconnect,

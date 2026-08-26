@@ -23,8 +23,8 @@ interface ThemeContextValue {
 
 const ThemeContext = createContext<ThemeContextValue>({
   theme: "light",
-  toggleTheme: () => { },
-  setTheme: () => { },
+  toggleTheme: () => {},
+  setTheme: () => {},
 });
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
@@ -75,10 +75,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     // Update theme-color meta tag
     const metaThemeColor = document.querySelector('meta[name="theme-color"]');
     if (metaThemeColor) {
-      metaThemeColor.setAttribute(
-        "content",
-        newTheme === "dark" ? "#0a0a0a" : "#ffffff"
-      );
+      metaThemeColor.setAttribute("content", newTheme === "dark" ? "#0a0a0a" : "#ffffff");
     }
   };
 

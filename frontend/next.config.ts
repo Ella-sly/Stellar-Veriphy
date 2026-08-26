@@ -27,7 +27,8 @@ const nextConfig: NextConfig = {
           },
           {
             key: "Report-To",
-            value: '{"group":"csp-endpoint","max_age":10886400,"endpoints":[{"url":"/api/csp-report"}]}'
+            value:
+              '{"group":"csp-endpoint","max_age":10886400,"endpoints":[{"url":"/api/csp-report"}]}',
           },
           {
             key: "X-Frame-Options",

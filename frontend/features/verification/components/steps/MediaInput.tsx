@@ -7,23 +7,19 @@ import { useRouter } from "next/navigation";
 import { MediaPreview } from "./MediaPreview";
 
 export function MediaInput() {
-  const { setFile, setContentHash, setHashProgress, hashProgress } =
-    useWizard();
+  const { setFile, setContentHash, setHashProgress, hashProgress } = useWizard();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isHashing, setIsHashing] = useState(false);
   const [hash, setHash] = useState("");
   const router = useRouter();
 
-  const handleDrop = useCallback(
-    (e: React.DragEvent<HTMLDivElement>) => {
-      e.preventDefault();
-      const file = e.dataTransfer.files[0];
-      if (file) {
-        processFile(file);
-      }
-    },
-    []
-  );
+  const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files[0];
+    if (file) {
+      processFile(file);
+    }
+  }, []);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -67,16 +63,9 @@ export function MediaInput() {
           onDragOver={(e) => e.preventDefault()}
           className="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center hover:border-blue-500 transition cursor-pointer"
         >
-          <input
-            type="file"
-            onChange={handleFileSelect}
-            className="hidden"
-            id="file-input"
-          />
+          <input type="file" onChange={handleFileSelect} className="hidden" id="file-input" />
           <label htmlFor="file-input" className="cursor-pointer">
-            <p className="text-lg font-semibold mb-2">
-              Drag and drop your file here
-            </p>
+            <p className="text-lg font-semibold mb-2">Drag and drop your file here</p>
             <p className="text-gray-600">or click to select a file</p>
           </label>
         </div>

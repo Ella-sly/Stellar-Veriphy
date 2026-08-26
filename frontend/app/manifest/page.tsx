@@ -99,9 +99,7 @@ export default function ManifestPage() {
   return (
     <main className="min-h-screen bg-white dark:bg-gray-950 p-6">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold mb-2 text-black dark:text-white">
-          Manifest Generator
-        </h1>
+        <h1 className="text-3xl font-bold mb-2 text-black dark:text-white">Manifest Generator</h1>
         <p className="text-gray-600 dark:text-gray-400 mb-2">
           Build a content manifest interactively with live preview.
         </p>
@@ -146,7 +144,10 @@ export default function ManifestPage() {
             <div>
               <label className="block text-sm font-medium text-black dark:text-white mb-2">
                 Content Hash (SHA-256)
-                <HelpIcon content="The SHA-256 hash of your content. Use the Hash Calculator tool to generate one." className="ml-1.5 align-middle" />
+                <HelpIcon
+                  content="The SHA-256 hash of your content. Use the Hash Calculator tool to generate one."
+                  className="ml-1.5 align-middle"
+                />
               </label>
               <input
                 type="text"
@@ -165,7 +166,10 @@ export default function ManifestPage() {
             <div>
               <label className="block text-sm font-medium text-black dark:text-white mb-2">
                 Creator (Stellar Address)
-                <HelpIcon content="Your Stellar public key starting with G. Connect your wallet or paste your address." className="ml-1.5 align-middle" />
+                <HelpIcon
+                  content="Your Stellar public key starting with G. Connect your wallet or paste your address."
+                  className="ml-1.5 align-middle"
+                />
               </label>
               <input
                 type="text"
@@ -176,40 +180,37 @@ export default function ManifestPage() {
                   errors.creator ? "border-red-500" : "border-gray-300 dark:border-gray-600"
                 }`}
               />
-              {errors.creator && (
-                <p className="text-red-500 text-sm mt-1">{errors.creator}</p>
-              )}
+              {errors.creator && <p className="text-red-500 text-sm mt-1">{errors.creator}</p>}
             </div>
 
             <div>
               <label className="block text-sm font-medium text-black dark:text-white mb-2">
                 Timestamp (ISO 8601)
-                <HelpIcon content="The date and time the content was created. Defaults to the current time." className="ml-1.5 align-middle" />
+                <HelpIcon
+                  content="The date and time the content was created. Defaults to the current time."
+                  className="ml-1.5 align-middle"
+                />
               </label>
               <input
                 type="datetime-local"
                 value={manifest.timestamp?.slice(0, 16) || ""}
-                onChange={(e) =>
-                  handleChange("timestamp", new Date(e.target.value).toISOString())
-                }
+                onChange={(e) => handleChange("timestamp", new Date(e.target.value).toISOString())}
                 className={`w-full px-4 py-2 border rounded bg-white dark:bg-gray-800 text-black dark:text-white ${
                   errors.timestamp ? "border-red-500" : "border-gray-300 dark:border-gray-600"
                 }`}
               />
-              {errors.timestamp && (
-                <p className="text-red-500 text-sm mt-1">{errors.timestamp}</p>
-              )}
+              {errors.timestamp && <p className="text-red-500 text-sm mt-1">{errors.timestamp}</p>}
             </div>
 
             <div>
               <label className="block text-sm font-medium text-black dark:text-white mb-2">
                 Custom Metadata
-                <HelpIcon content="Add custom key-value pairs to enrich your manifest with additional metadata." className="ml-1.5 align-middle" />
+                <HelpIcon
+                  content="Add custom key-value pairs to enrich your manifest with additional metadata."
+                  className="ml-1.5 align-middle"
+                />
               </label>
-              <KeyValueBuilder
-                value={manifest.metadata || {}}
-                onChange={handleMetadataChange}
-              />
+              <KeyValueBuilder value={manifest.metadata || {}} onChange={handleMetadataChange} />
             </div>
 
             <div className="flex gap-2">

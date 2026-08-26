@@ -6,7 +6,7 @@
 
 ## Context
 
-StellarVeriphy spans several architecturally significant choices — the blockchain platform, the trust model for off-chain verification, the storage layer, the monorepo layout — that were made during initial scaffolding without a durable written record. As the team grows, new contributors need a way to understand *why* the system is shaped the way it is, not just read the current code and guess.
+StellarVeriphy spans several architecturally significant choices — the blockchain platform, the trust model for off-chain verification, the storage layer, the monorepo layout — that were made during initial scaffolding without a durable written record. As the team grows, new contributors need a way to understand _why_ the system is shaped the way it is, not just read the current code and guess.
 
 Without a record, the same debates (e.g. "why not Ethereum," "why not just trust the oracle server") tend to resurface repeatedly, and knowledge stays trapped in whoever was present for the original discussion.
 

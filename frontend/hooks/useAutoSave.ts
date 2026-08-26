@@ -49,9 +49,7 @@ export function useAutoSave<T>({
         localStorage.setItem(key, JSON.stringify(dataToSave));
         const now = Date.now();
         setState({ lastSaved: now, isSaving: false, hasUnsaved: false });
-        window.dispatchEvent(
-          new CustomEvent(STORAGE_EVENT_KEY, { detail: { key } })
-        );
+        window.dispatchEvent(new CustomEvent(STORAGE_EVENT_KEY, { detail: { key } }));
         onSave?.(dataToSave);
       } catch {
         setState((prev) => ({ ...prev, isSaving: false }));
@@ -113,8 +111,7 @@ export function useAutoSave<T>({
       }
     };
     window.addEventListener(STORAGE_EVENT_KEY, handleStorageEvent);
-    return () =>
-      window.removeEventListener(STORAGE_EVENT_KEY, handleStorageEvent);
+    return () => window.removeEventListener(STORAGE_EVENT_KEY, handleStorageEvent);
   }, [enabled, key, onRestore]);
 
   useEffect(() => {

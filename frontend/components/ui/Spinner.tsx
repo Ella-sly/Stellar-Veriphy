@@ -34,14 +34,7 @@ import { cn } from "@/utils/cn";
 
 export type SpinnerSize = "sm" | "md" | "lg" | "xl";
 export type SpinnerColor =
-  | "primary"
-  | "secondary"
-  | "white"
-  | "gray"
-  | "success"
-  | "warning"
-  | "danger"
-  | "current";
+  "primary" | "secondary" | "white" | "gray" | "success" | "warning" | "danger" | "current";
 
 export interface SpinnerProps extends React.HTMLAttributes<HTMLDivElement> {
   /**
@@ -186,9 +179,7 @@ export function Spinner({
       </svg>
 
       {showLabel ? (
-        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-          {label}
-        </span>
+        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{label}</span>
       ) : (
         <span className="sr-only">{label}</span>
       )}

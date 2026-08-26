@@ -43,65 +43,60 @@ import type { VerificationStatus, VerificationPhase } from "@/services/verificat
 // ---------------------------------------------------------------------------
 
 export interface VerificationStatusTrackerProps {
-  jobId:       string;
-  txHash?:     string;
-  requestId?:  string;
+  jobId: string;
+  txHash?: string;
+  requestId?: string;
   horizonUrl?: string;
   /** Start polling as soon as the component mounts. */
-  autoStart?:  boolean;
+  autoStart?: boolean;
   /** Called when a terminal status is reached. */
   onComplete?: (status: VerificationStatus) => void;
 }
 
 export interface VerificationStatusTrackerHandle {
   start: () => void;
-  stop:  () => void;
+  stop: () => void;
 }
 
 // ---------------------------------------------------------------------------
 // Phase pipeline (ordered)
 // ---------------------------------------------------------------------------
 
-const PIPELINE: VerificationPhase[] = [
-  "submitted",
-  "pending",
-  "processing",
-  "verified",
-];
+const PIPELINE: VerificationPhase[] = ["submitted", "pending", "processing", "verified"];
 
 const PHASE_LABEL: Record<VerificationPhase, string> = {
-  submitted:  "Transaction submitted",
-  pending:    "Request received",
+  submitted: "Transaction submitted",
+  pending: "Request received",
   processing: "Provider processing",
-  verified:   "Verification complete",
-  rejected:   "Rejected",
-  cancelled:  "Cancelled",
-  failed:     "Error",
-  expired:    "Expired",
+  verified: "Verification complete",
+  rejected: "Rejected",
+  cancelled: "Cancelled",
+  failed: "Error",
+  expired: "Expired",
 };
 
 const PHASE_ICON: Record<VerificationPhase, string> = {
-  submitted:  "⬆",
-  pending:    "⏳",
+  submitted: "⬆",
+  pending: "⏳",
   processing: "🔄",
-  verified:   "✅",
-  rejected:   "❌",
-  cancelled:  "🚫",
-  failed:     "⚠️",
-  expired:    "⏰",
+  verified: "✅",
+  rejected: "❌",
+  cancelled: "🚫",
+  failed: "⚠️",
+  expired: "⏰",
 };
 
 type PhaseVariant = "success" | "error" | "warning" | "info";
 
 const PHASE_VARIANT: Record<VerificationPhase, PhaseVariant> = {
-  submitted:  "info",
-  pending:    "info",
+  submitted: "info",
+  pending: "info",
   processing: "info",
-  verified:   "success",
-  rejected:   "error",
-  cancelled:  "warning",
-  failed:     "error",
-  expired:    "warning",
+  verified: "success",
+  rejected: "error",
+  cancelled: "warning",
+  failed: "error",
+  expired: "warning",
 };
 
 // ---------------------------------------------------------------------------
@@ -109,7 +104,7 @@ const PHASE_VARIANT: Record<VerificationPhase, PhaseVariant> = {
 // ---------------------------------------------------------------------------
 
 interface Toast {
-  id:      number;
+  id: number;
   message: string;
   variant: PhaseVariant;
 }
@@ -118,9 +113,7 @@ let _toastId = 0;
 
 function toastReducer(
   state: Toast[],
-  action:
-    | { type: "push"; payload: Omit<Toast, "id"> }
-    | { type: "remove"; id: number }
+  action: { type: "push"; payload: Omit<Toast, "id"> } | { type: "remove"; id: number }
 ): Toast[] {
   switch (action.type) {
     case "push":
@@ -134,9 +127,9 @@ function toastReducer(
 
 const VARIANT_STYLES: Record<PhaseVariant, string> = {
   success: "bg-emerald-900/90 border-emerald-600 text-emerald-100",
-  error:   "bg-red-900/90 border-red-600 text-red-100",
+  error: "bg-red-900/90 border-red-600 text-red-100",
   warning: "bg-amber-900/90 border-amber-600 text-amber-100",
-  info:    "bg-slate-800/90 border-slate-600 text-slate-100",
+  info: "bg-slate-800/90 border-slate-600 text-slate-100",
 };
 
 function ToastStack({ toasts, dismiss }: { toasts: Toast[]; dismiss: (id: number) => void }) {
@@ -153,7 +146,13 @@ function ToastStack({ toasts, dismiss }: { toasts: Toast[]; dismiss: (id: number
           className={`pointer-events-auto flex items-start gap-3 rounded-lg border px-4 py-3 text-sm shadow-lg backdrop-blur-sm transition-all duration-300 ${VARIANT_STYLES[t.variant]}`}
         >
           <span className="mt-0.5 shrink-0">
-            {t.variant === "success" ? "✅" : t.variant === "error" ? "❌" : t.variant === "warning" ? "⚠️" : "ℹ️"}
+            {t.variant === "success"
+              ? "✅"
+              : t.variant === "error"
+                ? "❌"
+                : t.variant === "warning"
+                  ? "⚠️"
+                  : "ℹ️"}
           </span>
           <p className="flex-1 leading-snug">{t.message}</p>
           <button
@@ -176,13 +175,18 @@ function ToastStack({ toasts, dismiss }: { toasts: Toast[]; dismiss: (id: number
 function ProgressBar({ progress, variant }: { progress: number; variant: PhaseVariant }) {
   const track: Record<PhaseVariant, string> = {
     success: "bg-emerald-500",
-    error:   "bg-red-500",
+    error: "bg-red-500",
     warning: "bg-amber-500",
-    info:    "bg-blue-500",
+    info: "bg-blue-500",
   };
   return (
-    <div className="w-full h-2 bg-slate-700 rounded-full overflow-hidden" role="progressbar"
-      aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100}>
+    <div
+      className="w-full h-2 bg-slate-700 rounded-full overflow-hidden"
+      role="progressbar"
+      aria-valuenow={progress}
+      aria-valuemin={0}
+      aria-valuemax={100}
+    >
       <div
         className={`h-full rounded-full transition-all duration-700 ease-out ${track[variant]}`}
         style={{ width: `${progress}%` }}
@@ -200,11 +204,13 @@ type StepState = "completed" | "active" | "upcoming";
 function StepIndicator({ state, icon }: { state: StepState; icon: string }) {
   const ring: Record<StepState, string> = {
     completed: "border-emerald-500 bg-emerald-900/50 text-emerald-400",
-    active:    "border-blue-400 bg-blue-900/50 text-blue-300 animate-pulse",
-    upcoming:  "border-slate-600 bg-slate-800 text-slate-500",
+    active: "border-blue-400 bg-blue-900/50 text-blue-300 animate-pulse",
+    upcoming: "border-slate-600 bg-slate-800 text-slate-500",
   };
   return (
-    <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center text-sm shrink-0 ${ring[state]}`}>
+    <div
+      className={`w-8 h-8 rounded-full border-2 flex items-center justify-center text-sm shrink-0 ${ring[state]}`}
+    >
       {state === "completed" ? "✓" : icon}
     </div>
   );
@@ -229,11 +235,15 @@ function PipelineTimeline({ currentPhase }: { currentPhase: VerificationPhase })
         return (
           <li key={phase} className="flex items-center gap-3">
             <StepIndicator state={state} icon={PHASE_ICON[phase]} />
-            <span className={`text-sm ${
-              state === "completed" ? "text-emerald-300" :
-              state === "active"    ? "text-white font-medium" :
-                                      "text-slate-500"
-            }`}>
+            <span
+              className={`text-sm ${
+                state === "completed"
+                  ? "text-emerald-300"
+                  : state === "active"
+                    ? "text-white font-medium"
+                    : "text-slate-500"
+              }`}
+            >
               {PHASE_LABEL[phase]}
             </span>
           </li>
@@ -243,15 +253,16 @@ function PipelineTimeline({ currentPhase }: { currentPhase: VerificationPhase })
       {/* Off-pipeline terminal states get an extra row */}
       {isTerminalOff && (
         <li className="flex items-center gap-3">
-          <StepIndicator
-            state="active"
-            icon={PHASE_ICON[currentPhase]}
-          />
-          <span className={`text-sm font-medium ${
-            PHASE_VARIANT[currentPhase] === "error"   ? "text-red-300" :
-            PHASE_VARIANT[currentPhase] === "warning" ? "text-amber-300" :
-                                                         "text-slate-300"
-          }`}>
+          <StepIndicator state="active" icon={PHASE_ICON[currentPhase]} />
+          <span
+            className={`text-sm font-medium ${
+              PHASE_VARIANT[currentPhase] === "error"
+                ? "text-red-300"
+                : PHASE_VARIANT[currentPhase] === "warning"
+                  ? "text-amber-300"
+                  : "text-slate-300"
+            }`}
+          >
             {PHASE_LABEL[currentPhase]}
           </span>
         </li>
@@ -288,12 +299,17 @@ export const VerificationStatusTracker = forwardRef<
   const dismissToast = useCallback((id: number) => {
     dispatchToast({ type: "remove", id });
     const tid = toastTimeouts.current.get(id);
-    if (tid) { clearTimeout(tid); toastTimeouts.current.delete(id); }
+    if (tid) {
+      clearTimeout(tid);
+      toastTimeouts.current.delete(id);
+    }
   }, []);
 
   // Clear all toast timeouts on unmount
   useEffect(() => {
-    return () => { toastTimeouts.current.forEach(clearTimeout); };
+    return () => {
+      toastTimeouts.current.forEach(clearTimeout);
+    };
   }, []);
 
   const { status, isPolling, start, stop } = useVerificationStatus({
@@ -312,10 +328,14 @@ export const VerificationStatusTracker = forwardRef<
   });
 
   // Expose start/stop via ref
-  useImperativeHandle(ref, () => ({
-    start: () => start(jobId, { txHash, requestId, horizonUrl }),
-    stop,
-  }), [start, stop, jobId, txHash, requestId, horizonUrl]);
+  useImperativeHandle(
+    ref,
+    () => ({
+      start: () => start(jobId, { txHash, requestId, horizonUrl }),
+      stop,
+    }),
+    [start, stop, jobId, txHash, requestId, horizonUrl]
+  );
 
   // Auto-start on mount
   useEffect(() => {
@@ -326,11 +346,9 @@ export const VerificationStatusTracker = forwardRef<
   }, []);
 
   const currentPhase = status?.phase ?? "submitted";
-  const variant      = PHASE_VARIANT[currentPhase];
-  const progress     = status?.progress ?? 0;
-  const explorerUrl  = txHash
-    ? `https://stellar.expert/explorer/testnet/tx/${txHash}`
-    : null;
+  const variant = PHASE_VARIANT[currentPhase];
+  const progress = status?.progress ?? 0;
+  const explorerUrl = txHash ? `https://stellar.expert/explorer/testnet/tx/${txHash}` : null;
 
   return (
     <>

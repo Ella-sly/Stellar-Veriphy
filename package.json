@@ -11,6 +11,8 @@
     "test": "pnpm -r --if-present run test",
     "test:coverage": "pnpm -r --if-present run test:coverage",
     "test:mutation": "pnpm --filter @stellarveriphy/shared run test:mutation",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "prepare": "husky"
   },
   "keywords": [
@@ -24,7 +26,11 @@
   "packageManager": "pnpm@10.18.2",
   "lint-staged": {
     "frontend/**/*.{ts,tsx}": [
+      "prettier --write",
       "pnpm --filter frontend exec eslint --fix --config eslint.config.mjs"
+    ],
+    "**/*.{js,jsx,json,css,md,yml,yaml}": [
+      "prettier --write"
     ],
     "contracts/**/*.rs": [
       "rustfmt --edition 2021"
@@ -32,6 +38,7 @@
   },
   "devDependencies": {
     "husky": "^9.1.7",
-    "lint-staged": "^16.2.7"
+    "lint-staged": "^16.2.7",
+    "prettier": "^3.4.2"
   }
 }

@@ -1,11 +1,7 @@
 {
   "extends": "../tsconfig.base.json",
   "compilerOptions": {
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
+    "lib": ["dom", "dom.iterable", "esnext"],
     "strict": true,
     "jsx": "preserve",
     "incremental": true,
@@ -17,12 +13,8 @@
     "types": ["jest"],
     "baseUrl": ".",
     "paths": {
-      "@/*": [
-        "./*"
-      ],
-      "@stellarveriphy/shared/*": [
-        "../packages/shared/*"
-      ]
+      "@/*": ["./*"],
+      "@stellarveriphy/shared/*": ["../packages/shared/*"]
     },
     "allowJs": true,
     "skipLibCheck": true,
@@ -31,13 +23,6 @@
     "resolveJsonModule": true,
     "isolatedModules": true
   },
-  "include": [
-    "**/*.ts",
-    "**/*.tsx",
-    "next-env.d.ts",
-    ".next/types/**/*.ts"
-  ],
-  "exclude": [
-    "node_modules"
-  ]
+  "include": ["**/*.ts", "**/*.tsx", "next-env.d.ts", ".next/types/**/*.ts"],
+  "exclude": ["node_modules"]
 }

@@ -1,27 +1,27 @@
-'use client';
+"use client";
 
-import { motion } from 'framer-motion';
+import { motion } from "framer-motion";
 
 const steps = [
   {
     number: 1,
-    title: 'Upload Media',
-    description: 'Submit your digital content and metadata',
+    title: "Upload Media",
+    description: "Submit your digital content and metadata",
   },
   {
     number: 2,
-    title: 'Hash & Manifest',
-    description: 'Generate cryptographic hashes of content and manifest',
+    title: "Hash & Manifest",
+    description: "Generate cryptographic hashes of content and manifest",
   },
   {
     number: 3,
-    title: 'TEE Attestation',
-    description: 'Verify in a Trusted Execution Environment',
+    title: "TEE Attestation",
+    description: "Verify in a Trusted Execution Environment",
   },
   {
     number: 4,
-    title: 'On-Chain Certificate',
-    description: 'Immutable proof recorded on Stellar blockchain',
+    title: "On-Chain Certificate",
+    description: "Immutable proof recorded on Stellar blockchain",
   },
 ];
 
@@ -94,12 +94,8 @@ export default function HowItWorks() {
                 )}
               </div>
               <div className="pb-6">
-                <h3 className="font-semibold text-gray-900 dark:text-white">
-                  {step.title}
-                </h3>
-                <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
-                  {step.description}
-                </p>
+                <h3 className="font-semibold text-gray-900 dark:text-white">{step.title}</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{step.description}</p>
               </div>
             </motion.div>
           ))}

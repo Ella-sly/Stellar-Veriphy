@@ -38,10 +38,7 @@ export default function TimelineViewPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
-      <CertificateHistoryTimelineView
-        certificateId="CERT-12345"
-        events={mockEvents}
-      />
+      <CertificateHistoryTimelineView certificateId="CERT-12345" events={mockEvents} />
     </div>
   );
 }

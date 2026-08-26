@@ -34,17 +34,21 @@ export interface GenerateManifestParams {
    */
   timestamp?: string | undefined;
   /** Optional device / location / AI-model metadata. */
-  metadata?: {
-    device?: string | undefined;
-    location?: string | undefined;
-    aiModel?: string | undefined;
-  } | undefined;
+  metadata?:
+    | {
+        device?: string | undefined;
+        location?: string | undefined;
+        aiModel?: string | undefined;
+      }
+    | undefined;
   /** Optional media metadata used by schema v2+ */
-  media?: {
-    fileName?: string | undefined;
-    fileType?: string | undefined;
-    fileSizeBytes?: number | undefined;
-  } | undefined;
+  media?:
+    | {
+        fileName?: string | undefined;
+        fileType?: string | undefined;
+        fileSizeBytes?: number | undefined;
+      }
+    | undefined;
 }
 
 /** Supported export formats. */

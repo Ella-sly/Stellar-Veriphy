@@ -24,6 +24,7 @@ The StellarVeriphy verification pipeline is a multi-stage process that transform
 4. **Provenance Contract**: Certificate minting and storage
 
 The pipeline ensures that:
+
 - Content integrity is cryptographically verified
 - Only authorized providers can attest to verification
 - Only approved TEE (Trusted Execution Environment) code can perform verification
@@ -69,12 +70,12 @@ sequenceDiagram
 
     Note over User,Blockchain: 5. Attestation Verification
     Frontend->>Oracle: verify_attestation(provider, tee_hash, payload, signature)
-    
+
     Note over Oracle,Registry: 5a. Provider Authorization Check
     Oracle->>Registry: is_provider(provider_key)
     Registry->>Registry: Check if provider is registered
     Registry-->>Oracle: Return authorization status
-    
+
     alt Provider not authorized
         Oracle-->>Frontend: Error: UnauthorizedSigner
         Frontend-->>User: Display error: Provider not authorized
@@ -84,7 +85,7 @@ sequenceDiagram
     Oracle->>Registry: is_tee_hash_approved(tee_hash)
     Registry->>Registry: Check if TEE hash is approved
     Registry-->>Oracle: Return approval status
-    
+
     alt TEE hash not approved
         Oracle-->>Frontend: Error: TeeNotVerified
         Frontend-->>User: Display error: TEE not verified
@@ -92,7 +93,7 @@ sequenceDiagram
 
     Note over Oracle,Registry: 5c. Cryptographic Signature Verification
     Oracle->>Oracle: Verify Ed25519 signature<br/>crypto.ed25519_verify(provider, payload, signature)
-    
+
     alt Signature invalid
         Oracle-->>Frontend: Error: Invalid signature
         Frontend-->>User: Display error: Signature verification failed
@@ -100,10 +101,10 @@ sequenceDiagram
 
     Note over Oracle,Provenance: 6. Certificate Minting
     Oracle->>Provenance: mint(storage_ref, manifest_hash, attestation_hash, creator)
-    
+
     Note over Provenance: 6a. Duplicate Check
     Provenance->>Provenance: Check if manifest_hash already exists
-    
+
     alt Duplicate manifest hash
         Provenance-->>Oracle: Error: Certificate already exists
         Oracle-->>Frontend: Error: Duplicate certificate
@@ -117,7 +118,7 @@ sequenceDiagram
     Provenance->>Provenance: Store manifest_hash → cert_id mapping
     Provenance->>Blockchain: Emit CertificateMinted event
     Provenance-->>Oracle: Return certificate ID
-    
+
     Note over User,Blockchain: 7. Confirmation
     Oracle-->>Frontend: Verification successful (cert_id)
     Frontend->>Provenance: get_certificate(cert_id)
@@ -134,16 +135,19 @@ sequenceDiagram
 **Location**: Frontend
 
 **Process**:
+
 1. User selects a media file (image, video, document, etc.)
 2. Frontend computes SHA-256 hash of the file content
 3. File is uploaded to decentralized storage (IPFS) or centralized storage (MongoDB, S3)
 4. Storage system returns a reference (IPFS CID or database ID)
 
 **Output**:
+
 - `contentHash`: SHA-256 hash of the media file (hex string)
 - `storageRef`: Reference to where the file is stored
 
 **Error Handling**:
+
 - **File too large**: Display error, suggest compression
 - **Upload failed**: Retry with exponential backoff (3 attempts)
 - **Hash computation failed**: Display error, suggest browser compatibility check
@@ -155,6 +159,7 @@ sequenceDiagram
 **Location**: Frontend
 
 **Process**:
+
 1. Frontend creates a `ContentManifest` object:
    ```typescript
    {
@@ -173,10 +178,12 @@ sequenceDiagram
 4. Manifest is stored in the same storage system as the media
 
 **Output**:
+
 - `manifestHash`: SHA-256 hash of the manifest (hex string)
 - `manifestRef`: Reference to stored manifest
 
 **Error Handling**:
+
 - **Invalid creator address**: Validate Stellar public key format
 - **Missing required fields**: Display validation errors
 - **Storage failed**: Retry with exponential backoff
@@ -188,6 +195,7 @@ sequenceDiagram
 **Location**: Frontend → Oracle Contract
 
 **Process**:
+
 1. User signs the verification request using Freighter wallet
 2. Frontend calls `Oracle.submit_request()`:
    ```rust
@@ -206,9 +214,11 @@ sequenceDiagram
    - Emits `submitted` event with request ID
 
 **Output**:
+
 - `requestId`: Unique identifier for tracking the verification request
 
 **Error Handling**:
+
 - **User rejects signature**: Display error, allow retry
 - **Insufficient XLM balance**: Display error with funding instructions
 - **Transaction failed**: Parse error, display user-friendly message
@@ -221,6 +231,7 @@ sequenceDiagram
 **Location**: Off-chain TEE (Trusted Execution Environment)
 
 **Process**:
+
 1. TEE service monitors blockchain for `submitted` events
 2. TEE retrieves media file and manifest from storage using references
 3. TEE verifies:
@@ -233,12 +244,14 @@ sequenceDiagram
    - Produces attestation hash
 
 **Output**:
+
 - `attestationProof`: Signed attestation from TEE
 - `attestationHash`: Hash of the attestation proof
 - `teeHash`: Hash of the TEE code that performed verification
 - `signature`: Ed25519 signature over the payload
 
 **Error Handling**:
+
 - **Content not found**: TEE marks request as failed
 - **Hash mismatch**: TEE marks request as rejected
 - **TEE failure**: Request expires after TTL (100 ledgers)
@@ -250,6 +263,7 @@ sequenceDiagram
 **Location**: Frontend → Oracle Contract → Registry Contract
 
 **Process**:
+
 1. Frontend receives attestation proof from TEE (via polling or webhook)
 2. Frontend calls `Oracle.verify_attestation()`:
    ```rust
@@ -263,18 +277,21 @@ sequenceDiagram
    ```
 
 #### Step 5a: Provider Authorization Check
+
 3. Oracle calls `Registry.is_provider(provider_key)`:
    - Registry checks if provider public key is registered
    - Returns `true` if authorized, `false` otherwise
 4. If provider not authorized, return `Error::UnauthorizedSigner`
 
 #### Step 5b: TEE Hash Verification
+
 5. Oracle calls `Registry.is_tee_hash_approved(tee_hash)`:
    - Registry checks if TEE code hash is in approved list
    - Returns `true` if approved, `false` otherwise
 6. If TEE hash not approved, return `Error::TeeNotVerified`
 
 #### Step 5c: Cryptographic Signature Verification
+
 7. Oracle verifies Ed25519 signature:
    ```rust
    env.crypto().ed25519_verify(&provider, &payload, &signature);
@@ -282,10 +299,12 @@ sequenceDiagram
 8. If signature invalid, transaction panics (signature verification failure)
 
 **Output**:
+
 - `Ok(())` if all checks pass
 - `Err(Error)` if any check fails
 
 **Error Handling**:
+
 - **UnauthorizedSigner**: Provider not registered in Registry
 - **TeeNotVerified**: TEE code hash not approved
 - **Invalid signature**: Cryptographic verification failed
@@ -299,6 +318,7 @@ sequenceDiagram
 **Location**: Oracle Contract → Provenance Contract
 
 **Process**:
+
 1. After successful attestation verification, Oracle calls `Provenance.mint()`:
    ```rust
    pub fn mint(
@@ -311,6 +331,7 @@ sequenceDiagram
    ```
 
 #### Step 6a: Duplicate Check
+
 2. Provenance contract checks if `manifest_hash` already exists:
    ```rust
    let mani_key = (symbol_short!("MANI"), manifest_hash.clone());
@@ -321,6 +342,7 @@ sequenceDiagram
 3. If duplicate found, transaction panics
 
 #### Step 6b: Certificate Creation
+
 4. Provenance contract:
    - Generates unique certificate ID (auto-incrementing counter)
    - Creates `ProvenanceCert` struct:
@@ -341,9 +363,11 @@ sequenceDiagram
      - `manifest_hash`: Manifest hash for indexing
 
 **Output**:
+
 - `certificateId`: Unique on-chain certificate identifier
 
 **Error Handling**:
+
 - **Duplicate certificate**: Panic with message "Certificate already exists"
 - **Not initialized**: Panic with message "Not initialized"
 - **Unauthorized caller**: Only Oracle can mint (enforced by `oracle.require_auth()`)
@@ -355,6 +379,7 @@ sequenceDiagram
 **Location**: Frontend
 
 **Process**:
+
 1. Frontend receives successful transaction result with `certificate_id`
 2. Frontend calls `Provenance.get_certificate(cert_id)` to retrieve full certificate
 3. Certificate details are displayed to user:
@@ -367,11 +392,13 @@ sequenceDiagram
    - Blockchain transaction hash (proof of immutability)
 
 **Output**:
+
 - User-friendly certificate display
 - Shareable certificate URL
 - Downloadable certificate JSON
 
 **Error Handling**:
+
 - **Certificate not found**: Should not occur if minting succeeded
 - **Network error**: Retry fetching certificate details
 
@@ -384,11 +411,12 @@ sequenceDiagram
 The Oracle contract makes two types of calls to the Registry:
 
 1. **Check TEE Hash Approval**:
+
    ```rust
    let registry: Address = env.storage().instance()
        .get(&DataKey::Registry)
        .ok_or(Error::RegistryNotConfigured)?;
-   
+
    let approved: bool = env.invoke_contract(
        &registry,
        &Symbol::new(&env, "is_tee_hash_approved"),
@@ -438,6 +466,7 @@ pub fn verify_and_mint(
 ```
 
 This function:
+
 1. Computes SHA-256 hash of content
 2. Compares with expected hash
 3. If match, calls `Provenance.mint()`
@@ -449,47 +478,47 @@ This function:
 
 ### Oracle Contract Errors
 
-| Error Code | Error Name | Description | Recovery Action |
-|------------|------------|-------------|-----------------|
-| 1 | `NotInitialized` | Contract not initialized with Registry/Provenance addresses | Admin must call `init()` |
-| 2 | `UnauthorizedSigner` | Provider public key not registered in Registry | Admin must call `Registry.add_provider()` |
-| 3 | `AlreadyInitialized` | Attempting to initialize contract twice | No action needed, contract is ready |
-| 4 | `RegistryNotConfigured` | Registry address not set in storage | Admin must reinitialize contract |
-| 5 | `TeeNotVerified` | TEE code hash not approved in Registry | Admin must call `Registry.add_tee_hash()` |
-| 6 | `ProviderNotRegistered` | Provider not found in Registry | Admin must register provider |
+| Error Code | Error Name              | Description                                                 | Recovery Action                           |
+| ---------- | ----------------------- | ----------------------------------------------------------- | ----------------------------------------- |
+| 1          | `NotInitialized`        | Contract not initialized with Registry/Provenance addresses | Admin must call `init()`                  |
+| 2          | `UnauthorizedSigner`    | Provider public key not registered in Registry              | Admin must call `Registry.add_provider()` |
+| 3          | `AlreadyInitialized`    | Attempting to initialize contract twice                     | No action needed, contract is ready       |
+| 4          | `RegistryNotConfigured` | Registry address not set in storage                         | Admin must reinitialize contract          |
+| 5          | `TeeNotVerified`        | TEE code hash not approved in Registry                      | Admin must call `Registry.add_tee_hash()` |
+| 6          | `ProviderNotRegistered` | Provider not found in Registry                              | Admin must register provider              |
 
 ### Provenance Contract Errors
 
-| Error Code | Error Name | Description | Recovery Action |
-|------------|------------|-------------|-----------------|
-| 1 | `CertificateNotFound` | Certificate ID does not exist | Verify certificate ID is correct |
-| - | `AlreadyInitialized` (panic) | Contract already initialized | No action needed |
-| - | `DuplicateManifest` (panic) | Certificate already exists for manifest hash | Use existing certificate |
-| - | `NotInitialized` (panic) | Contract not initialized | Admin must call `initialize()` |
-| - | `Unauthorized` (panic) | Caller is not the Oracle contract | Only Oracle can mint certificates |
+| Error Code | Error Name                   | Description                                  | Recovery Action                   |
+| ---------- | ---------------------------- | -------------------------------------------- | --------------------------------- |
+| 1          | `CertificateNotFound`        | Certificate ID does not exist                | Verify certificate ID is correct  |
+| -          | `AlreadyInitialized` (panic) | Contract already initialized                 | No action needed                  |
+| -          | `DuplicateManifest` (panic)  | Certificate already exists for manifest hash | Use existing certificate          |
+| -          | `NotInitialized` (panic)     | Contract not initialized                     | Admin must call `initialize()`    |
+| -          | `Unauthorized` (panic)       | Caller is not the Oracle contract            | Only Oracle can mint certificates |
 
 ### Registry Contract Errors
 
-| Error | Description | Recovery Action |
-|-------|-------------|-----------------|
-| `AlreadyInitialized` (panic) | Contract already initialized | No action needed |
-| `NotInitialized` (panic) | Contract not initialized | Admin must call `init()` |
-| `Unauthorized` (panic) | Non-admin attempting admin operation | Use admin account |
+| Error                        | Description                          | Recovery Action          |
+| ---------------------------- | ------------------------------------ | ------------------------ |
+| `AlreadyInitialized` (panic) | Contract already initialized         | No action needed         |
+| `NotInitialized` (panic)     | Contract not initialized             | Admin must call `init()` |
+| `Unauthorized` (panic)       | Non-admin attempting admin operation | Use admin account        |
 
 ### Frontend Error Handling
 
-| Error Type | User Message | Technical Action |
-|------------|--------------|------------------|
-| Wallet not connected | "Please connect your Freighter wallet" | Prompt wallet connection |
-| Insufficient balance | "Insufficient XLM balance. Please fund your account." | Show funding instructions |
-| User rejected signature | "Transaction cancelled by user" | Allow retry |
-| Network timeout | "Network timeout. Please try again." | Retry with exponential backoff |
-| Invalid file format | "Unsupported file format" | Show supported formats |
-| File too large | "File exceeds maximum size (10MB)" | Suggest compression |
+| Error Type              | User Message                                                    | Technical Action                |
+| ----------------------- | --------------------------------------------------------------- | ------------------------------- |
+| Wallet not connected    | "Please connect your Freighter wallet"                          | Prompt wallet connection        |
+| Insufficient balance    | "Insufficient XLM balance. Please fund your account."           | Show funding instructions       |
+| User rejected signature | "Transaction cancelled by user"                                 | Allow retry                     |
+| Network timeout         | "Network timeout. Please try again."                            | Retry with exponential backoff  |
+| Invalid file format     | "Unsupported file format"                                       | Show supported formats          |
+| File too large          | "File exceeds maximum size (10MB)"                              | Suggest compression             |
 | Provider not authorized | "Verification provider not authorized. Please contact support." | Log error, show support contact |
-| TEE not verified | "TEE verification failed. Please contact support." | Log error, show support contact |
-| Duplicate certificate | "A certificate already exists for this content" | Show existing certificate |
-| Hash mismatch | "Content verification failed: hash mismatch" | Suggest re-upload |
+| TEE not verified        | "TEE verification failed. Please contact support."              | Log error, show support contact |
+| Duplicate certificate   | "A certificate already exists for this content"                 | Show existing certificate       |
+| Hash mismatch           | "Content verification failed: hash mismatch"                    | Suggest re-upload               |
 
 ---
 
@@ -510,12 +539,12 @@ async function retryWithBackoff<T>(
       return await fn();
     } catch (error) {
       if (i === maxRetries - 1) throw error;
-      
+
       const delay = baseDelay * Math.pow(2, i);
-      await new Promise(resolve => setTimeout(resolve, delay));
+      await new Promise((resolve) => setTimeout(resolve, delay));
     }
   }
-  throw new Error('Max retries exceeded');
+  throw new Error("Max retries exceeded");
 }
 ```
 
@@ -547,12 +576,14 @@ async function retryWithBackoff<T>(
 Smart contracts do **not** implement automatic retries. Failed transactions must be retried by the caller (frontend or off-chain service).
 
 **Non-Retryable Errors** (require manual intervention):
+
 - `UnauthorizedSigner`: Admin must register provider
 - `TeeNotVerified`: Admin must approve TEE hash
 - `DuplicateManifest`: Certificate already exists (use existing)
 - `NotInitialized`: Admin must initialize contract
 
 **Retryable Errors** (can be retried after fixing):
+
 - Network timeouts: Retry transaction
 - Insufficient balance: Fund account, then retry
 - Nonce errors: Wait for pending transactions, then retry
@@ -610,6 +641,7 @@ if env.storage().persistent().has(&mani_key) {
 ```
 
 This ensures:
+
 - One certificate per unique manifest
 - No replay attacks
 - No certificate spam
@@ -634,6 +666,7 @@ admin.require_auth();
 ```
 
 This ensures:
+
 - Only admin can register providers
 - Only admin can approve TEE hashes
 - Only admin can initialize contracts
@@ -654,6 +687,7 @@ Contracts validate all inputs:
 The StellarVeriphy verification pipeline provides a robust, secure, and transparent system for digital content verification. By combining off-chain efficiency with on-chain immutability, the pipeline ensures that provenance certificates are trustworthy, auditable, and permanent.
 
 Key strengths:
+
 - **Multi-layer authorization**: Provider, TEE, and user authorization
 - **Cryptographic integrity**: SHA-256 hashing and Ed25519 signatures
 - **Duplicate prevention**: One certificate per unique manifest
@@ -662,6 +696,7 @@ Key strengths:
 - **Retry resilience**: Exponential backoff for transient failures
 
 For more information:
+
 - [Contract Implementation Details](../IMPLEMENTATION.md)
 - [Deployment Guide](../DEPLOYMENT.md)
 - [Contributing Guide](../CONTRIBUTING.md)

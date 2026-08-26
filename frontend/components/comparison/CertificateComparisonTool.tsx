@@ -41,7 +41,7 @@ export function CertificateComparisonTool({
   // Search certificates
   const handleSearch = useCallback(async () => {
     if (!searchQuery.trim()) return;
-    
+
     setIsSearching(true);
     try {
       if (onSearch) {
@@ -81,16 +81,19 @@ export function CertificateComparisonTool({
   }, [searchQuery, onSearch]);
 
   // Add certificate to comparison
-  const addCertificate = useCallback((cert: Certificate) => {
-    if (selectedCertificates.length >= 3) {
-      alert("You can compare up to 3 certificates at a time");
-      return;
-    }
-    if (selectedCertificates.find((c) => c.id === cert.id)) {
-      return;
-    }
-    setSelectedCertificates((prev) => [...prev, cert]);
-  }, [selectedCertificates]);
+  const addCertificate = useCallback(
+    (cert: Certificate) => {
+      if (selectedCertificates.length >= 3) {
+        alert("You can compare up to 3 certificates at a time");
+        return;
+      }
+      if (selectedCertificates.find((c) => c.id === cert.id)) {
+        return;
+      }
+      setSelectedCertificates((prev) => [...prev, cert]);
+    },
+    [selectedCertificates]
+  );
 
   // Remove certificate from comparison
   const removeCertificate = useCallback((id: string) => {
@@ -128,7 +131,7 @@ export function CertificateComparisonTool({
   const shareComparison = useCallback(() => {
     const ids = selectedCertificates.map((c) => c.id).join(",");
     const url = `${window.location.origin}/compare?certificates=${encodeURIComponent(ids)}`;
-    
+
     if (navigator.clipboard) {
       navigator.clipboard.writeText(url);
       alert("Comparison link copied to clipboard!");
@@ -301,7 +304,12 @@ export function CertificateComparisonTool({
 
           {comparisonMode === "side-by-side" ? (
             /* Side by Side View */
-            <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${selectedCertificates.length}, minmax(0, 1fr))` }}>
+            <div
+              className="grid gap-4"
+              style={{
+                gridTemplateColumns: `repeat(${selectedCertificates.length}, minmax(0, 1fr))`,
+              }}
+            >
               {selectedCertificates.map((cert) => (
                 <div
                   key={cert.id}
