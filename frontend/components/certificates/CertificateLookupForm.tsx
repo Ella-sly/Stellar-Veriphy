@@ -11,8 +11,9 @@
  * Emits search results via the onResult callback.
  */
 
-import { FormEvent,useCallback, useState } from "react";
+import { FormEvent, type HTMLInputTypeAttribute, useCallback, useState } from "react";
 
+import { FormInput } from "@/components/ui/FormInput";
 import type { CertificateLookupMethod } from "@/services/certificateVerificationService";
 
 // ---------------------------------------------------------------------------
@@ -34,7 +35,8 @@ interface LookupMethodConfig {
   label: string;
   description: string;
   placeholder: string;
-  inputType: string;
+  inputType: HTMLInputTypeAttribute;
+  maxLength?: number;
   validate: (value: string) => string | null;
 }
 
@@ -58,6 +60,7 @@ const LOOKUP_METHODS: LookupMethodConfig[] = [
     description: "Look up using the 8-character verification code",
     placeholder: "e.g. ABC12345",
     inputType: "text",
+    maxLength: 8,
     validate: (value) => {
       if (!value.trim()) return "Please enter a verification code";
       const cleaned = value.trim().toUpperCase();
@@ -71,6 +74,7 @@ const LOOKUP_METHODS: LookupMethodConfig[] = [
     description: "Find all certificates created by a Stellar address",
     placeholder: "e.g. G...",
     inputType: "text",
+    maxLength: 56,
     validate: (value) => {
       if (!value.trim()) return "Please enter a Stellar address";
       if (!value.trim().startsWith("G")) return "Stellar public key must start with G";
@@ -94,6 +98,7 @@ export function CertificateLookupForm({
   const [inputError, setInputError] = useState<string | null>(null);
 
   const activeConfig = LOOKUP_METHODS.find((m) => m.id === method)!;
+  const isInputValid = inputValue.trim() !== "" && activeConfig.validate(inputValue) === null;
 
   const handleMethodChange = useCallback((newMethod: CertificateLookupMethod) => {
     setMethod(newMethod);
@@ -137,13 +142,10 @@ export function CertificateLookupForm({
 
       {/* ── Form ── */}
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Description */}
-        <p className="text-sm text-gray-600 dark:text-gray-400">{activeConfig.description}</p>
-
         {/* Input */}
-        <div>
-          <div className="relative">
-            <input
+        <div className="flex items-start gap-2">
+          <div className="min-w-0 flex-1">
+            <FormInput
               type={activeConfig.inputType}
               value={inputValue}
               onChange={(e) => {
@@ -152,58 +154,47 @@ export function CertificateLookupForm({
               }}
               placeholder={activeConfig.placeholder}
               disabled={isLoading}
-              className={`w-full px-4 py-3 pr-12 text-sm border rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 transition-colors focus:outline-none focus:ring-2 ${
-                inputError
-                  ? "border-red-300 dark:border-red-700 focus:ring-red-500"
-                  : "border-gray-300 dark:border-gray-600 focus:ring-blue-500 focus:border-blue-500"
-              } disabled:opacity-50 disabled:cursor-not-allowed`}
-              aria-describedby={inputError ? "lookup-input-error" : undefined}
-              aria-invalid={!!inputError}
+              maxLength={activeConfig.maxLength}
+              showCharacterCount={Boolean(activeConfig.maxLength)}
+              errorText={inputError}
+              successText={isInputValid ? "Ready to search" : undefined}
+              helperText={activeConfig.description}
             />
-            <button
-              type="submit"
-              disabled={isLoading || !inputValue.trim()}
-              className="absolute right-1.5 top-1/2 -translate-y-1/2 px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              {isLoading ? (
-                <span className="flex items-center gap-1.5">
-                  <svg
-                    className="animate-spin h-4 w-4"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    aria-hidden="true"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    />
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    />
-                  </svg>
-                  Searching
-                </span>
-              ) : (
-                "Search"
-              )}
-            </button>
           </div>
-          {inputError && (
-            <p
-              id="lookup-input-error"
-              className="mt-1.5 text-xs text-red-600 dark:text-red-400"
-              role="alert"
-            >
-              {inputError}
-            </p>
-          )}
+          <button
+            type="submit"
+            disabled={isLoading || !inputValue.trim()}
+            className="h-11 shrink-0 rounded-md bg-blue-600 px-4 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {isLoading ? (
+              <span className="flex items-center gap-1.5">
+                <svg
+                  className="h-4 w-4 animate-spin"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  />
+                </svg>
+                Searching
+              </span>
+            ) : (
+              "Search"
+            )}
+          </button>
         </div>
 
         {/* Server/global error */}

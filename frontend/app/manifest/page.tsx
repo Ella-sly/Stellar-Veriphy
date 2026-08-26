@@ -1,15 +1,21 @@
 "use client";
 
 import { ContentManifest } from "@stellarveriphy/shared/types";
-import { useEffect,useState } from "react";
+import { useEffect, useState } from "react";
 
 import { KeyValueBuilder } from "@/components/KeyValueBuilder";
 import { ManifestPreview } from "@/components/ManifestPreview";
 import { AutoSaveIndicator } from "@/components/ui/AutoSaveIndicator";
+import { FormInput } from "@/components/ui/FormInput";
 import { HelpIcon } from "@/components/ui/HelpIcon";
 import { useAutoSave } from "@/hooks/useAutoSave";
 import { ALL_TEMPLATES, loadTemplate, type TemplateId } from "@/utils/manifestTemplates";
-import { downloadJSON, downloadXML,isValidStellarAddress } from "@/utils/validation";
+import {
+  downloadJSON,
+  downloadXML,
+  isValidSHA256,
+  isValidStellarAddress,
+} from "@/utils/validation";
 
 export default function ManifestPage() {
   const [manifest, setManifest] = useState<Partial<ContentManifest>>({
@@ -21,6 +27,9 @@ export default function ManifestPage() {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [activeTemplate, setActiveTemplate] = useState<TemplateId | null>(null);
+  const contentHash = manifest.contentHash || "";
+  const creator = manifest.creator || "";
+  const timestamp = manifest.timestamp?.slice(0, 16) || "";
 
   const { state: autoSaveState, clearSaved } = useAutoSave({
     key: "manifest-form",
@@ -63,6 +72,8 @@ export default function ManifestPage() {
 
     if (!manifest.contentHash?.trim()) {
       newErrors.contentHash = "Content hash is required";
+    } else if (!isValidSHA256(manifest.contentHash)) {
+      newErrors.contentHash = "Content hash must be a 64-character SHA-256 hex value";
     }
 
     if (!manifest.creator?.trim()) {
@@ -143,64 +154,69 @@ export default function ManifestPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <div className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-black dark:text-white mb-2">
-                Content Hash (SHA-256)
-                <HelpIcon
-                  content="The SHA-256 hash of your content. Use the Hash Calculator tool to generate one."
-                  className="ml-1.5 align-middle"
-                />
-              </label>
-              <input
+              <FormInput
+                label={
+                  <>
+                    Content Hash (SHA-256)
+                    <HelpIcon
+                      content="The SHA-256 hash of your content. Use the Hash Calculator tool to generate one."
+                      className="ml-1.5 align-middle"
+                    />
+                  </>
+                }
                 type="text"
-                value={manifest.contentHash || ""}
+                value={contentHash}
                 onChange={(e) => handleChange("contentHash", e.target.value)}
                 placeholder="e.g., a1b2c3d4..."
-                className={`w-full px-4 py-2 border rounded bg-white dark:bg-gray-800 text-black dark:text-white ${
-                  errors.contentHash ? "border-red-500" : "border-gray-300 dark:border-gray-600"
-                }`}
+                maxLength={64}
+                showCharacterCount
+                errorText={errors.contentHash}
+                successText={isValidSHA256(contentHash) ? "Valid SHA-256 hash" : undefined}
+                helperText="Paste the 64-character SHA-256 digest for the content."
               />
-              {errors.contentHash && (
-                <p className="text-red-500 text-sm mt-1">{errors.contentHash}</p>
-              )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-black dark:text-white mb-2">
-                Creator (Stellar Address)
-                <HelpIcon
-                  content="Your Stellar public key starting with G. Connect your wallet or paste your address."
-                  className="ml-1.5 align-middle"
-                />
-              </label>
-              <input
+              <FormInput
+                label={
+                  <>
+                    Creator (Stellar Address)
+                    <HelpIcon
+                      content="Your Stellar public key starting with G. Connect your wallet or paste your address."
+                      className="ml-1.5 align-middle"
+                    />
+                  </>
+                }
                 type="text"
-                value={manifest.creator || ""}
+                value={creator}
                 onChange={(e) => handleChange("creator", e.target.value)}
                 placeholder="e.g., GBRPYHIL2CI3..."
-                className={`w-full px-4 py-2 border rounded bg-white dark:bg-gray-800 text-black dark:text-white ${
-                  errors.creator ? "border-red-500" : "border-gray-300 dark:border-gray-600"
-                }`}
+                maxLength={56}
+                showCharacterCount
+                errorText={errors.creator}
+                successText={isValidStellarAddress(creator) ? "Valid Stellar address" : undefined}
+                helperText="Use a Stellar public key beginning with G."
               />
-              {errors.creator && <p className="text-red-500 text-sm mt-1">{errors.creator}</p>}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-black dark:text-white mb-2">
-                Timestamp (ISO 8601)
-                <HelpIcon
-                  content="The date and time the content was created. Defaults to the current time."
-                  className="ml-1.5 align-middle"
-                />
-              </label>
-              <input
+              <FormInput
+                label={
+                  <>
+                    Timestamp (ISO 8601)
+                    <HelpIcon
+                      content="The date and time the content was created. Defaults to the current time."
+                      className="ml-1.5 align-middle"
+                    />
+                  </>
+                }
                 type="datetime-local"
-                value={manifest.timestamp?.slice(0, 16) || ""}
+                value={timestamp}
                 onChange={(e) => handleChange("timestamp", new Date(e.target.value).toISOString())}
-                className={`w-full px-4 py-2 border rounded bg-white dark:bg-gray-800 text-black dark:text-white ${
-                  errors.timestamp ? "border-red-500" : "border-gray-300 dark:border-gray-600"
-                }`}
+                errorText={errors.timestamp}
+                successText={timestamp ? "Timestamp ready" : undefined}
+                helperText="Defaults to the current date and time."
               />
-              {errors.timestamp && <p className="text-red-500 text-sm mt-1">{errors.timestamp}</p>}
             </div>
 
             <div>
