@@ -1,5 +1,13 @@
 # ⭐ StellarVeriphy — The Truth Engine for the Stellar Ecosystem
 
+[![CI Status](https://github.com/Stellar-Veriphy/Stellar-Veriphy/actions/workflows/ci.yml/badge.svg)](https://github.com/Stellar-Veriphy/Stellar-Veriphy/actions/workflows/ci.yml)
+[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/Stellar-Veriphy/Stellar-Veriphy/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+[![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen.svg)](https://github.com/Stellar-Veriphy/Stellar-Veriphy)
+[![pnpm](https://img.shields.io/badge/pnpm-10.18.2-blue.svg)](https://pnpm.io/)
+[![Node.js](https://img.shields.io/badge/node-%3E%3D20-brightgreen.svg)](https://nodejs.org/)
+[![Rust](https://img.shields.io/badge/rust-stable-orange.svg)](https://www.rust-lang.org/)
+
 StellarVeriphy is a decentralized digital content verification and provenance platform built on the **Stellar blockchain**. It enables creators, developers, and platforms to generate immutable authenticity proofs for digital media directly on-chain using **Soroban smart contracts** — Stellar's native smart contract platform built on Rust/WASM.
 
 By leveraging Stellar's ultra-low transaction fees (~0.00001 XLM), fast 3–5 second finality, and energy-efficient **Stellar Consensus Protocol (SCP)**, StellarVeriphy makes large-scale content verification affordable, scalable, and environmentally sustainable.
