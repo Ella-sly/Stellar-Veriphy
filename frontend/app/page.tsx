@@ -4,6 +4,7 @@ import { AboutSection } from "@/components/landing/AboutSection";
 import { HowItWorksSection } from "@/components/landing/HowItWorksSection";
 import { EcosystemSection } from "@/components/landing/EcosystemSection";
 import { CallToActionSection } from "@/components/landing/CallToActionSection";
+import { Footer } from "@/components/Footer";
 
 export default function Home() {
   return (
@@ -15,6 +16,7 @@ export default function Home() {
         <HowItWorksSection />
         <EcosystemSection />
         <CallToActionSection />
+        <Footer />
       </div>
     </main>
   );
