@@ -203,6 +203,8 @@ The contracts use the **Soroban SDK** (Rust → WASM). The important building bl
 | [Key Management](docs/security/key-management.md)     | Custody, rotation, storage, access control, backup, and auditing for every key category in the system                                |
 | [Privacy Policy](docs/legal/privacy-policy.md)        | What StellarVeriphy stores, where, and your GDPR/CCPA rights — see also [Data Retention Policy](docs/legal/data-retention-policy.md) |
 | [User Guide and Tutorials](docs/user-guide.md)        | Using StellarVeriphy — what works today vs. the target verification/certificate workflow, troubleshooting, FAQ                       |
+| [Contract Error Codes](docs/api/error-codes.md)       | Error lookup for oracle, provenance, and registry contract failures                                                                    |
+| [Video Tutorials](docs/tutorials/README.md)          | Transcript source for getting started, verification workflow, and developer setup walkthroughs                                         |
 | [Architecture Decision Records](docs/adr/README.md)   | Why the system is built the way it is — Soroban, the monorepo layout, the TEE trust model, storage abstraction                       |
 
 ## 🤝 Contributing

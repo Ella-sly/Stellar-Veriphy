@@ -122,7 +122,7 @@ Open a [GitHub issue](https://github.com/Stellar-Veriphy/Stellar-Veriphy/issues)
 These are explicitly **not included** in this pass, and that's a deliberate choice rather than an oversight:
 
 - **Screenshots** would currently just show unstyled placeholder text (see [Getting started](#getting-started-what-works-today)) — adding them now would need to be redone the moment real UI design lands, so they're deferred until the upload/certificate-viewer pages have real layouts.
-- **Video tutorials** require an actual working end-to-end flow to record — there's nothing to demonstrate yet beyond the CLI-driven contract calls above. Worth revisiting once the [target workflow](#target-workflow-how-content-verification-will-work) is implemented in the UI.
+- **Video tutorials** now have transcript drafts in [docs/tutorials](tutorials/README.md). The actual recordings and YouTube uploads are still a follow-up task, but the narration, structure, and accessibility text are ready to use as source material.
 - **A searchable documentation site** (e.g. a static site generator like [Nextra](https://nextra.site/) or [Docusaurus](https://docusaurus.io/) publishing everything under `/docs`) is a reasonable next step once there's enough written documentation to make search worthwhile — tracked as follow-up rather than built speculatively here.
 
 If you're picking up one of these as a follow-up task, it's a good candidate for its own issue rather than folding into this guide.
