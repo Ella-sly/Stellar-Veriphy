@@ -3,12 +3,7 @@
  * Covers: generateManifest, exportManifestAsJSON, exportManifestAsXML
  */
 
-import {
-  exportManifestAsJSON,
-  exportManifestAsXML,
-  generateManifest,
-} from "../manifestUseCases";
-import { generateManifest, exportManifestAsJSON, exportManifestAsXML } from "../manifestUseCases";
+import { exportManifestAsJSON, exportManifestAsXML, generateManifest } from "../manifestUseCases";
 
 const VALID_HASH = "a3f5c2e1b4d6789012345678901234567890abcdef1234567890abcdef123456";
 const VALID_CREATOR = "GBRPYHIL2CI3WHZDTOOQFC6EB4RRJC3XNSOLXAUJVLVWXVVNQNYWGLZ";

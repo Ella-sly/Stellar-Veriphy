@@ -9,6 +9,9 @@ const __dirname = dirname(__filename);
 const compat = new FlatCompat({ baseDirectory: __dirname });
 
 const eslintConfig = [
+  {
+    ignores: [".next/**", "next-env.d.ts", "public/widget.js"],
+  },
   ...compat.extends("next/core-web-vitals"),
   {
     plugins: {
@@ -20,6 +23,5 @@ const eslintConfig = [
     },
   },
 ];
-const eslintConfig = [...compat.extends("next/core-web-vitals")];
 
 export default eslintConfig;

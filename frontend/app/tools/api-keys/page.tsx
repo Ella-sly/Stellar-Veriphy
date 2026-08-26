@@ -4,10 +4,9 @@
  * API Key Management Demo Page — Issue #219
  */
 
-import { Header } from "@/components/Header";
-import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { APIKeyManagement } from "@/components/APIKeyManagement";
 import { Header } from "@/components/Header";
+import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { useWallet } from "@/context/WalletContext";
 
 export default function APIKeysPage() {

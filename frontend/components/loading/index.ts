@@ -1,8 +1,6 @@
-export { FileUploadProgress,PageTransitionLoader, useOperationLoader } from "./PageTransitionLoader";
-export { ProgressBar } from "./ProgressBar";
-export { ProgressBar } from "./ProgressBar";
 export {
+  FileUploadProgress,
   PageTransitionLoader,
   useOperationLoader,
-  FileUploadProgress,
 } from "./PageTransitionLoader";
+export { ProgressBar } from "./ProgressBar";
