@@ -7,6 +7,7 @@
 import { Header } from "@/components/Header";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { ContentHashCalculator } from "@/components/ContentHashCalculator";
+import { Header } from "@/components/Header";
 
 export default function HashCalculatorPage() {
   return (

@@ -5,8 +5,32 @@
  * and offline support.
  */
 
+import { logger } from "./logger";
+
 // Service Worker Registration
 export async function registerServiceWorker(): Promise<ServiceWorkerRegistration | null> {
+    if (typeof window === "undefined" || !("serviceWorker" in navigator)) {
+        logger.debug("Service Worker not supported");
+        return null;
+    }
+
+    try {
+        const registration = await navigator.serviceWorker.register("/sw.js", {
+            scope: "/",
+        });
+
+        logger.info("Service Worker registered:", registration.scope);
+
+        // Check for updates periodically
+        setInterval(() => {
+            registration.update();
+        }, 60 * 60 * 1000); // Check every hour
+
+        return registration;
+    } catch (error) {
+        logger.error("Service Worker registration failed:", error);
+        return null;
+    }
   if (typeof window === "undefined" || !("serviceWorker" in navigator)) {
     console.log("Service Worker not supported");
     return null;
@@ -36,6 +60,19 @@ export async function registerServiceWorker(): Promise<ServiceWorkerRegistration
 
 // Unregister Service Worker
 export async function unregisterServiceWorker(): Promise<boolean> {
+    if (typeof window === "undefined" || !("serviceWorker" in navigator)) {
+        return false;
+    }
+
+    try {
+        const registration = await navigator.serviceWorker.ready;
+        const success = await registration.unregister();
+        logger.info("Service Worker unregistered:", success);
+        return success;
+    } catch (error) {
+        logger.error("Service Worker unregistration failed:", error);
+        return false;
+    }
   if (typeof window === "undefined" || !("serviceWorker" in navigator)) {
     return false;
   }
@@ -53,6 +90,10 @@ export async function unregisterServiceWorker(): Promise<boolean> {
 
 // Push Notifications
 export async function requestNotificationPermission(): Promise<NotificationPermission> {
+    if (typeof window === "undefined" || !("Notification" in window)) {
+        logger.debug("Notifications not supported");
+        return "denied";
+    }
   if (typeof window === "undefined" || !("Notification" in window)) {
     console.log("Notifications not supported");
     return "denied";
@@ -74,6 +115,24 @@ export async function subscribeToPushNotifications(
   registration: ServiceWorkerRegistration,
   vapidPublicKey: string
 ): Promise<PushSubscription | null> {
+    try {
+        const permission = await requestNotificationPermission();
+
+        if (permission !== "granted") {
+            logger.debug("Notification permission denied");
+            return null;
+        }
+
+        const subscription = await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(vapidPublicKey) as unknown as BufferSource,
+        });
+
+        logger.info("Push subscription created:", subscription);
+        return subscription;
+    } catch (error) {
+        logger.error("Push subscription failed:", error);
+        return null;
   try {
     const permission = await requestNotificationPermission();
 
@@ -98,6 +157,19 @@ export async function subscribeToPushNotifications(
 export async function unsubscribeFromPushNotifications(
   registration: ServiceWorkerRegistration
 ): Promise<boolean> {
+    try {
+        const subscription = await registration.pushManager.getSubscription();
+
+        if (!subscription) {
+            return false;
+        }
+
+        const success = await subscription.unsubscribe();
+        logger.info("Push unsubscribed:", success);
+        return success;
+    } catch (error) {
+        logger.error("Push unsubscribe failed:", error);
+        return false;
   try {
     const subscription = await registration.pushManager.getSubscription();
 
@@ -140,6 +212,9 @@ export async function clearAllCaches(): Promise<void> {
     return;
   }
 
+    const cacheNames = await caches.keys();
+    await Promise.all(cacheNames.map((name) => caches.delete(name)));
+    logger.debug("All caches cleared");
   const cacheNames = await caches.keys();
   await Promise.all(cacheNames.map((name) => caches.delete(name)));
   console.log("All caches cleared");
@@ -214,6 +289,17 @@ export async function registerBackgroundSync(
   registration: ServiceWorkerRegistration,
   tag: string
 ): Promise<void> {
+    if (!("sync" in registration)) {
+        logger.debug("Background Sync not supported");
+        return;
+    }
+
+    try {
+        await (registration as unknown as { sync: { register(t: string): Promise<void> } }).sync.register(tag);
+        logger.info("Background sync registered:", tag);
+    } catch (error) {
+        logger.error("Background sync registration failed:", error);
+    }
   if (!("sync" in registration)) {
     console.log("Background Sync not supported");
     return;

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback, createContext, useContext, ReactNode } from "react";
-import { Bell, X, CheckCheck, Settings, Mail, Smartphone } from "lucide-react";
+import { Bell, CheckCheck, Mail, Settings, Smartphone,X } from "lucide-react";
+import { createContext, ReactNode,useCallback, useContext, useEffect, useState } from "react";
 
 // ---------------------------------------------------------------------------
 // Types

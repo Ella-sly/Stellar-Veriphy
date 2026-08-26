@@ -13,6 +13,12 @@
  */
 
 import type {
+    ExportOptions,
+    Transaction,
+    TransactionFilters,
+    TransactionListResponse,
+    TransactionPaginationOptions,
+    TransactionType,
   Transaction,
   TransactionFilters,
   TransactionListResponse,

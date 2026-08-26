@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useEffect, useState } from "react";
+
 import { Header } from "@/components/Header";
+import { type AuditLogEntry,auditLogger } from "@/lib/security/auditLogger";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { auditLogger, type AuditLogEntry } from "@/lib/security/auditLogger";
 

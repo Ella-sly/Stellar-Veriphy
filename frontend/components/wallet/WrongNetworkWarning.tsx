@@ -1,7 +1,8 @@
 "use client";
 
-import { useWallet } from "@/context/WalletContext";
 import { useState } from "react";
+
+import { useWallet } from "@/context/WalletContext";
 
 export function WrongNetworkWarning() {
   const { network } = useWallet();

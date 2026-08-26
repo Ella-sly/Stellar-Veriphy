@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
 import { ContentManifest } from "@stellarveriphy/shared/types";
+import { useState } from "react";
+
+import { jsonToXml } from "@/utils/manifestConverter";
+
 import { FormatToggle } from "./FormatToggle";
 import { ManifestPreview } from "./ManifestPreview";
-import { jsonToXml } from "@/utils/manifestConverter";
 
 interface ManifestModalProps {
   manifest: ContentManifest;

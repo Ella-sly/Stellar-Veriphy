@@ -11,17 +11,17 @@
  */
 
 import {
-  Skeleton,
+  CardGridSkeleton,
   CertificateCardSkeleton,
-  TransactionListSkeleton,
   DashboardWidgetSkeleton,
+  FormSkeleton,
+  ListItemSkeleton,
+  PageHeaderSkeleton,
+  Skeleton,
   StatsCardsSkeleton,
   TableSkeleton,
-  CardGridSkeleton,
-  ListItemSkeleton,
-  FormSkeleton,
-  PageHeaderSkeleton,
   TextLineSkeleton,
+  TransactionListSkeleton,
 } from "@/components/ui/Skeleton";
 
 export default function SkeletonDemoPage() {

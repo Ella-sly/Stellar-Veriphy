@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useRef, ReactNode } from "react";
+import { ReactNode,useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
+
 import { cn } from "@/utils/cn";
 
 interface ModalProps {

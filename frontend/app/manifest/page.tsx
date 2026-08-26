@@ -1,14 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { ContentManifest } from "@stellarveriphy/shared/types";
+import { useEffect,useState } from "react";
+
 import { KeyValueBuilder } from "@/components/KeyValueBuilder";
 import { ManifestPreview } from "@/components/ManifestPreview";
-import { isValidStellarAddress, downloadJSON, downloadXML } from "@/utils/validation";
-import { ALL_TEMPLATES, loadTemplate, type TemplateId } from "@/utils/manifestTemplates";
-import { useAutoSave } from "@/hooks/useAutoSave";
 import { AutoSaveIndicator } from "@/components/ui/AutoSaveIndicator";
 import { HelpIcon } from "@/components/ui/HelpIcon";
+import { useAutoSave } from "@/hooks/useAutoSave";
+import { ALL_TEMPLATES, loadTemplate, type TemplateId } from "@/utils/manifestTemplates";
+import { downloadJSON, downloadXML,isValidStellarAddress } from "@/utils/validation";
 
 export default function ManifestPage() {
   const [manifest, setManifest] = useState<Partial<ContentManifest>>({

@@ -4,7 +4,7 @@
  * Responsive design utilities for Stellar-Veriphy
  */
 
-import { useState, useEffect } from "react";
+import { useEffect,useState } from "react";
 
 export type Breakpoint = "xs" | "sm" | "md" | "lg" | "xl" | "2xl";
 

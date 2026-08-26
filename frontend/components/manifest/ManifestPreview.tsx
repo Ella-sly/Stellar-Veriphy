@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import Prism from "prismjs";
 import "prismjs/components/prism-json";
 import "prismjs/components/prism-markup";
 import "prismjs/themes/prism-tomorrow.css";
-import { FiCopy, FiCheck } from "react-icons/fi";
+
+import Prism from "prismjs";
+import { useEffect, useRef, useState } from "react";
+import { FiCheck,FiCopy } from "react-icons/fi";
 
 interface ManifestPreviewProps {
   content: string;

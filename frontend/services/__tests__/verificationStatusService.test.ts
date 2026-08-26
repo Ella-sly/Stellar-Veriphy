@@ -4,9 +4,9 @@
  */
 
 import {
-  verificationStatusService,
-  type VerificationStatus,
   type VerificationPhase,
+  type VerificationStatus,
+  verificationStatusService,
 } from "../verificationStatusService";
 
 // Use fake timers to control setInterval / setTimeout without waiting

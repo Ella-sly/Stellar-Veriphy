@@ -8,10 +8,11 @@
  * validation error messages, format suggestions, and a schema version selector.
  */
 
-import { useState, useCallback, useRef } from "react";
+import { useCallback, useRef,useState } from "react";
+
 import { cn } from "@/utils/cn";
 import { validateManifest } from "@/utils/manifestValidation";
-import { isValidStellarAddress, isValidSHA256 } from "@/utils/validation";
+import { isValidSHA256,isValidStellarAddress } from "@/utils/validation";
 
 // ---------------------------------------------------------------------------
 // Schema versions

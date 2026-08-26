@@ -1,7 +1,8 @@
 "use client";
 
-import { useWallet } from "@/context/WalletContext";
 import { FiArrowRight } from "react-icons/fi";
+
+import { useWallet } from "@/context/WalletContext";
 
 export function HeroSection() {
   const { connect, connected } = useWallet();

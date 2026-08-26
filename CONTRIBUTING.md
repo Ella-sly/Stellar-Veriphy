@@ -218,6 +218,7 @@ We enforce automatic formatting and linting via pre-commit hooks (`husky` + `lin
 - **Frontend**: [Prettier](https://prettier.io/) for formatting, then ESLint with TypeScript rules.
 - **Contracts**: `rustfmt --edition 2021` and `cargo clippy`.
 
+**Import sorting**: The frontend ESLint config includes `eslint-plugin-simple-import-sort`, which automatically groups and alphabetizes imports and exports (`simple-import-sort/imports`, `simple-import-sort/exports`). This runs as part of `pnpm --filter frontend exec eslint --fix` and the pre-commit hook, so imports are sorted automatically whenever you commit or run lint with `--fix`.
 Prettier's config lives at the repo root (`.prettierrc.json`, `.prettierignore`) and covers the
 whole workspace — TypeScript/JavaScript, JSON, CSS, and Markdown. Rust contracts are excluded and
 formatted with `rustfmt` instead.

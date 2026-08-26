@@ -1,21 +1,23 @@
+import "./globals.css";
+
+import { GeistMono } from "geist/font/mono";
+import { GeistSans } from "geist/font/sans";
 import type { Metadata } from "next";
-import { WalletProvider } from "@/context/WalletContext";
-import { ToastProvider } from "@/components/ToastProvider";
-import { ThemeProvider } from "@/components/ThemeProvider";
+
 import { WizardProvider } from "@/app/context/WizardContext";
-import { NotificationProvider } from "@/components/notifications";
-import { HelpProvider } from "@/context/HelpContext";
+import { ConsentBanner } from "@/components/ConsentBanner";
 import { KeyboardShortcutsProvider } from "@/components/KeyboardShortcutsProvider";
-import { HelpSearchOverlay } from "@/components/ui/HelpSearchOverlay";
-import { TutorialOverlay } from "@/components/ui/TutorialOverlay";
-import { ScrollToTop } from "@/components/ui/ScrollToTop";
+import { NotificationProvider } from "@/components/notifications";
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 import { PWAUpdatePrompt } from "@/components/PWAUpdatePrompt";
-import { ConsentBanner } from "@/components/ConsentBanner";
-import { GeistSans } from "geist/font/sans";
-import { GeistMono } from "geist/font/mono";
+import { ThemeProvider } from "@/components/ThemeProvider";
+import { ToastProvider } from "@/components/ToastProvider";
+import { HelpSearchOverlay } from "@/components/ui/HelpSearchOverlay";
+import { ScrollToTop } from "@/components/ui/ScrollToTop";
+import { TutorialOverlay } from "@/components/ui/TutorialOverlay";
+import { HelpProvider } from "@/context/HelpContext";
+import { WalletProvider } from "@/context/WalletContext";
 import { SkipToContentLink } from "@/utils/accessibility";
-import "./globals.css";
 
 const SITE_NAME = "StellarVeriphy";
 const SITE_DESCRIPTION =

@@ -4,7 +4,8 @@
  */
 
 import { useEffect, useState } from "react";
-import { registerServiceWorker, isPWAInstalled, isOnline } from "@/lib/pwa";
+
+import { isOnline,isPWAInstalled, registerServiceWorker } from "@/lib/pwa";
 
 export function usePWA() {
   const [isInstalled, setIsInstalled] = useState(false);

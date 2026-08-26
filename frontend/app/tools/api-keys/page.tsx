@@ -7,6 +7,7 @@
 import { Header } from "@/components/Header";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { APIKeyManagement } from "@/components/APIKeyManagement";
+import { Header } from "@/components/Header";
 import { useWallet } from "@/context/WalletContext";
 
 export default function APIKeysPage() {

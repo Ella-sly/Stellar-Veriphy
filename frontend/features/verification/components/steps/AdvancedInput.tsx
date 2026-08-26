@@ -1,9 +1,10 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+
 import { useWizard } from "@/context/WizardContext";
 import { isValidSHA256 } from "@/utils/validation";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
 
 export function AdvancedInput() {
   const {

@@ -14,9 +14,34 @@
  * - Export transaction history as CSV
  */
 
-import { useState, useEffect, useCallback } from "react";
+import {
+    AlertCircle,
+    CheckCircle,
+    ChevronLeft,
+    ChevronRight,
+    Clock,
+    Download,
+    ExternalLink,
+    Filter,
+    Loader2,
+    Search,
+    TrendingUp,
+} from "lucide-react";
+import { useCallback,useEffect, useState } from "react";
+
+import { TransactionDetailsModal } from "@/components/transactions/TransactionDetailsModal";
+import { StatsCardsSkeleton,TransactionListSkeleton } from "@/components/ui/Skeleton";
 import { useWallet } from "@/context/WalletContext";
 import {
+    exportTransactions,
+    fetchTransactionHistory,
+    getTransactionStats,
+} from "@/services/transactionService";
+import type {
+    Transaction,
+    TransactionFilters,
+    TransactionType,
+} from "@/types/transaction.types";
   fetchTransactionHistory,
   exportTransactions,
   getTransactionStats,

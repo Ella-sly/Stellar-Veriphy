@@ -6,9 +6,9 @@
  * Displayed when the user is offline and the requested page is not cached.
  */
 
-import { useEffect, useState } from "react";
-import { WifiOff, RefreshCw, Home } from "lucide-react";
+import { Home,RefreshCw, WifiOff } from "lucide-react";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 export default function OfflinePage() {
   const [isOnline, setIsOnline] = useState(false);

@@ -11,8 +11,8 @@
  * than silently starting to write to localStorage on first load.
  */
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 const CONSENT_KEY = "sv_consent_ack";
 

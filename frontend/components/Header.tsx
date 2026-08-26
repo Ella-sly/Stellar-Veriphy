@@ -1,13 +1,14 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { useWallet } from "@/context/WalletContext";
+import { useEffect,useRef, useState } from "react";
+
 import { NotificationBell } from "@/components/notifications";
-import { walletService } from "@/services/wallet";
-import { useHelp } from "@/context/HelpContext";
-import { Tooltip } from "@/components/ui/Tooltip";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { Tooltip } from "@/components/ui/Tooltip";
+import { useHelp } from "@/context/HelpContext";
+import { useWallet } from "@/context/WalletContext";
+import { walletService } from "@/services/wallet";
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);

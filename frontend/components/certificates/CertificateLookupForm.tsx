@@ -11,7 +11,8 @@
  * Emits search results via the onResult callback.
  */
 
-import { useState, useCallback, FormEvent } from "react";
+import { FormEvent,useCallback, useState } from "react";
+
 import type { CertificateLookupMethod } from "@/services/certificateVerificationService";
 
 // ---------------------------------------------------------------------------

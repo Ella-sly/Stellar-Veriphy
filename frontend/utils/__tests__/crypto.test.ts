@@ -3,7 +3,7 @@
  * Covers: hexToBytes, bytesToHex, hashManifest
  */
 
-import { hexToBytes, bytesToHex, hashManifest } from "../crypto";
+import { bytesToHex, hashManifest,hexToBytes } from "../crypto";
 
 // ---------------------------------------------------------------------------
 // hexToBytes

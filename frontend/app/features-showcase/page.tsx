@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
+import { useState } from "react";
+
 import { BatchVerificationPanel } from "@/components/batch";
-import { CertificateComparisonTool } from "@/components/comparison";
-import { CertificateHistoryTimelineView } from "@/components/timeline";
-import { useNotifications } from "@/components/notifications";
 import { generateMockHistory } from "@/components/certificates/CertificateHistoryTimeline";
+import { CertificateComparisonTool } from "@/components/comparison";
+import { useNotifications } from "@/components/notifications";
+import { CertificateHistoryTimelineView } from "@/components/timeline";
 
 export default function FeaturesShowcasePage() {
   const [activeTab, setActiveTab] = useState<"batch" | "timeline" | "comparison">("batch");

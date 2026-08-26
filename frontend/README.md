@@ -20,6 +20,21 @@ pnpm test:watch  # Run tests in watch mode
 
 ## Environment Variables
 
+All environment variables consumed by the frontend are prefixed `NEXT_PUBLIC_` because they are read in client-side code and inlined at build time by Next.js.
+
+| Variable | Description | Required | Example |
+|----------|-------------|----------|---------|
+| `NEXT_PUBLIC_NETWORK` | Active Stellar network: `testnet`, `mainnet`, or `futurenet` | Optional (defaults to `testnet`) | `testnet` |
+| `NEXT_PUBLIC_TESTNET_RPC_URL` | Soroban RPC URL used when connected to Testnet | Optional (falls back to the public Testnet RPC) | `https://soroban-testnet.stellar.org` |
+| `NEXT_PUBLIC_MAINNET_RPC_URL` | Soroban RPC URL used when connected to Mainnet | Optional (falls back to a public Mainnet RPC) | `https://mainnet.stellar.validationcloud.io/v1/soroban/rpc` |
+| `NEXT_PUBLIC_FUTURENET_RPC_URL` | Soroban RPC URL used when connected to Futurenet | Optional (falls back to the public Futurenet RPC) | `https://rpc-futurenet.stellar.org` |
+| `NEXT_PUBLIC_NETWORK_PASSPHRASE` | Overrides the network passphrase reported to wallet adapters (Albedo, xBull) that cannot query the connected network directly | Optional (defaults to the Testnet passphrase) | `Test SDF Network ; September 2015` |
+| `NEXT_PUBLIC_ORACLE_CONTRACT_ID` | Deployed Soroban contract ID for the Oracle contract | Required for staging/production; optional locally | `CA...` (56-character Soroban contract ID) |
+| `NEXT_PUBLIC_PROVENANCE_CONTRACT_ID` | Deployed Soroban contract ID for the Provenance contract | Required for staging/production; optional locally | `CA...` (56-character Soroban contract ID) |
+| `NEXT_PUBLIC_REGISTRY_CONTRACT_ID` | Deployed Soroban contract ID for the Registry contract | Required for staging/production; optional locally | `CA...` (56-character Soroban contract ID) |
+| `NEXT_PUBLIC_MOCK_WALLET` | Set to `"true"` to use the in-memory mock wallet service instead of a real wallet extension (Freighter/Albedo/xBull) — used for local development and e2e tests | Optional (defaults to disabled) | `true` |
+
+Create a `.env.local` file based on `.env.local.example` or set these variables in your deployment environment.
 | Variable                             | Description                                                |
 | ------------------------------------ | ---------------------------------------------------------- |
 | `NEXT_PUBLIC_MOCK_WALLET`            | Set to `"true"` to enable mock wallet mode for development |

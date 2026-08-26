@@ -1,7 +1,7 @@
 "use client";
 
-import { CertificateHistoryTimelineView } from "@/components/timeline";
 import { generateMockHistory } from "@/components/certificates/CertificateHistoryTimeline";
+import { CertificateHistoryTimelineView } from "@/components/timeline";
 
 export default function TimelineViewPage() {
   // Generate mock data for demo

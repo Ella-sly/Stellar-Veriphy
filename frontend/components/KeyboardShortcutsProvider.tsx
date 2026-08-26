@@ -1,8 +1,15 @@
 "use client";
 
+import { usePathname,useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useRouter, usePathname } from "next/navigation";
+
+import { CommandPalette } from "@/components/ui/CommandPalette";
+import { ShortcutHelpModal } from "@/components/ui/ShortcutHelpModal";
 import { useHelp } from "@/context/HelpContext";
+import {
+  type ShortcutAction,
+  useKeyboardShortcuts,
+} from "@/hooks/useKeyboardShortcuts";
 import { useKeyboardShortcuts, type ShortcutAction } from "@/hooks/useKeyboardShortcuts";
 import { CommandPalette } from "@/components/ui/CommandPalette";
 import { ShortcutHelpModal } from "@/components/ui/ShortcutHelpModal";

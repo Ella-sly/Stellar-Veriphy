@@ -13,24 +13,26 @@
  * rendering to sub-components.
  */
 
-import { useState, useCallback } from "react";
+import { useCallback,useState } from "react";
+
+import { CertificateCardSkeleton } from "@/components/ui/Skeleton";
 import type {
   CertificateLookupMethod,
-  CertificateVerificationResult,
   CertificateSearchResult,
+  CertificateVerificationResult,
 } from "@/services/certificateVerificationService";
 import {
-  getCertificateById,
+  generateVerificationCode,
   getCertificateByCode,
+  getCertificateById,
   getCertificatesByCreator,
   verifyCertificateAuthenticity,
-  generateVerificationCode,
 } from "@/services/certificateVerificationService";
+
+import type { HistoryEvent } from "./CertificateHistoryTimeline";
+import { CertificateHistoryTimeline, generateMockHistory } from "./CertificateHistoryTimeline";
 import { CertificateLookupForm } from "./CertificateLookupForm";
 import { CertificateResultCard } from "./CertificateResultCard";
-import { CertificateHistoryTimeline, generateMockHistory } from "./CertificateHistoryTimeline";
-import type { HistoryEvent } from "./CertificateHistoryTimeline";
-import { CertificateCardSkeleton } from "@/components/ui/Skeleton";
 
 // ---------------------------------------------------------------------------
 // Types

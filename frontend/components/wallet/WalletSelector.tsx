@@ -16,6 +16,7 @@
  */
 
 import { useEffect, useState } from "react";
+
 import { useWallet } from "@/context/WalletContext";
 import type { WalletType } from "@/services/walletAdapters";
 

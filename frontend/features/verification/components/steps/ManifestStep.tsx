@@ -1,9 +1,10 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+
 import { useWizard } from "@/context/WizardContext";
 import { hashFile } from "@/utils/hashing";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
 
 export function ManifestStep() {
   const { setManifest, setManifestHash, setHashProgress, hashProgress } = useWizard();

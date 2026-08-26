@@ -4,12 +4,12 @@
  */
 
 import {
-  getCertificateById,
+  generateVerificationCode,
   getCertificateByCode,
+  getCertificateById,
   getCertificatesByCreator,
   searchCertificates,
   verifyCertificateAuthenticity,
-  generateVerificationCode,
 } from "../certificateVerificationService";
 
 // Speed up tests by overriding the internal delay

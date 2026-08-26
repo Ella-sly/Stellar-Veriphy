@@ -15,6 +15,16 @@
  * adapter reports it is still available.
  */
 
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+
+import { auditLogger } from "@/lib/security/auditLogger";
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import {
   ALL_ADAPTERS,
@@ -23,7 +33,6 @@ import {
   type WalletNetworkDetails,
   type WalletType,
 } from "@/services/walletAdapters";
-import { auditLogger } from "@/lib/security/auditLogger";
 
 // ---------------------------------------------------------------------------
 // Storage keys

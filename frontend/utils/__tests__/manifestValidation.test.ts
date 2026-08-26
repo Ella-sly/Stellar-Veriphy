@@ -3,11 +3,11 @@
  */
 
 import {
-  validateManifest,
-  escapeHtml,
   containsScriptOrHtml,
-  validateAndSanitizeField,
+  escapeHtml,
   sanitizeManifest,
+  validateAndSanitizeField,
+  validateManifest,
 } from "../manifestValidation";
 
 // ─────────────────────────────────────────────────────────────────────────────

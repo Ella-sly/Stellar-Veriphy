@@ -7,8 +7,10 @@
  * Handles beforeinstallprompt event and provides custom UI.
  */
 
+import { Download, Smartphone,X } from "lucide-react";
 import { useEffect, useState } from "react";
-import { X, Download, Smartphone } from "lucide-react";
+
+import { logger } from "@/lib/logger";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -16,6 +18,75 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 export function PWAInstallPrompt() {
+    const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+    const [showPrompt, setShowPrompt] = useState(false);
+    const [isInstalled, setIsInstalled] = useState(false);
+
+    useEffect(() => {
+        // Check if already installed
+        if (window.matchMedia("(display-mode: standalone)").matches) {
+            setIsInstalled(true);
+            return;
+        }
+
+        // Check if user already dismissed
+        const dismissed = localStorage.getItem("pwa-install-dismissed");
+        if (dismissed) {
+            const dismissedDate = new Date(dismissed);
+            const daysSinceDismissed = (Date.now() - dismissedDate.getTime()) / (1000 * 60 * 60 * 24);
+
+            // Show again after 7 days
+            if (daysSinceDismissed < 7) {
+                return;
+            }
+        }
+
+        // Listen for beforeinstallprompt event
+        const handleBeforeInstallPrompt = (e: Event) => {
+            e.preventDefault();
+            setDeferredPrompt(e as BeforeInstallPromptEvent);
+
+            // Show prompt after a delay
+            setTimeout(() => {
+                setShowPrompt(true);
+            }, 3000);
+        };
+
+        window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+
+        // Listen for app installed event
+        const handleAppInstalled = () => {
+            setIsInstalled(true);
+            setShowPrompt(false);
+            setDeferredPrompt(null);
+        };
+
+        window.addEventListener("appinstalled", handleAppInstalled);
+
+        return () => {
+            window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+            window.removeEventListener("appinstalled", handleAppInstalled);
+        };
+    }, []);
+
+    const handleInstall = async () => {
+        if (!deferredPrompt) return;
+
+        // Show install prompt
+        deferredPrompt.prompt();
+
+        // Wait for user choice
+        const { outcome } = await deferredPrompt.userChoice;
+
+        if (outcome === "accepted") {
+            logger.info("PWA installed");
+        } else {
+            logger.debug("PWA installation dismissed");
+        }
+
+        // Clear the prompt
+        setDeferredPrompt(null);
+        setShowPrompt(false);
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showPrompt, setShowPrompt] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
