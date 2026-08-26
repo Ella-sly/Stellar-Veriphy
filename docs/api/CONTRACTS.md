@@ -51,24 +51,31 @@ archival), SLA tracking and reputation-weighted provider selection, dispute
 handling, and cost estimation. Cross-calls `registry` (for TEE attestation
 checks) and `provenance` (to mint certificates once verified).
 
-### Error codes
+### Error codes (`Error`)
 
-| Code | Name | Code | Name |
-|---|---|---|---|
-| 1 | `NotInitialized` | 11 | `InsufficientStake` |
-| 2 | `UnauthorizedSigner` | 12 | `NoStake` |
-| 3 | `AlreadyInitialized` | 13 | `WithdrawalCooldown` |
-| 4 | `RegistryNotConfigured` | 14 | `ContractPaused` |
-| 5 | `TeeNotVerified` | 15 | `ProviderSuspended` / `NoAvailableProvider`* |
-| 6 | `ProviderNotRegistered` | 16 | `PricingNotSet` / `DisputeNotFound`* |
-| 7 | `BatchSizeExceeded` | 17 | `DisputeAlreadyResolved` |
-| 8 | `RequestNotFound` | 18 | `InvalidTTL` |
-| 9 | `Unauthorized` | 19 | `InvalidThreshold` |
-| 10 | `InvalidState` | | |
-
-\* Codes 15 and 16 each have two conflicting variant names in the current
-source — another symptom of the known issue above; confirm the real values
-with `cargo doc` once the file is fixed.
+| Code | Name | Meaning / Trigger Condition |
+|---|---|---|
+| 1 | `NotInitialized` | Contract has not been initialized with required dependencies (`init` not yet called). |
+| 2 | `UnauthorizedSigner` | Attestation or transaction signer does not match the authorized provider public key. |
+| 3 | `AlreadyInitialized` | Attempted to call `init` on a contract that has already been initialized. |
+| 4 | `RegistryNotConfigured` | Registry contract address is missing in instance storage during cross-contract verification. |
+| 5 | `TeeNotVerified` | TEE code hash/measurement is unapproved or failed validation against the registry. |
+| 6 | `ProviderNotRegistered` | The target provider address is not registered in the oracle system. |
+| 7 | `BatchSizeExceeded` | Submitted batch verification request exceeds maximum allowable batch size. |
+| 8 | `RequestNotFound` | No verification request found matching the specified ID or request has expired. |
+| 9 | `Unauthorized` | Caller lacks administrator privileges or ownership rights for the operation. |
+| 10 | `InvalidState` | Request or dispute is not in a valid state to undergo the requested transition. |
+| 11 | `InsufficientStake` | Staked deposit is below `MINIMUM_STAKE` (10 XLM) or withdrawal exceeds active stake. |
+| 12 | `NoStake` | No active stake deposit record exists for the provider. |
+| 13 | `WithdrawalCooldown` | Attempted to finalize stake withdrawal before cooldown ledgers (`WITHDRAWAL_COOLDOWN_LEDGERS`) elapsed. |
+| 14 | `ContractPaused` | Operation aborted because the contract circuit breaker is actively engaged. |
+| 15 | `ProviderSuspended` | Provider is suspended due to SLA non-compliance (compliance below `SLA_SUSPENSION_THRESHOLD`). |
+| 16 | `PricingNotSet` | Cost estimation requested for a provider lacking configured fee rates. |
+| 17 | `NoAvailableProvider` | No eligible, active oracle provider available in round-robin selection. |
+| 18 | `DisputeNotFound` | No dispute record exists matching the specified dispute ID. |
+| 19 | `DisputeAlreadyResolved` | Attempted to resolve or dismiss a dispute that has already reached finality. |
+| 20 | `InvalidTTL` | TTL configuration contains zero values for default, high, or low priority TTL. |
+| 21 | `InvalidThreshold` | Expiration warning threshold specified is zero ledgers. |
 
 ### Functions
 

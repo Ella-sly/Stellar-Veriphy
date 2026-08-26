@@ -1558,3 +1558,70 @@ fn integration_double_cancel_fails() {
     let err = client.try_cancel_request(&id).unwrap_err().unwrap();
     assert_eq!(err, Error::InvalidState);
 }
+
+// ---------------------------------------------------------------------------
+// Error Message & Enum Verification Tests (#369)
+// ---------------------------------------------------------------------------
+
+#[test]
+fn test_update_ttl_config_invalid_ttl_error() {
+    let env = make_env();
+    env.mock_all_auths();
+    let (oracle_id, ..) = setup_oracle(&env);
+    let client = OracleContractClient::new(&env, &oracle_id);
+
+    let invalid_config = TTLConfig {
+        default_ttl: 0,
+        high_priority_ttl: 100,
+        low_priority_ttl: 50,
+    };
+    let err = client.try_update_ttl_config(&invalid_config).unwrap_err().unwrap();
+    assert_eq!(err, Error::InvalidTTL);
+}
+
+#[test]
+fn test_update_warning_threshold_invalid_threshold_error() {
+    let env = make_env();
+    env.mock_all_auths();
+    let (oracle_id, ..) = setup_oracle(&env);
+    let client = OracleContractClient::new(&env, &oracle_id);
+
+    let err = client.try_update_warning_threshold(&0u32).unwrap_err().unwrap();
+    assert_eq!(err, Error::InvalidThreshold);
+}
+
+#[test]
+fn test_dispute_not_found_error() {
+    let env = make_env();
+    env.mock_all_auths();
+    let (oracle_id, ..) = setup_oracle(&env);
+    let client = OracleContractClient::new(&env, &oracle_id);
+
+    let non_existent_dispute_id = 999999u64;
+    let err = client
+        .try_resolve_dispute(
+            &non_existent_dispute_id,
+            &DisputeResolution::ProviderFault,
+            &100u32,
+            &0u128,
+        )
+        .unwrap_err()
+        .unwrap();
+    assert_eq!(err, Error::DisputeNotFound);
+}
+
+#[test]
+fn test_no_stake_error_on_withdrawal() {
+    let env = make_env();
+    env.mock_all_auths();
+    let (oracle_id, ..) = setup_oracle(&env);
+    let client = OracleContractClient::new(&env, &oracle_id);
+
+    let unstaked_provider = Address::generate(&env);
+    let err = client
+        .try_initiate_withdrawal(&unstaked_provider, &1_000_000_000u128)
+        .unwrap_err()
+        .unwrap();
+    assert_eq!(err, Error::NoStake);
+}
+

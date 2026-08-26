@@ -34,41 +34,89 @@ const FAILURE_COOLDOWN_LEDGERS: u32 = 500;
 #[contracterror]
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum Error {
-    NotInitialized       = 1,
-    UnauthorizedSigner   = 2,
-    AlreadyInitialized   = 3,
+    /// The contract has not been initialized.
+    /// Occurs when calling functions that require contract setup before `init` has been executed.
+    NotInitialized = 1,
+
+    /// The attestation or signature was not signed by an authorized provider.
+    /// Occurs in `verify_attestation` if the provider public key does not match or is unauthorized.
+    UnauthorizedSigner = 2,
+
+    /// The contract has already been initialized.
+    /// Occurs when `init` is invoked more than once.
+    AlreadyInitialized = 3,
+
+    /// The registry contract is not configured in instance storage.
+    /// Occurs during cross-contract calls to the registry if the registry address is missing.
     RegistryNotConfigured = 4,
-    TeeNotVerified       = 5,
+
+    /// The TEE (Trusted Execution Environment) measurement/hash is unverified.
+    /// Occurs when the provided `tee_hash` is not approved in the registry.
+    TeeNotVerified = 5,
+
+    /// The specified oracle provider is not registered in the contract.
+    /// Occurs when querying, configuring, or recording metrics for an unregistered provider.
     ProviderNotRegistered = 6,
-    BatchSizeExceeded    = 7,
-    RequestNotFound      = 8,
-    Unauthorized         = 9,
-    InvalidState         = 10,
-    InsufficientStake    = 11,
-    NoStake              = 12,
-    WithdrawalCooldown   = 13,
-    ContractPaused       = 14,
-    ProviderSuspended    = 15,
-    PricingNotSet        = 16,
-    NotInitialized            = 1,
-    UnauthorizedSigner        = 2,
-    AlreadyInitialized        = 3,
-    RegistryNotConfigured     = 4,
-    TeeNotVerified            = 5,
-    ProviderNotRegistered     = 6,
-    BatchSizeExceeded         = 7,
-    RequestNotFound           = 8,
-    Unauthorized              = 9,
-    InvalidState              = 10,
-    InsufficientStake         = 11,
-    NoStake                   = 12,
-    WithdrawalCooldown        = 13,
-    ContractPaused            = 14,
-    NoAvailableProvider       = 15,
-    DisputeNotFound           = 16,
-    DisputeAlreadyResolved    = 17,
-    InvalidTTL                = 18,
-    InvalidThreshold          = 19,
+
+    /// The batch verification request exceeds the maximum allowed batch size.
+    /// Occurs in `submit_batch_request` when submitting more items than permitted.
+    BatchSizeExceeded = 7,
+
+    /// The verification request with the specified ID was not found.
+    /// Occurs when querying, canceling, or resolving a non-existent or expired request ID.
+    RequestNotFound = 8,
+
+    /// The caller is not authorized to perform the operation.
+    /// Occurs when an administrative or owner action is called without proper permissions.
+    Unauthorized = 9,
+
+    /// The request or entity is in an invalid state for the attempted operation.
+    /// Occurs when attempting to cancel, verify, or resolve a request that is not in `Pending` state.
+    InvalidState = 10,
+
+    /// The provider stake is insufficient.
+    /// Occurs when depositing less than `MINIMUM_STAKE` or attempting to withdraw more than staked.
+    InsufficientStake = 11,
+
+    /// No stake found for the specified provider.
+    /// Occurs when initiating a withdrawal or slashing stake for a provider without a stake record.
+    NoStake = 12,
+
+    /// The withdrawal cooldown period has not elapsed yet.
+    /// Occurs when attempting to complete a stake withdrawal before `WITHDRAWAL_COOLDOWN_LEDGERS` passes.
+    WithdrawalCooldown = 13,
+
+    /// The oracle contract operations are currently paused by the administrator.
+    /// Occurs when attempting to submit requests while the circuit breaker is active.
+    ContractPaused = 14,
+
+    /// The oracle provider is currently suspended due to SLA violations.
+    /// Occurs when attempting operations with a provider whose compliance fell below `SLA_SUSPENSION_THRESHOLD`.
+    ProviderSuspended = 15,
+
+    /// Pricing configuration has not been set for the provider.
+    /// Occurs in `estimate_cost` when the provider has no configured `ProviderPricing`.
+    PricingNotSet = 16,
+
+    /// No eligible oracle provider is available to process the request.
+    /// Occurs in `get_next_available_provider` when all providers are unregistered, failed, or cooldown active.
+    NoAvailableProvider = 17,
+
+    /// The dispute with the specified ID was not found.
+    /// Occurs when attempting to retrieve, resolve, or dismiss a non-existent dispute ID.
+    DisputeNotFound = 18,
+
+    /// The dispute has already been resolved or dismissed.
+    /// Occurs when attempting to resolve or dismiss an already-finalized dispute.
+    DisputeAlreadyResolved = 19,
+
+    /// The provided TTL configuration values are invalid.
+    /// Occurs in `update_ttl_config` if any TTL parameter (default, high, or low priority) is 0.
+    InvalidTTL = 20,
+
+    /// The provided expiration warning threshold is invalid.
+    /// Occurs in `update_warning_threshold` if the ledger threshold is set to 0.
+    InvalidThreshold = 21,
 }
 
 // ---------------------------------------------------------------------------
