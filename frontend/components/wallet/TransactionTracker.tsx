@@ -1,14 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { FiAlertCircle, FiCheckCircle, FiExternalLink,FiLoader } from "react-icons/fi";
+import { FiAlertCircle, FiCheckCircle, FiExternalLink, FiLoader } from "react-icons/fi";
 
-import {
-  fetchTransactionStatus,
-  type TransactionStatus,
-} from "@/utils/transaction";
 import { fetchTransactionStatus, type TransactionStatus } from "@/utils/transaction";
-import { FiLoader, FiCheckCircle, FiAlertCircle, FiExternalLink } from "react-icons/fi";
 
 interface TransactionTrackerProps {
   txHash: string;

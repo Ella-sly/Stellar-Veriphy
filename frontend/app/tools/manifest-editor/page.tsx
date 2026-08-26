@@ -7,11 +7,11 @@
 import { useState } from "react";
 
 import { Header } from "@/components/Header";
-import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import {
   AdvancedManifestEditor,
   type AdvancedManifestValue,
 } from "@/components/manifest/AdvancedManifestEditor";
+import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 
 export default function AdvancedManifestEditorPage() {
   const [currentManifest, setCurrentManifest] = useState<AdvancedManifestValue | null>(null);

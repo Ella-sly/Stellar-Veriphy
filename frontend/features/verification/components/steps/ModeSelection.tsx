@@ -1,7 +1,8 @@
 "use client";
 
-import { useWizard } from "@/context/WizardContext";
 import { useRouter } from "next/navigation";
+
+import { useWizard } from "@/context/WizardContext";
 
 export function ModeSelection() {
   const { setMode } = useWizard();
@@ -22,7 +23,7 @@ export function ModeSelection() {
         >
           <h3 className="text-xl font-semibold mb-2">Standard Mode</h3>
           <p className="text-gray-600">
-            Upload your media file and we'll compute the hash for you.
+            Upload your media file and we&apos;ll compute the hash for you.
           </p>
         </button>
         <button

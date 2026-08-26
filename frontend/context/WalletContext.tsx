@@ -15,17 +15,9 @@
  * adapter reports it is still available.
  */
 
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 
 import { auditLogger } from "@/lib/security/auditLogger";
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import {
   ALL_ADAPTERS,
   getAdapter,

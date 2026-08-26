@@ -5,6 +5,11 @@ Two workflows cover CI: [`.github/workflows/ci.yml`](../../.github/workflows/ci.
 [`.github/workflows/security-scan.yml`](../../.github/workflows/security-scan.yml)
 (dependency/vulnerability scanning, on PRs and a daily schedule).
 
+The repository also includes [`.github/workflows/e2e.yml`](../../.github/workflows/e2e.yml)
+for the home page Playwright smoke test. It installs the Chromium browser,
+builds the frontend, starts `next start` through Playwright's `webServer`
+configuration, runs `e2e/home.spec.ts`, and uploads the Playwright HTML report.
+
 ## `ci.yml` jobs
 
 | Job                   | What it does                                                                                                                                                                                                                                                                                                                 |
@@ -31,6 +36,7 @@ to `main` and daily via cron, independent of `ci.yml`.
 - **Contracts:** `cargo test` output in the `build-contracts` job log per
   contract; `cargo-llvm-cov` coverage summaries in `contract-coverage`.
 - **E2E:** Playwright's HTML report, uploaded as an artifact per browser.
+  The lightweight home page smoke test is reported by the `E2E Tests` workflow.
 - **Mutation:** Stryker's HTML report, uploaded as an artifact (see the
   mutation testing doc for the current score).
 
