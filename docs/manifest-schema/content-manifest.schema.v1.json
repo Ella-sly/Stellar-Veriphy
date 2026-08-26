@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://stellarveriphy.dev/schemas/content-manifest.schema.v1.json",
+  "title": "Stellar Veriphy Content Manifest v1",
+  "description": "Base manifest for content provenance verification.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contentHash", "creator", "timestamp"],
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "1.0.0",
+      "description": "Schema version identifier."
+    },
+    "contentHash": {
+      "type": "string",
+      "pattern": "^[a-fA-F0-9]{64}$",
+      "description": "SHA-256 digest of the media file."
+    },
+    "creator": {
+      "type": "string",
+      "pattern": "^G[A-Z2-7]{55}$",
+      "description": "Stellar public key of the creator."
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 creation timestamp."
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "device": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "location": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "aiModel": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        }
+      }
+    }
+  }
+}

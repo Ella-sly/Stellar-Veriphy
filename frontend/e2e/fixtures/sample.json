@@ -1,0 +1,10 @@
+{
+  "contentHash": "a3f5c2e1b4d6789012345678901234567890abcdef1234567890abcdef123456",
+  "creator": "GBRPYHIL2CI3WHZDTOOQFC6EB4RRJC3XNSOLXAUJVLVWXVVNQNYWGLZ",
+  "timestamp": "2024-06-01T12:00:00Z",
+  "metadata": {
+    "device": "Test Camera",
+    "location": "Test Location",
+    "aiModel": ""
+  }
+}

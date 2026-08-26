@@ -6,13 +6,41 @@
     "dev:frontend": "pnpm --filter frontend dev",
     "build:frontend": "pnpm --filter frontend build",
     "build:contracts": "cd contracts/oracle && stellar contract build && cd ../provenance && stellar contract build && cd ../registry && stellar contract build",
+    "docs:contracts": "cargo doc --manifest-path contracts/oracle/Cargo.toml --no-deps && cargo doc --manifest-path contracts/provenance/Cargo.toml --no-deps && cargo doc --manifest-path contracts/registry/Cargo.toml --no-deps",
+    "check:frontend": "pnpm --filter frontend lint",
+    "typecheck": "pnpm -r --if-present run typecheck",
+    "test": "pnpm -r --if-present run test",
+    "test:e2e": "pnpm --filter frontend test:e2e",
+    "test:coverage": "pnpm -r --if-present run test:coverage",
+    "test:mutation": "pnpm --filter @stellarveriphy/shared run test:mutation",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "prepare": "husky"
   },
-  "keywords": ["stellar", "soroban", "blockchain", "verification", "provenance"],
+  "keywords": [
+    "stellar",
+    "soroban",
+    "blockchain",
+    "verification",
+    "provenance"
+  ],
   "license": "MIT",
   "packageManager": "pnpm@10.18.2",
+  "lint-staged": {
+    "frontend/**/*.{ts,tsx}": [
+      "prettier --write",
+      "pnpm --filter frontend exec eslint --fix --config eslint.config.mjs"
+    ],
+    "**/*.{js,jsx,json,css,md,yml,yaml}": [
+      "prettier --write"
+    ],
+    "contracts/**/*.rs": [
+      "rustfmt --edition 2021"
+    ]
+  },
   "devDependencies": {
     "husky": "^9.1.7",
-    "lint-staged": "^16.2.7"
+    "lint-staged": "^16.2.7",
+    "prettier": "^3.4.2"
   }
 }
