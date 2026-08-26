@@ -53,9 +53,7 @@ function buildGitHubUrl(values: ReportIssueFormValues): string {
 
   const body = [
     `## Description\n${values.description}`,
-    values.issueType === "bug"
-      ? `## Steps to Reproduce\n${values.stepsToReproduce}`
-      : "",
+    values.issueType === "bug" ? `## Steps to Reproduce\n${values.stepsToReproduce}` : "",
     `---\n*Submitted via the in-app report form.*`,
   ]
     .filter(Boolean)
@@ -124,13 +122,10 @@ export default function ReportIssuePage() {
       <div className="max-w-2xl mx-auto">
         {/* ── Header ── */}
         <div className="mb-10">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            Report an Issue
-          </h1>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Report an Issue</h1>
           <p className="text-gray-600 dark:text-gray-400">
-            Found a bug or have a feature idea? Fill in the form below and
-            we&apos;ll open a pre-filled GitHub issue for you to review and
-            submit.
+            Found a bug or have a feature idea? Fill in the form below and we&apos;ll open a
+            pre-filled GitHub issue for you to review and submit.
           </p>
         </div>
 
@@ -165,15 +160,14 @@ export default function ReportIssuePage() {
 
         {/* ── Form ── */}
         {!submitted && (
-          <form
-            onSubmit={handleSubmit(onSubmit)}
-            noValidate
-            className="space-y-6"
-          >
+          <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-6">
             {/* Issue Type */}
             <fieldset>
               <legend className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                Issue Type <span aria-hidden="true" className="text-red-500">*</span>
+                Issue Type{" "}
+                <span aria-hidden="true" className="text-red-500">
+                  *
+                </span>
               </legend>
               <div className="grid grid-cols-3 gap-3">
                 {(["bug", "feature", "other"] as IssueType[]).map((type) => (
@@ -209,8 +203,14 @@ export default function ReportIssuePage() {
                 htmlFor="title"
                 className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1"
               >
-                Title <span aria-hidden="true" className="text-red-500">*</span>
-                <HelpIcon content="Provide a concise summary that helps identify the issue at a glance." className="ml-1.5" />
+                Title{" "}
+                <span aria-hidden="true" className="text-red-500">
+                  *
+                </span>
+                <HelpIcon
+                  content="Provide a concise summary that helps identify the issue at a glance."
+                  className="ml-1.5"
+                />
               </label>
               <input
                 id="title"
@@ -237,7 +237,11 @@ export default function ReportIssuePage() {
                 })}
               />
               {errors.title && (
-                <p id="title-error" role="alert" className="mt-1 text-sm text-red-600 dark:text-red-400">
+                <p
+                  id="title-error"
+                  role="alert"
+                  className="mt-1 text-sm text-red-600 dark:text-red-400"
+                >
                   {errors.title.message}
                 </p>
               )}
@@ -249,8 +253,14 @@ export default function ReportIssuePage() {
                 htmlFor="description"
                 className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1"
               >
-                Description <span aria-hidden="true" className="text-red-500">*</span>
-                <HelpIcon content="Include steps to reproduce, expected vs actual behavior, and any relevant screenshots or error messages." className="ml-1.5" />
+                Description{" "}
+                <span aria-hidden="true" className="text-red-500">
+                  *
+                </span>
+                <HelpIcon
+                  content="Include steps to reproduce, expected vs actual behavior, and any relevant screenshots or error messages."
+                  className="ml-1.5"
+                />
               </label>
               <textarea
                 id="description"
@@ -273,7 +283,11 @@ export default function ReportIssuePage() {
                 })}
               />
               {errors.description && (
-                <p id="description-error" role="alert" className="mt-1 text-sm text-red-600 dark:text-red-400">
+                <p
+                  id="description-error"
+                  role="alert"
+                  className="mt-1 text-sm text-red-600 dark:text-red-400"
+                >
                   {errors.description.message}
                 </p>
               )}
@@ -287,15 +301,15 @@ export default function ReportIssuePage() {
                   className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1"
                 >
                   Steps to Reproduce{" "}
-                  <span aria-hidden="true" className="text-red-500">*</span>
+                  <span aria-hidden="true" className="text-red-500">
+                    *
+                  </span>
                 </label>
                 <textarea
                   id="stepsToReproduce"
                   rows={4}
                   placeholder={`1. Go to ...\n2. Click on ...\n3. Observe that ...`}
-                  aria-describedby={
-                    errors.stepsToReproduce ? "steps-error" : undefined
-                  }
+                  aria-describedby={errors.stepsToReproduce ? "steps-error" : undefined}
                   aria-invalid={!!errors.stepsToReproduce}
                   className={`w-full px-4 py-2.5 rounded-lg border text-gray-900 dark:text-white bg-white dark:bg-gray-900 placeholder-gray-400 dark:placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-y font-mono text-sm transition
                     ${
@@ -303,8 +317,9 @@ export default function ReportIssuePage() {
                         ? "border-red-500 focus:ring-red-500"
                         : "border-gray-300 dark:border-gray-700"
                     }`}
-                  {...register("stepsToReproduce", 
-                    issueType === "bug" 
+                  {...register(
+                    "stepsToReproduce",
+                    issueType === "bug"
                       ? {
                           required: "Steps to reproduce are required for bug reports.",
                           minLength: {
@@ -316,7 +331,11 @@ export default function ReportIssuePage() {
                   )}
                 />
                 {errors.stepsToReproduce && (
-                  <p id="steps-error" role="alert" className="mt-1 text-sm text-red-600 dark:text-red-400">
+                  <p
+                    id="steps-error"
+                    role="alert"
+                    className="mt-1 text-sm text-red-600 dark:text-red-400"
+                  >
                     {errors.stepsToReproduce.message}
                   </p>
                 )}
@@ -333,8 +352,8 @@ export default function ReportIssuePage() {
                 {isSubmitting ? "Opening GitHub…" : "Open GitHub Issue →"}
               </button>
               <p className="mt-3 text-xs text-center text-gray-500 dark:text-gray-500">
-                This will open a pre-filled GitHub issue in a new tab. You can
-                review and edit it before submitting.
+                This will open a pre-filled GitHub issue in a new tab. You can review and edit it
+                before submitting.
               </p>
             </div>
           </form>

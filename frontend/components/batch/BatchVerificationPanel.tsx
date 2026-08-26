@@ -33,14 +33,14 @@ export function BatchVerificationPanel({ onVerify }: BatchVerificationPanelProps
   // File selection handler
   const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return;
-    
+
     const newFiles: BatchFile[] = Array.from(e.target.files).map((file) => ({
       id: `${file.name}-${Date.now()}-${Math.random()}`,
       file,
       status: "pending" as const,
       progress: 0,
     }));
-    
+
     setFiles((prev) => [...prev, ...newFiles]);
   }, []);
 
@@ -67,61 +67,64 @@ export function BatchVerificationPanel({ onVerify }: BatchVerificationPanelProps
         status: "pending" as const,
         progress: 0,
       }));
-      
+
       setFiles((prev) => [...prev, ...newFiles]);
     }
   }, []);
 
   // CSV import handler
-  const handleCsvImport = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files || !e.target.files[0]) return;
-    
-    const file = e.target.files[0];
-    const reader = new FileReader();
-    
-    reader.onload = (event) => {
-      const text = event.target?.result as string;
-      const lines = text.split("\n").filter((line) => line.trim());
-      
-      if (lines.length < 2) return; // Need header + at least one row
-      
-      const headerLine = lines[0];
-      if (!headerLine) return;
-      const headers = headerLine.split(",").map((h) => h.trim());
-      
-      // Update existing files with metadata from CSV
-      const updatedFiles = [...files];
-      
-      for (let i = 1; i < lines.length; i++) {
-        const line = lines[i];
-        if (!line) continue;
-        const values = line.split(",").map((v) => v.trim());
-        const filename = values[0];
-        if (!filename) continue;
-        
-        const fileIndex = updatedFiles.findIndex((f) => f.file.name === filename);
-        
-        if (fileIndex !== -1) {
-          const metadata: Record<string, string> = {};
-          for (let j = 1; j < headers.length && j < values.length; j++) {
-            const h = headers[j];
-            const v = values[j];
-            if (h !== undefined && v !== undefined) {
-              metadata[h] = v;
+  const handleCsvImport = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (!e.target.files || !e.target.files[0]) return;
+
+      const file = e.target.files[0];
+      const reader = new FileReader();
+
+      reader.onload = (event) => {
+        const text = event.target?.result as string;
+        const lines = text.split("\n").filter((line) => line.trim());
+
+        if (lines.length < 2) return; // Need header + at least one row
+
+        const headerLine = lines[0];
+        if (!headerLine) return;
+        const headers = headerLine.split(",").map((h) => h.trim());
+
+        // Update existing files with metadata from CSV
+        const updatedFiles = [...files];
+
+        for (let i = 1; i < lines.length; i++) {
+          const line = lines[i];
+          if (!line) continue;
+          const values = line.split(",").map((v) => v.trim());
+          const filename = values[0];
+          if (!filename) continue;
+
+          const fileIndex = updatedFiles.findIndex((f) => f.file.name === filename);
+
+          if (fileIndex !== -1) {
+            const metadata: Record<string, string> = {};
+            for (let j = 1; j < headers.length && j < values.length; j++) {
+              const h = headers[j];
+              const v = values[j];
+              if (h !== undefined && v !== undefined) {
+                metadata[h] = v;
+              }
+            }
+            const target = updatedFiles[fileIndex];
+            if (target) {
+              target.metadata = metadata;
             }
           }
-          const target = updatedFiles[fileIndex];
-          if (target) {
-            target.metadata = metadata;
-          }
         }
-      }
-      
-      setFiles(updatedFiles);
-    };
-    
-    reader.readAsText(file);
-  }, [files]);
+
+        setFiles(updatedFiles);
+      };
+
+      reader.readAsText(file);
+    },
+    [files]
+  );
 
   // Remove file
   const removeFile = useCallback((id: string) => {
@@ -140,9 +143,9 @@ export function BatchVerificationPanel({ onVerify }: BatchVerificationPanelProps
   // Submit batch
   const handleSubmit = useCallback(async () => {
     if (files.length === 0) return;
-    
+
     setIsProcessing(true);
-    
+
     try {
       if (onVerify) {
         await onVerify(files);
@@ -150,24 +153,18 @@ export function BatchVerificationPanel({ onVerify }: BatchVerificationPanelProps
         // Mock verification for demo
         for (const file of files) {
           setFiles((prev) =>
-            prev.map((f) =>
-              f.id === file.id ? { ...f, status: "processing" as const } : f
-            )
+            prev.map((f) => (f.id === file.id ? { ...f, status: "processing" as const } : f))
           );
-          
+
           // Simulate progress
           for (let i = 0; i <= 100; i += 20) {
             await new Promise((resolve) => setTimeout(resolve, 200));
-            setFiles((prev) =>
-              prev.map((f) =>
-                f.id === file.id ? { ...f, progress: i } : f
-              )
-            );
+            setFiles((prev) => prev.map((f) => (f.id === file.id ? { ...f, progress: i } : f)));
           }
-          
+
           // Simulate success or failure (90% success rate)
           const success = Math.random() > 0.1;
-          
+
           setFiles((prev) =>
             prev.map((f) =>
               f.id === file.id
@@ -176,7 +173,9 @@ export function BatchVerificationPanel({ onVerify }: BatchVerificationPanelProps
                     status: success ? ("completed" as const) : ("failed" as const),
                     progress: 100,
                     error: success ? undefined : "Verification failed",
-                    certificateId: success ? `CERT-${Math.random().toString(36).substr(2, 9).toUpperCase()}` : undefined,
+                    certificateId: success
+                      ? `CERT-${Math.random().toString(36).substr(2, 9).toUpperCase()}`
+                      : undefined,
                   }
                 : f
             )
@@ -202,24 +201,17 @@ export function BatchVerificationPanel({ onVerify }: BatchVerificationPanelProps
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Batch Verification
-          </h2>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Batch Verification</h2>
           <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
             Upload multiple files for verification in a single batch
           </p>
         </div>
-        
+
         {/* CSV Import */}
         <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-sm">
           <FileText className="w-4 h-4" />
           Import CSV Metadata
-          <input
-            type="file"
-            accept=".csv"
-            onChange={handleCsvImport}
-            className="hidden"
-          />
+          <input type="file" accept=".csv" onChange={handleCsvImport} className="hidden" />
         </label>
       </div>
 
@@ -241,12 +233,7 @@ export function BatchVerificationPanel({ onVerify }: BatchVerificationPanelProps
         </p>
         <label className="inline-block cursor-pointer px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
           Select Files
-          <input
-            type="file"
-            multiple
-            onChange={handleFileChange}
-            className="hidden"
-          />
+          <input type="file" multiple onChange={handleFileChange} className="hidden" />
         </label>
       </div>
 
@@ -254,9 +241,7 @@ export function BatchVerificationPanel({ onVerify }: BatchVerificationPanelProps
       {files.length > 0 && (
         <div className="grid grid-cols-5 gap-4">
           <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
-            <div className="text-2xl font-bold text-gray-900 dark:text-white">
-              {stats.total}
-            </div>
+            <div className="text-2xl font-bold text-gray-900 dark:text-white">{stats.total}</div>
             <div className="text-sm text-gray-600 dark:text-gray-400">Total</div>
           </div>
           <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
@@ -278,9 +263,7 @@ export function BatchVerificationPanel({ onVerify }: BatchVerificationPanelProps
             <div className="text-sm text-green-600 dark:text-green-400">Completed</div>
           </div>
           <div className="bg-red-50 dark:bg-red-900/20 rounded-lg p-4">
-            <div className="text-2xl font-bold text-red-600 dark:text-red-400">
-              {stats.failed}
-            </div>
+            <div className="text-2xl font-bold text-red-600 dark:text-red-400">{stats.failed}</div>
             <div className="text-sm text-red-600 dark:text-red-400">Failed</div>
           </div>
         </div>
@@ -304,12 +287,8 @@ export function BatchVerificationPanel({ onVerify }: BatchVerificationPanelProps
                 {file.status === "processing" && (
                   <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
                 )}
-                {file.status === "completed" && (
-                  <CheckCircle className="w-8 h-8 text-green-600" />
-                )}
-                {file.status === "failed" && (
-                  <AlertCircle className="w-8 h-8 text-red-600" />
-                )}
+                {file.status === "completed" && <CheckCircle className="w-8 h-8 text-green-600" />}
+                {file.status === "failed" && <AlertCircle className="w-8 h-8 text-red-600" />}
               </div>
 
               {/* File Info */}
@@ -322,13 +301,16 @@ export function BatchVerificationPanel({ onVerify }: BatchVerificationPanelProps
                     {(file.file.size / 1024).toFixed(1)} KB
                   </span>
                 </div>
-                
+
                 {file.metadata && (
                   <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                    Metadata: {Object.entries(file.metadata).map(([k, v]) => `${k}=${v}`).join(", ")}
+                    Metadata:{" "}
+                    {Object.entries(file.metadata)
+                      .map(([k, v]) => `${k}=${v}`)
+                      .join(", ")}
                   </p>
                 )}
-                
+
                 {file.status === "processing" && (
                   <div className="mt-2">
                     <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
@@ -339,17 +321,15 @@ export function BatchVerificationPanel({ onVerify }: BatchVerificationPanelProps
                     </div>
                   </div>
                 )}
-                
+
                 {file.status === "completed" && file.certificateId && (
                   <p className="text-xs text-green-600 dark:text-green-400 mt-1">
                     Certificate: {file.certificateId}
                   </p>
                 )}
-                
+
                 {file.status === "failed" && file.error && (
-                  <p className="text-xs text-red-600 dark:text-red-400 mt-1">
-                    {file.error}
-                  </p>
+                  <p className="text-xs text-red-600 dark:text-red-400 mt-1">{file.error}</p>
                 )}
               </div>
 
@@ -388,7 +368,7 @@ export function BatchVerificationPanel({ onVerify }: BatchVerificationPanelProps
           >
             Clear All
           </button>
-          
+
           <button
             onClick={handleSubmit}
             disabled={isProcessing || stats.pending === 0}

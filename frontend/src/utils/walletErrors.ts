@@ -37,11 +37,7 @@ interface FreighterError {
 }
 
 function isFreighterError(value: unknown): value is FreighterError {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    ("code" in value || "message" in value)
-  );
+  return typeof value === "object" && value !== null && ("code" in value || "message" in value);
 }
 
 /**

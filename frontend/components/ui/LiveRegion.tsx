@@ -10,62 +10,57 @@
 import { useEffect, useState } from "react";
 
 interface LiveRegionProps {
-    message: string;
-    politeness?: "polite" | "assertive";
-    clearAfter?: number;
+  message: string;
+  politeness?: "polite" | "assertive";
+  clearAfter?: number;
 }
 
-export function LiveRegion({
-    message,
-    politeness = "polite",
-    clearAfter = 3000,
-}: LiveRegionProps) {
-    const [announced, setAnnounced] = useState("");
+export function LiveRegion({ message, politeness = "polite", clearAfter = 3000 }: LiveRegionProps) {
+  const [announced, setAnnounced] = useState("");
 
-    useEffect(() => {
-        if (message) {
-            setAnnounced(message);
+  useEffect(() => {
+    if (message) {
+      setAnnounced(message);
 
-            if (clearAfter > 0) {
-                const timer = setTimeout(() => {
-                    setAnnounced("");
-                }, clearAfter);
+      if (clearAfter > 0) {
+        const timer = setTimeout(() => {
+          setAnnounced("");
+        }, clearAfter);
 
-                return () => clearTimeout(timer);
-            }
-        }
-        return undefined;
-    }, [message, clearAfter]);
+        return () => clearTimeout(timer);
+      }
+    }
+    return undefined;
+  }, [message, clearAfter]);
 
-    return (
-        <div
-            role="status"
-            aria-live={politeness}
-            aria-atomic="true"
-            className="sr-only"
-        >
-            {announced}
-        </div>
-    );
+  return (
+    <div role="status" aria-live={politeness} aria-atomic="true" className="sr-only">
+      {announced}
+    </div>
+  );
 }
 
 /**
  * Hook for announcing loading states to screen readers
  */
-export function useLoadingAnnouncement(isLoading: boolean, loadingText = "Loading content", loadedText = "Content loaded") {
-    const [announcement, setAnnouncement] = useState("");
+export function useLoadingAnnouncement(
+  isLoading: boolean,
+  loadingText = "Loading content",
+  loadedText = "Content loaded"
+) {
+  const [announcement, setAnnouncement] = useState("");
 
-    useEffect(() => {
-        if (isLoading) {
-            setAnnouncement(loadingText);
-            return undefined;
-        } else {
-            setAnnouncement(loadedText);
-            // Clear after a short delay
-            const timer = setTimeout(() => setAnnouncement(""), 1000);
-            return () => clearTimeout(timer);
-        }
-    }, [isLoading, loadingText, loadedText]);
+  useEffect(() => {
+    if (isLoading) {
+      setAnnouncement(loadingText);
+      return undefined;
+    } else {
+      setAnnouncement(loadedText);
+      // Clear after a short delay
+      const timer = setTimeout(() => setAnnouncement(""), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [isLoading, loadingText, loadedText]);
 
-    return announcement;
+  return announcement;
 }

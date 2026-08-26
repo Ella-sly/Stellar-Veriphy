@@ -4,6 +4,8 @@
  * API Key Management Demo Page — Issue #219
  */
 
+import { Header } from "@/components/Header";
+import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import { APIKeyManagement } from "@/components/APIKeyManagement";
 import { Header } from "@/components/Header";
 import { useWallet } from "@/context/WalletContext";
@@ -14,6 +16,9 @@ export default function APIKeysPage() {
   return (
     <main className="min-h-screen bg-white dark:bg-gray-950">
       <Header />
+      <div className="max-w-5xl mx-auto px-6">
+        <Breadcrumbs />
+      </div>
       <div className="max-w-5xl mx-auto px-6 py-12">
         {!connected ? (
           <div className="text-center py-20">
@@ -36,8 +41,8 @@ export default function APIKeysPage() {
               Wallet Connection Required
             </h2>
             <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
-              Please connect your Stellar wallet to manage API keys. API keys are
-              scoped to your wallet address for security.
+              Please connect your Stellar wallet to manage API keys. API keys are scoped to your
+              wallet address for security.
             </p>
             <p className="text-sm text-gray-500 dark:text-gray-400">
               Click &quot;Connect Wallet&quot; in the top navigation to get started.

@@ -19,13 +19,35 @@ import { HelpProvider } from "@/context/HelpContext";
 import { WalletProvider } from "@/context/WalletContext";
 import { SkipToContentLink } from "@/utils/accessibility";
 
+const SITE_NAME = "StellarVeriphy";
+const SITE_DESCRIPTION =
+  "Decentralized content verification and provenance on the Stellar blockchain — cryptographically verify media authenticity and origin.";
+const SITE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://stellarveriphy.com";
+
 export const metadata: Metadata = {
-  title: "StellarVeriphy",
-  description: "Decentralized content verification on the Stellar blockchain",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: SITE_NAME,
+    template: `%s | ${SITE_NAME}`,
+  },
+  description: SITE_DESCRIPTION,
   viewport: "width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover",
   robots: "index, follow",
   themeColor: "#3b82f6",
   manifest: "/manifest.json",
+  openGraph: {
+    type: "website",
+    url: "/",
+    siteName: SITE_NAME,
+    title: SITE_NAME,
+    description: SITE_DESCRIPTION,
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: SITE_NAME,
+    description: SITE_DESCRIPTION,
+  },
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },
@@ -36,9 +58,7 @@ export const metadata: Metadata = {
       { url: "/icons/icon-512x512.png", sizes: "512x512", type: "image/png" },
     ],
     shortcut: "/favicon.ico",
-    apple: [
-      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
-    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
   },
   appleWebApp: {
     capable: true,

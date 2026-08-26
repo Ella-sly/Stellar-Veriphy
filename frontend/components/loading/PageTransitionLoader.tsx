@@ -43,9 +43,9 @@ export function PageTransitionLoader({
     const handleRouteChangeComplete = () => {
       const elapsed = Date.now() - startTime;
       const remaining = Math.max(0, minimumDuration - elapsed);
-      
+
       setProgress(100);
-      
+
       setTimeout(() => {
         clearInterval(interval);
         setIsLoading(false);
@@ -74,16 +74,14 @@ export function PageTransitionLoader({
     >
       <div className="relative">
         <Spinner size="lg" label="Loading page..." />
-        
+
         {/* Animated border */}
         <div className="absolute inset-0 border-4 border-transparent border-t-blue-500 border-r-blue-500 rounded-full animate-spin"></div>
       </div>
-      
+
       <div className="mt-6 max-w-md text-center">
-        <p className="text-gray-700 dark:text-gray-300 font-medium mb-2">
-          Loading content...
-        </p>
-        
+        <p className="text-gray-700 dark:text-gray-300 font-medium mb-2">Loading content...</p>
+
         {/* Progress indicator */}
         <div className="w-64 h-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
           <div
@@ -96,7 +94,7 @@ export function PageTransitionLoader({
             aria-label={`Loading progress: ${Math.round(progress)}%`}
           />
         </div>
-        
+
         <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
           {progress < 30 && "Initializing..."}
           {progress >= 30 && progress < 60 && "Loading content..."}
@@ -127,16 +125,16 @@ export function useOperationLoader() {
 
   const updateProgress = (value: number) => {
     setProgress(value);
-    
+
     // Calculate estimated time remaining
     if (startTime > 0 && value > 0) {
       const elapsed = Date.now() - startTime;
       const estimatedTotal = (elapsed / value) * 100;
       const remaining = estimatedTotal - elapsed;
-      
+
       const minutes = Math.floor(remaining / 60000);
       const seconds = Math.floor((remaining % 60000) / 1000);
-      
+
       if (minutes > 0) {
         setEstimatedTime(`${minutes}m ${seconds}s`);
       } else {
@@ -147,7 +145,7 @@ export function useOperationLoader() {
 
   const completeOperation = () => {
     setProgress(100);
-    
+
     setTimeout(() => {
       setIsLoading(false);
       setOperationName("");
@@ -209,12 +207,8 @@ export function FileUploadProgress({
             </svg>
           </div>
           <div>
-            <p className="font-medium text-gray-900 dark:text-gray-100 text-sm">
-              {fileName}
-            </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              Uploading at {speed}
-            </p>
+            <p className="font-medium text-gray-900 dark:text-gray-100 text-sm">{fileName}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Uploading at {speed}</p>
           </div>
         </div>
         {onCancel && (
@@ -223,12 +217,7 @@ export function FileUploadProgress({
             className="p-1 text-gray-400 hover:text-red-500 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 rounded"
             aria-label="Cancel upload"
           >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -239,7 +228,7 @@ export function FileUploadProgress({
           </button>
         )}
       </div>
-      
+
       <div className="space-y-1">
         <div className="flex justify-between text-xs">
           <span className="text-gray-600 dark:text-gray-400">Progress</span>

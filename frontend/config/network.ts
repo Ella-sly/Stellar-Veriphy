@@ -14,7 +14,9 @@ export function getNetworkConfig(network: Network): NetworkConfig {
     case "mainnet":
       return {
         passphrase: MAINNET_PASSPHRASE,
-        rpcUrl: process.env.NEXT_PUBLIC_MAINNET_RPC_URL ?? "https://mainnet.stellar.validationcloud.io/v1/soroban/rpc",
+        rpcUrl:
+          process.env.NEXT_PUBLIC_MAINNET_RPC_URL ??
+          "https://mainnet.stellar.validationcloud.io/v1/soroban/rpc",
       };
     case "futurenet":
       return {

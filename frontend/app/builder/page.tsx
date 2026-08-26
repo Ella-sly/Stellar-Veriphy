@@ -35,8 +35,8 @@ export default function BuilderPage() {
           Advanced Manifest Builder
         </h1>
         <p className="text-gray-600 dark:text-gray-400 mb-8">
-          Construct manifests with full control over the schema, including nested objects
-          and arrays.
+          Construct manifests with full control over the schema, including nested objects and
+          arrays.
         </p>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -72,9 +72,7 @@ export default function BuilderPage() {
 
           <div>
             <div className="p-4 bg-gray-100 dark:bg-gray-900 rounded border border-gray-300 dark:border-gray-700 sticky top-6">
-              <h3 className="font-semibold mb-3 text-black dark:text-white">
-                Live Preview
-              </h3>
+              <h3 className="font-semibold mb-3 text-black dark:text-white">Live Preview</h3>
               <pre className="text-sm overflow-auto max-h-96 text-black dark:text-white">
                 {JSON.stringify(manifest, null, 2)}
               </pre>

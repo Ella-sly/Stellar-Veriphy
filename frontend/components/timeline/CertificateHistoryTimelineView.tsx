@@ -9,6 +9,8 @@ import {
   Filter} from "lucide-react";
 import { useRef,useState } from "react";
 
+import { useState, useRef } from "react";
+import { Download, Filter, Calendar, ArrowRight, ChevronDown, ChevronUp } from "lucide-react";
 import { HistoryEvent } from "../certificates/CertificateHistoryTimeline";
 
 // ---------------------------------------------------------------------------
@@ -22,7 +24,15 @@ interface TimelineViewProps {
   hasMore?: boolean;
 }
 
-type EventType = "all" | "minted" | "transferred" | "metadata_updated" | "revoked" | "renewed" | "linked" | "locked";
+type EventType =
+  | "all"
+  | "minted"
+  | "transferred"
+  | "metadata_updated"
+  | "revoked"
+  | "renewed"
+  | "linked"
+  | "locked";
 
 // ---------------------------------------------------------------------------
 // Event Styles
@@ -74,12 +84,14 @@ const EVENT_STYLES: Record<string, { icon: string; color: string; bg: string; la
 };
 
 function getEventStyle(action: string) {
-  return EVENT_STYLES[action] || {
-    icon: "●",
-    color: "text-gray-600 dark:text-gray-400",
-    bg: "bg-gray-100 dark:bg-gray-800",
-    label: action,
-  };
+  return (
+    EVENT_STYLES[action] || {
+      icon: "●",
+      color: "text-gray-600 dark:text-gray-400",
+      bg: "bg-gray-100 dark:bg-gray-800",
+      label: action,
+    }
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -118,9 +130,8 @@ export function CertificateHistoryTimelineView({
   const timelineRef = useRef<HTMLDivElement>(null);
 
   // Filter events
-  const filteredEvents = filterType === "all" 
-    ? events 
-    : events.filter((e) => e.action === filterType);
+  const filteredEvents =
+    filterType === "all" ? events : events.filter((e) => e.action === filterType);
 
   // Toggle event expansion
   const toggleExpand = (eventId: number) => {
@@ -183,9 +194,7 @@ export function CertificateHistoryTimelineView({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Certificate Timeline
-          </h2>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Certificate Timeline</h2>
           <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
             Certificate ID: <span className="font-mono">{certificateId}</span>
           </p>
@@ -210,7 +219,16 @@ export function CertificateHistoryTimelineView({
 
             {showFilterMenu && (
               <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-10">
-                {["all", "minted", "transferred", "metadata_updated", "revoked", "renewed", "linked", "locked"].map((type) => (
+                {[
+                  "all",
+                  "minted",
+                  "transferred",
+                  "metadata_updated",
+                  "revoked",
+                  "renewed",
+                  "linked",
+                  "locked",
+                ].map((type) => (
                   <button
                     key={type}
                     onClick={() => {
@@ -218,7 +236,9 @@ export function CertificateHistoryTimelineView({
                       setShowFilterMenu(false);
                     }}
                     className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors first:rounded-t-lg last:rounded-b-lg ${
-                      filterType === type ? "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400" : "text-gray-900 dark:text-white"
+                      filterType === type
+                        ? "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400"
+                        : "text-gray-900 dark:text-white"
                     }`}
                   >
                     {type === "all" ? "All Events" : EVENT_STYLES[type]?.label || type}
@@ -261,7 +281,9 @@ export function CertificateHistoryTimelineView({
             return (
               <div key={event.id} className="relative flex gap-6 group">
                 {/* Event icon */}
-                <div className={`relative z-10 flex-shrink-0 w-16 h-16 flex items-center justify-center rounded-full ring-4 ring-white dark:ring-gray-900 ${style.bg}`}>
+                <div
+                  className={`relative z-10 flex-shrink-0 w-16 h-16 flex items-center justify-center rounded-full ring-4 ring-white dark:ring-gray-900 ${style.bg}`}
+                >
                   <span className="text-2xl">{style.icon}</span>
                 </div>
 
@@ -269,10 +291,7 @@ export function CertificateHistoryTimelineView({
                 <div className="flex-1 pb-8">
                   <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm hover:shadow-md transition-shadow">
                     {/* Event header */}
-                    <div 
-                      className="p-4 cursor-pointer"
-                      onClick={() => toggleExpand(event.id)}
-                    >
+                    <div className="p-4 cursor-pointer" onClick={() => toggleExpand(event.id)}>
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1">
                           <div className="flex items-center gap-3">
@@ -281,7 +300,7 @@ export function CertificateHistoryTimelineView({
                             </h3>
                             <ArrowRight className="w-4 h-4 text-gray-400" />
                           </div>
-                          
+
                           <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">
                             <div className="flex items-center gap-2">
                               <Calendar className="w-4 h-4" />

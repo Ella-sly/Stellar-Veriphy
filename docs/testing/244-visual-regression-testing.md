@@ -7,7 +7,7 @@
 More is already in place than the issue title suggests:
 
 - `frontend/playwright.config.ts` already declares `snapshotDir:
-  "./e2e/snapshots"` and runs 5 projects — `chromium`, `firefox`, `webkit`,
+"./e2e/snapshots"` and runs 5 projects — `chromium`, `firefox`, `webkit`,
   `mobile-chrome` (Pixel 5), `mobile-safari` (iPhone 13) — so
   cross-viewport coverage is already wired at the config level.
 - Five `expect(page).toHaveScreenshot(...)` calls already exist, embedded
@@ -79,14 +79,14 @@ diff," not "re-run the suite locally."
 
 ## Acceptance criteria mapping
 
-| Criterion | Delivered by |
-|---|---|
+| Criterion                      | Delivered by                                                                                                   |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------------- |
 | Chromatic or Percy integration | Substituted with Playwright native (see rationale above) — flag if the team wants the paid alternative instead |
-| Screenshot comparison | `toHaveScreenshot`, consolidated into `visual-regression.spec.ts` |
-| Component snapshot tests | Demo routes (`skeleton-demo`, `stepper-demo`, `features-showcase`) + new ones as needed |
-| Test across viewports | Existing 5 Playwright projects (desktop × 3, mobile × 2) |
-| Approve/reject workflow | `--update-snapshots` + documented process |
-| Integration with PR reviews | CI artifact upload + PR comment link on failure |
+| Screenshot comparison          | `toHaveScreenshot`, consolidated into `visual-regression.spec.ts`                                              |
+| Component snapshot tests       | Demo routes (`skeleton-demo`, `stepper-demo`, `features-showcase`) + new ones as needed                        |
+| Test across viewports          | Existing 5 Playwright projects (desktop × 3, mobile × 2)                                                       |
+| Approve/reject workflow        | `--update-snapshots` + documented process                                                                      |
+| Integration with PR reviews    | CI artifact upload + PR comment link on failure                                                                |
 
 ## Rollout
 

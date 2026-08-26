@@ -1,6 +1,6 @@
 # Mutation Testing
 
-Mutation testing checks the *test suite itself*: [Stryker](https://stryker-mutator.io)
+Mutation testing checks the _test suite itself_: [Stryker](https://stryker-mutator.io)
 introduces small, automated bugs ("mutants") into the source — flipping a
 comparison, deleting a string literal, changing an arithmetic operator — and
 reruns the tests against each mutant. A mutant that still passes ("survived")
@@ -44,11 +44,11 @@ This runs `stryker run` using `packages/shared/stryker.conf.json`:
 
 As of this setup, a full run reports:
 
-| Scope                       | Mutation score |
-|------------------------------|---------------:|
-| `utils/hash.ts`               | 100%           |
-| `factories/index.ts`          | 40%            |
-| **Overall (`packages/shared`)** | **~42%**     |
+| Scope                           | Mutation score |
+| ------------------------------- | -------------: |
+| `utils/hash.ts`                 |           100% |
+| `factories/index.ts`            |            40% |
+| **Overall (`packages/shared`)** |       **~42%** |
 
 (Re-run `pnpm run test:mutation` for the exact current number — it moves
 slightly as factories are added or adjusted; 40–42% has been stable across

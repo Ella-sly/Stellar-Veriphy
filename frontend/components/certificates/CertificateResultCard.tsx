@@ -79,10 +79,10 @@ function DetailRow({
 
   return (
     <div className="flex items-start justify-between py-2.5 border-b border-gray-100 dark:border-gray-800 last:border-b-0">
-      <dt className="text-sm text-gray-500 dark:text-gray-400 shrink-0 min-w-[120px]">
-        {label}
-      </dt>
-      <dd className={`text-sm text-gray-900 dark:text-gray-100 text-right flex items-center gap-2 ${mono ? "font-mono" : ""}`}>
+      <dt className="text-sm text-gray-500 dark:text-gray-400 shrink-0 min-w-[120px]">{label}</dt>
+      <dd
+        className={`text-sm text-gray-900 dark:text-gray-100 text-right flex items-center gap-2 ${mono ? "font-mono" : ""}`}
+      >
         <span className="break-all max-w-[320px]">{value}</span>
         {copyable && (
           <button
@@ -91,12 +91,28 @@ function DetailRow({
             aria-label={copied ? "Copied" : "Copy ".concat(label)}
           >
             {copied ? (
-              <svg className="w-4 h-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <svg
+                className="w-4 h-4 text-emerald-500"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
               </svg>
             ) : (
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                />
               </svg>
             )}
           </button>
@@ -138,7 +154,8 @@ export function CertificateResultCard({
   isVerifying = false,
   generatedCode = null,
 }: CertificateResultCardProps) {
-  const { certificate, verificationLevel, statusLabel, owner, displayName, description, isLocked } = result;
+  const { certificate, verificationLevel, statusLabel, owner, displayName, description, isLocked } =
+    result;
   const status = statusLabel as CertificateStatus;
 
   return (
@@ -218,8 +235,18 @@ export function CertificateResultCard({
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+              />
             </svg>
             View on StellarExpert
           </a>
@@ -248,7 +275,9 @@ export function CertificateResultCard({
         {/* Generated code display */}
         {generatedCode && (
           <div className="p-4 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg">
-            <p className="text-sm text-blue-700 dark:text-blue-300 font-medium mb-1">Verification Code Generated</p>
+            <p className="text-sm text-blue-700 dark:text-blue-300 font-medium mb-1">
+              Verification Code Generated
+            </p>
             <p className="text-2xl font-mono font-bold text-blue-900 dark:text-blue-100 tracking-widest text-center">
               {generatedCode}
             </p>
@@ -261,4 +290,3 @@ export function CertificateResultCard({
     </div>
   );
 }
-

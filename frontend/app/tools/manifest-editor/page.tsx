@@ -7,28 +7,30 @@
 import { useState } from "react";
 
 import { Header } from "@/components/Header";
+import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import {
   AdvancedManifestEditor,
   type AdvancedManifestValue,
 } from "@/components/manifest/AdvancedManifestEditor";
 
 export default function AdvancedManifestEditorPage() {
-  const [currentManifest, setCurrentManifest] =
-    useState<AdvancedManifestValue | null>(null);
+  const [currentManifest, setCurrentManifest] = useState<AdvancedManifestValue | null>(null);
 
   return (
     <main className="min-h-screen bg-white dark:bg-gray-950">
       <Header />
+      <div className="max-w-5xl mx-auto px-6">
+        <Breadcrumbs />
+      </div>
       <div className="max-w-5xl mx-auto px-6 py-12">
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-3">
             Advanced Manifest Editor
           </h1>
           <p className="text-lg text-gray-600 dark:text-gray-400">
-            Rich manifest editor with real-time JSON schema validation, field-type
-            enforcement, required-field indicators, auto-complete for common
-            fields, validation error messages, format suggestions, and a schema
-            version selector.
+            Rich manifest editor with real-time JSON schema validation, field-type enforcement,
+            required-field indicators, auto-complete for common fields, validation error messages,
+            format suggestions, and a schema version selector.
           </p>
         </div>
 
@@ -48,10 +50,9 @@ export default function AdvancedManifestEditorPage() {
             <button
               type="button"
               onClick={() => {
-                const blob = new Blob(
-                  [JSON.stringify(currentManifest, null, 2)],
-                  { type: "application/json" }
-                );
+                const blob = new Blob([JSON.stringify(currentManifest, null, 2)], {
+                  type: "application/json",
+                });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement("a");
                 a.href = url;

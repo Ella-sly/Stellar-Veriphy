@@ -100,18 +100,24 @@ test.describe("Certificate viewing", () => {
     // A meaningful page region must be present
     await expect(
       page
-        .locator('main, [role="main"], [data-testid="certificates-page"], [data-testid="verify-page"]')
+        .locator(
+          'main, [role="main"], [data-testid="certificates-page"], [data-testid="verify-page"]'
+        )
         .first()
     ).toBeVisible({ timeout: 10_000 });
   });
 
   // ── 2. Certificate list shows card metadata ──────────────────────────────
 
-  test("certificate list shows ID, creator address, and timestamp on each card", async ({ page }) => {
+  test("certificate list shows ID, creator address, and timestamp on each card", async ({
+    page,
+  }) => {
     await gotoCertificates(page);
 
     const card = page
-      .locator('[data-testid="certificate-card"], [data-testid="cert-item"], .certificate-card, tbody tr')
+      .locator(
+        '[data-testid="certificate-card"], [data-testid="cert-item"], .certificate-card, tbody tr'
+      )
       .first();
 
     const cardVisible = await card.isVisible({ timeout: 8_000 }).catch(() => false);
@@ -130,7 +136,9 @@ test.describe("Certificate viewing", () => {
     await gotoCertificates(page);
 
     const card = page
-      .locator('[data-testid="certificate-card"], [data-testid="cert-item"], .certificate-card, tbody tr')
+      .locator(
+        '[data-testid="certificate-card"], [data-testid="cert-item"], .certificate-card, tbody tr'
+      )
       .first();
 
     if (!(await card.isVisible({ timeout: 8_000 }).catch(() => false))) return;
@@ -341,9 +349,7 @@ test.describe("Certificate viewing", () => {
     await gotoCertificateDetail(page, 1);
 
     const collectionSection = page
-      .locator(
-        '[data-testid="collection"], text=/collection/i, [data-testid="cert-collection"]'
-      )
+      .locator('[data-testid="collection"], text=/collection/i, [data-testid="cert-collection"]')
       .first();
 
     if (await collectionSection.isVisible({ timeout: 4_000 }).catch(() => false)) {
@@ -358,9 +364,7 @@ test.describe("Certificate viewing", () => {
     await gotoCertificateDetail(page, 1);
 
     const linkedSection = page
-      .locator(
-        '[data-testid="linked-certs"], text=/linked|related|parent|child|sibling/i'
-      )
+      .locator('[data-testid="linked-certs"], text=/linked|related|parent|child|sibling/i')
       .first();
 
     if (await linkedSection.isVisible({ timeout: 4_000 }).catch(() => false)) {

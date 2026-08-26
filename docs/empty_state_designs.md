@@ -10,29 +10,29 @@ Currently, views that have no data render as blank or near-blank pages with no g
 
 ## Acceptance Criteria
 
-| # | Criterion | Description |
-|---|-----------|-------------|
-| 1 | Custom illustrations | Each distinct empty state has a unique or contextually appropriate illustration (SVG preferred) |
-| 2 | Contextual messages | Heading and body copy are specific to the empty state context, not generic ("No data found") |
-| 3 | Clear call-to-action buttons | A primary CTA guides the user toward the most logical next action |
-| 4 | Onboarding guidance | First-time empty states include a brief tip or checklist explaining how to get started |
-| 5 | Search result empty states | A dedicated empty state for zero-result searches, with the query echoed back and suggestions |
-| 6 | Filter result empty states | A dedicated empty state when active filters produce no results, with a "Clear filters" action |
+| #   | Criterion                    | Description                                                                                     |
+| --- | ---------------------------- | ----------------------------------------------------------------------------------------------- |
+| 1   | Custom illustrations         | Each distinct empty state has a unique or contextually appropriate illustration (SVG preferred) |
+| 2   | Contextual messages          | Heading and body copy are specific to the empty state context, not generic ("No data found")    |
+| 3   | Clear call-to-action buttons | A primary CTA guides the user toward the most logical next action                               |
+| 4   | Onboarding guidance          | First-time empty states include a brief tip or checklist explaining how to get started          |
+| 5   | Search result empty states   | A dedicated empty state for zero-result searches, with the query echoed back and suggestions    |
+| 6   | Filter result empty states   | A dedicated empty state when active filters produce no results, with a "Clear filters" action   |
 
 ## Empty State Inventory
 
 The following views require empty state handling:
 
-| View | Trigger Condition | Primary CTA |
-|------|-------------------|-------------|
-| Dashboard — certificates list | User has no certificates | "Issue your first certificate" |
-| Dashboard — verifications list | No verifications recorded | "Verify a certificate" |
-| Certificate search | Search query returns 0 results | "Clear search" / "Try a different term" |
-| Certificate list with filters | Active filters return 0 results | "Clear filters" |
-| Provider registry | No providers registered | "Register a provider" |
-| Attestation history | No attestations on record | "Submit an attestation" |
-| Notifications / activity feed | No activity yet | (informational only, no CTA) |
-| Admin — pending requests | No pending requests | (informational only) |
+| View                           | Trigger Condition               | Primary CTA                             |
+| ------------------------------ | ------------------------------- | --------------------------------------- |
+| Dashboard — certificates list  | User has no certificates        | "Issue your first certificate"          |
+| Dashboard — verifications list | No verifications recorded       | "Verify a certificate"                  |
+| Certificate search             | Search query returns 0 results  | "Clear search" / "Try a different term" |
+| Certificate list with filters  | Active filters return 0 results | "Clear filters"                         |
+| Provider registry              | No providers registered         | "Register a provider"                   |
+| Attestation history            | No attestations on record       | "Submit an attestation"                 |
+| Notifications / activity feed  | No activity yet                 | (informational only, no CTA)            |
+| Admin — pending requests       | No pending requests             | (informational only)                    |
 
 ## Component Structure
 
@@ -51,15 +51,15 @@ Each empty state is rendered by a shared `<EmptyState>` component that accepts p
 
 ### Props Reference
 
-| Prop | Type | Required | Description |
-|------|------|----------|-------------|
-| `illustration` | `string` (asset key) | Yes | Selects the SVG illustration to display |
-| `heading` | `string` | Yes | Bold heading, 1 short sentence |
-| `body` | `string` | Yes | Supporting copy, 1–2 sentences max |
-| `primaryAction` | `{ label, href \| onClick }` | Yes | The main CTA button |
-| `secondaryAction` | `{ label, href \| onClick }` | No | Optional secondary link or button |
-| `onboardingTip` | `string` | No | Shown as a subtle tip below the CTA for first-time states |
-| `className` | `string` | No | Additional CSS class for layout overrides |
+| Prop              | Type                         | Required | Description                                               |
+| ----------------- | ---------------------------- | -------- | --------------------------------------------------------- |
+| `illustration`    | `string` (asset key)         | Yes      | Selects the SVG illustration to display                   |
+| `heading`         | `string`                     | Yes      | Bold heading, 1 short sentence                            |
+| `body`            | `string`                     | Yes      | Supporting copy, 1–2 sentences max                        |
+| `primaryAction`   | `{ label, href \| onClick }` | Yes      | The main CTA button                                       |
+| `secondaryAction` | `{ label, href \| onClick }` | No       | Optional secondary link or button                         |
+| `onboardingTip`   | `string`                     | No       | Shown as a subtle tip below the CTA for first-time states |
+| `className`       | `string`                     | No       | Additional CSS class for layout overrides                 |
 
 ## Illustration Guidelines
 
@@ -71,20 +71,21 @@ Each empty state is rendered by a shared `<EmptyState>` component that accepts p
 
 ### Illustration Asset Keys
 
-| Key | Description |
-|-----|-------------|
-| `certificates` | Stack of blank certificate documents |
-| `verifications` | Magnifying glass over a document |
+| Key                 | Description                           |
+| ------------------- | ------------------------------------- |
+| `certificates`      | Stack of blank certificate documents  |
+| `verifications`     | Magnifying glass over a document      |
 | `search-no-results` | Magnifying glass with a question mark |
-| `filter-no-results` | Funnel with an X |
-| `providers` | Network nodes / connector graphic |
-| `attestations` | Stamp or seal graphic |
-| `activity` | Bell or timeline graphic |
-| `pending` | Hourglass or inbox graphic |
+| `filter-no-results` | Funnel with an X                      |
+| `providers`         | Network nodes / connector graphic     |
+| `attestations`      | Stamp or seal graphic                 |
+| `activity`          | Bell or timeline graphic              |
+| `pending`           | Hourglass or inbox graphic            |
 
 ## Copy Guidelines
 
 ### Heading
+
 - State what is absent, not what went wrong.
 - 4–8 words. Title case.
 - Examples:
@@ -94,6 +95,7 @@ Each empty state is rendered by a shared `<EmptyState>` component that accepts p
   - ❌ "Error: No data"
 
 ### Body
+
 - Explain why the state exists and what will change it.
 - 1–2 sentences, plain language.
 - Examples:
@@ -102,6 +104,7 @@ Each empty state is rendered by a shared `<EmptyState>` component that accepts p
   - "Your active filters returned no results. Adjust or clear them to see more."
 
 ### CTA Label
+
 - Use action verbs. Be specific.
 - ✅ "Issue Certificate", "Clear Filters", "Register Provider"
 - ❌ "Click here", "Go", "Submit"

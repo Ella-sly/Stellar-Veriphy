@@ -37,21 +37,12 @@ export function ShortcutHelpModal({
             </h3>
             <div className="space-y-1">
               {actions.map((action) => (
-                <div
-                  key={action.id}
-                  className="flex items-center justify-between py-1.5"
-                >
-                  <span className="text-sm text-gray-700 dark:text-gray-300">
-                    {action.label}
-                  </span>
+                <div key={action.id} className="flex items-center justify-between py-1.5">
+                  <span className="text-sm text-gray-700 dark:text-gray-300">{action.label}</span>
                   <div className="flex items-center gap-1">
                     {getDisplayKeys(action).map((key, i) => (
                       <span key={i}>
-                        {i > 0 && (
-                          <span className="text-gray-400 mx-0.5 text-xs">
-                            +
-                          </span>
-                        )}
+                        {i > 0 && <span className="text-gray-400 mx-0.5 text-xs">+</span>}
                         <kbd className="inline-flex items-center px-1.5 py-0.5 text-xs font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded">
                           {key}
                         </kbd>
@@ -64,8 +55,8 @@ export function ShortcutHelpModal({
           </div>
         ))}
         <p className="text-xs text-gray-400 mt-4 pt-3 border-t border-gray-200 dark:border-gray-800">
-          Customize shortcuts by pressing a keyboard combination after clicking
-          the shortcut in the settings panel.
+          Customize shortcuts by pressing a keyboard combination after clicking the shortcut in the
+          settings panel.
         </p>
       </div>
     </Modal>

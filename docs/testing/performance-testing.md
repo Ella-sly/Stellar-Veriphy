@@ -58,11 +58,11 @@ Next.js frontend/API (`frontend/`).
 
 ## Suggested Tooling
 
-| Purpose | Tool |
-|---|---|
+| Purpose                     | Tool                            |
+| --------------------------- | ------------------------------- |
 | Contract resource profiling | `soroban-sdk` `testutils::cost` |
-| HTTP/frontend load testing | `k6` |
-| Report generation | `k6` HTML reporter |
+| HTTP/frontend load testing  | `k6`                            |
+| Report generation           | `k6` HTML reporter              |
 
 ## CI Integration
 

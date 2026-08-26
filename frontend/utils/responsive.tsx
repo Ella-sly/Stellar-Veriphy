@@ -12,11 +12,11 @@ export type Breakpoint = "xs" | "sm" | "md" | "lg" | "xl" | "2xl";
  * Tailwind breakpoint mapping
  */
 export const breakpoints = {
-  xs: 0,     // < 640px
-  sm: 640,   // >= 640px
-  md: 768,   // >= 768px
-  lg: 1024,  // >= 1024px
-  xl: 1280,  // >= 1280px
+  xs: 0, // < 640px
+  sm: 640, // >= 640px
+  md: 768, // >= 768px
+  lg: 1024, // >= 1024px
+  xl: 1280, // >= 1280px
   "2xl": 1536, // >= 1536px
 };
 
@@ -29,7 +29,7 @@ export function useBreakpoint(): Breakpoint {
   useEffect(() => {
     const checkBreakpoint = () => {
       const width = window.innerWidth;
-      
+
       if (width >= breakpoints["2xl"]) {
         setBreakpoint("2xl");
       } else if (width >= breakpoints.xl) {
@@ -108,9 +108,7 @@ export function useOrientation(): "portrait" | "landscape" {
 
   useEffect(() => {
     const updateOrientation = () => {
-      setOrientation(
-        window.innerHeight > window.innerWidth ? "portrait" : "landscape"
-      );
+      setOrientation(window.innerHeight > window.innerWidth ? "portrait" : "landscape");
     };
 
     window.addEventListener("resize", updateOrientation);
@@ -133,14 +131,13 @@ export function ensureTouchTarget(element: HTMLElement | null): void {
   if (width < 44 || height < 44) {
     const newWidth = Math.max(width, 44);
     const newHeight = Math.max(height, 44);
-    
+
     element.style.minWidth = `${newWidth}px`;
     element.style.minHeight = `${newHeight}px`;
-    element.style.padding = `${
-      Math.max(0, (newHeight - element.scrollHeight) / 2)
-    }px ${
-      Math.max(0, (newWidth - element.scrollWidth) / 2)
-    }px`;
+    element.style.padding = `${Math.max(0, (newHeight - element.scrollHeight) / 2)}px ${Math.max(
+      0,
+      (newWidth - element.scrollWidth) / 2
+    )}px`;
   }
 }
 
@@ -160,10 +157,7 @@ export function Responsive({
   const currentSize = breakpoints[currentBreakpoint];
   const targetSize = breakpoints[breakpoint];
 
-  const shouldShow =
-    direction === "above"
-      ? currentSize >= targetSize
-      : currentSize < targetSize;
+  const shouldShow = direction === "above" ? currentSize >= targetSize : currentSize < targetSize;
 
   return shouldShow ? <>{children}</> : null;
 }
@@ -179,9 +173,7 @@ export function ResponsiveContainer({
   className?: string;
 }) {
   return (
-    <div
-      className={`w-full mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 ${className}`}
-    >
+    <div className={`w-full mx-auto px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 ${className}`}>
       {children}
     </div>
   );
@@ -221,19 +213,22 @@ export function ResponsiveGrid({
 /**
  * Hook to optimize images for different screen sizes
  */
-export function useResponsiveImage(src: string, options?: Partial<Record<Breakpoint, string>>): string {
+export function useResponsiveImage(
+  src: string,
+  options?: Partial<Record<Breakpoint, string>>
+): string {
   const breakpoint = useBreakpoint();
-  
+
   if (options?.[breakpoint]) {
     return options[breakpoint]!;
   }
-  
+
   // Fallback logic for larger breakpoints
   if (breakpoint === "2xl" && options?.xl) return options.xl;
   if (breakpoint === "xl" && options?.lg) return options.lg;
   if (breakpoint === "lg" && options?.md) return options.md;
   if (breakpoint === "md" && options?.sm) return options.sm;
-  
+
   return src;
 }
 
@@ -252,24 +247,20 @@ export function useSafeAreaInsets(): {
     const updateInsets = () => {
       setInsets({
         top: parseInt(
-          getComputedStyle(document.documentElement).getPropertyValue(
-            "--safe-area-inset-top"
-          ) || "0"
+          getComputedStyle(document.documentElement).getPropertyValue("--safe-area-inset-top") ||
+            "0"
         ),
         right: parseInt(
-          getComputedStyle(document.documentElement).getPropertyValue(
-            "--safe-area-inset-right"
-          ) || "0"
+          getComputedStyle(document.documentElement).getPropertyValue("--safe-area-inset-right") ||
+            "0"
         ),
         bottom: parseInt(
-          getComputedStyle(document.documentElement).getPropertyValue(
-            "--safe-area-inset-bottom"
-          ) || "0"
+          getComputedStyle(document.documentElement).getPropertyValue("--safe-area-inset-bottom") ||
+            "0"
         ),
         left: parseInt(
-          getComputedStyle(document.documentElement).getPropertyValue(
-            "--safe-area-inset-left"
-          ) || "0"
+          getComputedStyle(document.documentElement).getPropertyValue("--safe-area-inset-left") ||
+            "0"
         ),
       });
     };

@@ -34,7 +34,11 @@ describe("watch — initial 'submitted' status", () => {
 
   it("initial status has progress of 10", () => {
     let status: VerificationStatus | null = null;
-    verificationStatusService.watch("job-progress", { onUpdate: (s) => { status = s; } });
+    verificationStatusService.watch("job-progress", {
+      onUpdate: (s) => {
+        status = s;
+      },
+    });
     expect(status!.progress).toBe(10);
   });
 
@@ -43,7 +47,9 @@ describe("watch — initial 'submitted' status", () => {
     verificationStatusService.watch("job-ids", {
       txHash: "tx123",
       requestId: "req456",
-      onUpdate: (s) => { status = s; },
+      onUpdate: (s) => {
+        status = s;
+      },
     });
     expect(status!.txHash).toBe("tx123");
     expect(status!.requestId).toBe("req456");
@@ -132,7 +138,9 @@ describe("phase progression", () => {
     verificationStatusService.watch("job-terminal", {
       intervalMs: 50,
       onUpdate: (s) => phases.push(s.phase),
-      onTerminal: () => { terminalFired = true; },
+      onTerminal: () => {
+        terminalFired = true;
+      },
     });
 
     // Advance enough for the mock to reach 'verified'
@@ -150,8 +158,8 @@ describe("phase progression", () => {
   it("emits 'expired' after timeout", async () => {
     const phases: VerificationPhase[] = [];
     verificationStatusService.watch("job-timeout", {
-      intervalMs: 99999,   // very long interval so normal ticks don't fire
-      timeoutMs: 100,      // but timeout is short
+      intervalMs: 99999, // very long interval so normal ticks don't fire
+      timeoutMs: 100, // but timeout is short
       onUpdate: (s) => phases.push(s.phase),
     });
 
@@ -170,14 +178,22 @@ describe("phase progression", () => {
 describe("status fields", () => {
   it("updatedAt is a valid ISO string", () => {
     let status: VerificationStatus | null = null;
-    verificationStatusService.watch("job-date", { onUpdate: (s) => { status ??= s; } });
+    verificationStatusService.watch("job-date", {
+      onUpdate: (s) => {
+        status ??= s;
+      },
+    });
     expect(() => new Date(status!.updatedAt)).not.toThrow();
     expect(new Date(status!.updatedAt).toISOString()).toBe(status!.updatedAt);
   });
 
   it("message is a non-empty string for every phase", () => {
     let status: VerificationStatus | null = null;
-    verificationStatusService.watch("job-msg", { onUpdate: (s) => { status = s; } });
+    verificationStatusService.watch("job-msg", {
+      onUpdate: (s) => {
+        status = s;
+      },
+    });
     expect(status!.message.length).toBeGreaterThan(0);
   });
 });

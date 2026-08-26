@@ -5,11 +5,7 @@
   "description": "Base manifest for content provenance verification.",
   "type": "object",
   "additionalProperties": false,
-  "required": [
-    "contentHash",
-    "creator",
-    "timestamp"
-  ],
+  "required": ["contentHash", "creator", "timestamp"],
   "properties": {
     "schemaVersion": {
       "type": "string",

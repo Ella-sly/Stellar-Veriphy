@@ -64,10 +64,7 @@ export function containsScriptOrHtml(value: string): boolean {
  * Sanitizes a manifest string field, rejecting HTML/script content.
  * Returns an error message if invalid, or null if valid.
  */
-export function validateAndSanitizeField(
-  value: string,
-  fieldName: string
-): string | null {
+export function validateAndSanitizeField(value: string, fieldName: string): string | null {
   if (value.length > MAX_FIELD_LENGTH) {
     return `${fieldName} must be at most ${MAX_FIELD_LENGTH} characters (got ${value.length}).`;
   }
@@ -138,8 +135,7 @@ export function sanitizeManifest(m: SanitizedManifest): SanitizedManifest {
  *  2. Produces a finite Date when passed to `new Date()`.
  */
 function isValidISO8601(value: string): boolean {
-  const iso8601Regex =
-    /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:\d{2})?)?$/;
+  const iso8601Regex = /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:\d{2})?)?$/;
   if (!iso8601Regex.test(value)) return false;
   const date = new Date(value);
   return !isNaN(date.getTime());
@@ -203,9 +199,7 @@ export function validateManifest(manifest: unknown): ManifestValidationResult {
   } else if (typeof m.contentHash !== "string") {
     errors.push("contentHash must be a string.");
   } else if (!isValidSHA256(m.contentHash)) {
-    errors.push(
-      "contentHash must be a valid SHA-256 hex string (64 hexadecimal characters)."
-    );
+    errors.push("contentHash must be a valid SHA-256 hex string (64 hexadecimal characters).");
   }
 
   // ── Required: creator ───────────────────────────────────────────────────
@@ -226,7 +220,7 @@ export function validateManifest(manifest: unknown): ManifestValidationResult {
     errors.push("timestamp must be a string.");
   } else if (!isValidISO8601(m.timestamp)) {
     errors.push(
-      "timestamp must be a valid ISO 8601 date/datetime string (e.g. \"2024-01-15T10:30:00Z\")."
+      'timestamp must be a valid ISO 8601 date/datetime string (e.g. "2024-01-15T10:30:00Z").'
     );
   }
 
@@ -308,7 +302,11 @@ export function validateManifest(manifest: unknown): ManifestValidationResult {
         }
       }
 
-      if ("fileSizeBytes" in media && media.fileSizeBytes !== undefined && media.fileSizeBytes !== null) {
+      if (
+        "fileSizeBytes" in media &&
+        media.fileSizeBytes !== undefined &&
+        media.fileSizeBytes !== null
+      ) {
         if (
           typeof media.fileSizeBytes !== "number" ||
           !Number.isInteger(media.fileSizeBytes) ||
@@ -316,9 +314,7 @@ export function validateManifest(manifest: unknown): ManifestValidationResult {
         ) {
           errors.push("media.fileSizeBytes must be a positive integer.");
         } else if (media.fileSizeBytes > MAX_FILE_SIZE_BYTES) {
-          errors.push(
-            `media.fileSizeBytes must be at most ${MAX_FILE_SIZE_BYTES} bytes.`
-          );
+          errors.push(`media.fileSizeBytes must be at most ${MAX_FILE_SIZE_BYTES} bytes.`);
         }
       }
     }

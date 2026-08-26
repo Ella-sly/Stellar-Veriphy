@@ -20,8 +20,7 @@ export function AutoSaveIndicator({
     if (hasUnsaved) return { label: "Unsaved changes", color: "text-orange-500" };
     if (lastSaved) {
       const ago = Math.floor((Date.now() - lastSaved) / 1000);
-      const timeAgo =
-        ago < 60 ? `${ago}s ago` : `${Math.floor(ago / 60)}m ago`;
+      const timeAgo = ago < 60 ? `${ago}s ago` : `${Math.floor(ago / 60)}m ago`;
       return { label: `Auto-saved ${timeAgo}`, color: "text-green-500" };
     }
     return { label: "", color: "" };

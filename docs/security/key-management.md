@@ -6,13 +6,13 @@ There is no single "the key" in this system — a wallet-based dapp on Soroban h
 
 ## Key inventory
 
-| Category | Held by | Where | Risk if compromised |
-|---|---|---|---|
-| End-user wallet keys | End users | Freighter browser extension (never touches this app) | User's own funds/signing authority only |
-| Stellar deployer/admin keys | Whoever deploys `contracts/*` | Local `stellar keys` identity | Ability to deploy new contract instances; for `registry`, ability to approve TEE code hashes (see gap noted below) |
-| TEE oracle attestation key | AWS Nitro Enclave | Generated inside the enclave, never exported | Ability to forge verification attestations |
-| CI/CD deployment secrets | GitHub Actions | Repository/Environment secrets (`GHCR_TOKEN`, `DEPLOY_SSH_KEY`, etc. — see [`docs/deployment/ci-cd-pipeline.md`](../deployment/ci-cd-pipeline.md)) | Ability to push arbitrary images / deploy to staging or production |
-| Application-issued API keys | End users of the verification API | `frontend/components/APIKeyManagement.tsx` (client-side, see below) | Ability to call the verification API within the granted scopes |
+| Category                    | Held by                           | Where                                                                                                                                              | Risk if compromised                                                                                                |
+| --------------------------- | --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| End-user wallet keys        | End users                         | Freighter browser extension (never touches this app)                                                                                               | User's own funds/signing authority only                                                                            |
+| Stellar deployer/admin keys | Whoever deploys `contracts/*`     | Local `stellar keys` identity                                                                                                                      | Ability to deploy new contract instances; for `registry`, ability to approve TEE code hashes (see gap noted below) |
+| TEE oracle attestation key  | AWS Nitro Enclave                 | Generated inside the enclave, never exported                                                                                                       | Ability to forge verification attestations                                                                         |
+| CI/CD deployment secrets    | GitHub Actions                    | Repository/Environment secrets (`GHCR_TOKEN`, `DEPLOY_SSH_KEY`, etc. — see [`docs/deployment/ci-cd-pipeline.md`](../deployment/ci-cd-pipeline.md)) | Ability to push arbitrary images / deploy to staging or production                                                 |
+| Application-issued API keys | End users of the verification API | `frontend/components/APIKeyManagement.tsx` (client-side, see below)                                                                                | Ability to call the verification API within the granted scopes                                                     |
 
 ## HSM / hardware-backed signing
 
@@ -22,12 +22,12 @@ There is no single "the key" in this system — a wallet-based dapp on Soroban h
 
 ## Key rotation
 
-| Key | Rotation trigger | Procedure |
-|---|---|---|
+| Key                        | Rotation trigger                                                                  | Procedure                                                                                                                                                                                                                                                                                   |
+| -------------------------- | --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Stellar deployer/admin key | Suspected compromise, or on a routine cadence for mainnet (recommended: annually) | Generate a new `stellar keys` identity, transfer any required authority (e.g. re-run `registry.register` with the new admin once [the admin-check gap](../deployment.md#contract-initialization) is closed), update deployment docs/CI secrets, revoke the old key from any secrets manager |
-| CI/CD deployment secrets | Suspected compromise, contributor offboarding, or every 90 days | Rotate the credential at its source (e.g. regenerate a GHCR PAT, rotate the SSH deploy key pair), update the GitHub Environment secret, confirm the next deploy succeeds before deleting the old credential |
-| Application API keys | User-initiated, or automatically at the expiration the user set at creation | Handled entirely client-side today — see [Application API keys](#application-api-keys-encrypted-storage) below. Revoking or letting a key expire is immediate; there is no server-side propagation delay because there is no server-side key store yet |
-| TEE enclave key | On enclave image rebuild | A new enclave image produces a new key pair by construction (the key is generated inside the enclave at boot and never persisted outside it). The new image's code hash must be re-approved via `contracts/registry` before its attestations are trusted — see ADR-0004 |
+| CI/CD deployment secrets   | Suspected compromise, contributor offboarding, or every 90 days                   | Rotate the credential at its source (e.g. regenerate a GHCR PAT, rotate the SSH deploy key pair), update the GitHub Environment secret, confirm the next deploy succeeds before deleting the old credential                                                                                 |
+| Application API keys       | User-initiated, or automatically at the expiration the user set at creation       | Handled entirely client-side today — see [Application API keys](#application-api-keys-encrypted-storage) below. Revoking or letting a key expire is immediate; there is no server-side propagation delay because there is no server-side key store yet                                      |
+| TEE enclave key            | On enclave image rebuild                                                          | A new enclave image produces a new key pair by construction (the key is generated inside the enclave at boot and never persisted outside it). The new image's code hash must be re-approved via `contracts/registry` before its attestations are trusted — see ADR-0004                     |
 
 ## Application API keys: encrypted storage
 

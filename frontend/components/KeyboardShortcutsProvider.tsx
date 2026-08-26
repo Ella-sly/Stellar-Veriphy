@@ -10,16 +10,14 @@ import {
   type ShortcutAction,
   useKeyboardShortcuts,
 } from "@/hooks/useKeyboardShortcuts";
+import { useKeyboardShortcuts, type ShortcutAction } from "@/hooks/useKeyboardShortcuts";
+import { CommandPalette } from "@/components/ui/CommandPalette";
+import { ShortcutHelpModal } from "@/components/ui/ShortcutHelpModal";
 
-export function KeyboardShortcutsProvider({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export function KeyboardShortcutsProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { openHelpSearch, hasSeenTutorial, startTutorial, markTutorialSeen } =
-    useHelp();
+  const { openHelpSearch, hasSeenTutorial, startTutorial, markTutorialSeen } = useHelp();
   const [showCommandPalette, setShowCommandPalette] = useState(false);
   const [showShortcutHelp, setShowShortcutHelp] = useState(false);
 

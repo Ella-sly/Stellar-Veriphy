@@ -42,12 +42,12 @@ export function Header() {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (!mobileMenuOpen) return;
 
-      if (event.key === 'Escape') {
+      if (event.key === "Escape") {
         setMobileMenuOpen(false);
         mobileMenuButtonRef.current?.focus();
       }
 
-      if (event.key === 'Tab' && mobileMenuRef.current) {
+      if (event.key === "Tab" && mobileMenuRef.current) {
         const focusableElements = mobileMenuRef.current.querySelectorAll(
           'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
         ) as NodeListOf<HTMLElement>;
@@ -71,8 +71,8 @@ export function Header() {
       }
     };
 
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
   }, [mobileMenuOpen]);
 
   // Close mobile menu when clicking outside
@@ -89,10 +89,10 @@ export function Header() {
     };
 
     if (mobileMenuOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
     }
 
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [mobileMenuOpen]);
 
   return (
@@ -101,10 +101,7 @@ export function Header() {
       role="banner"
       aria-label="Main navigation"
     >
-      <nav
-        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4"
-        aria-label="Primary navigation"
-      >
+      <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4" aria-label="Primary navigation">
         <div className="flex items-center justify-between">
           {/* Logo */}
           <Link
@@ -136,11 +133,7 @@ export function Header() {
           </div>
 
           {/* Right Section */}
-          <div
-            className="hidden md:flex items-center gap-4"
-            role="group"
-            aria-label="User actions"
-          >
+          <div className="hidden md:flex items-center gap-4" role="group" aria-label="User actions">
             <ThemeToggle />
             <NotificationBell />
             <button
@@ -149,9 +142,7 @@ export function Header() {
               aria-label={connected ? "Disconnect wallet" : "Connect wallet"}
               aria-pressed={connected}
             >
-              {connected
-                ? `${publicKey?.slice(0, 6)}...${publicKey?.slice(-4)}`
-                : "Connect Wallet"}
+              {connected ? `${publicKey?.slice(0, 6)}...${publicKey?.slice(-4)}` : "Connect Wallet"}
             </button>
           </div>
 
@@ -176,11 +167,7 @@ export function Header() {
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth={2}
-                d={
-                  mobileMenuOpen
-                    ? "M6 18L18 6M6 6l12 12"
-                    : "M4 6h16M4 12h16M4 18h16"
-                }
+                d={mobileMenuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"}
               />
             </svg>
           </button>
@@ -193,10 +180,9 @@ export function Header() {
           role="menu"
           aria-label="Mobile navigation"
           aria-hidden={!mobileMenuOpen}
-          className={`md:hidden transition-all duration-200 ease-in-out ${mobileMenuOpen
-            ? "mt-4 space-y-3 pb-4 opacity-100 visible"
-            : "h-0 opacity-0 invisible"
-            }`}
+          className={`md:hidden transition-all duration-200 ease-in-out ${
+            mobileMenuOpen ? "mt-4 space-y-3 pb-4 opacity-100 visible" : "h-0 opacity-0 invisible"
+          }`}
         >
           {mobileMenuOpen && (
             <>

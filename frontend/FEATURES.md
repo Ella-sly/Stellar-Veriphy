@@ -5,13 +5,16 @@ This document describes the four new features implemented for the Stellar-Veriph
 ## Feature #213: Batch Verification Interface
 
 ### Overview
+
 Multi-file upload and verification system with progress tracking and CSV metadata import.
 
 ### Location
+
 - Component: `/frontend/components/batch/BatchVerificationPanel.tsx`
 - Demo Page: `/frontend/app/batch-verification/page.tsx`
 
 ### Features
+
 - Drag-and-drop file upload
 - Multiple file selection
 - Individual file status tracking (pending, processing, completed, failed)
@@ -23,17 +26,19 @@ Multi-file upload and verification system with progress tracking and CSV metadat
 - Mock verification for demo purposes
 
 ### Usage
+
 ```tsx
 import { BatchVerificationPanel } from "@/components/batch";
 
-<BatchVerificationPanel 
+<BatchVerificationPanel
   onVerify={async (files) => {
     // Custom verification logic
   }}
-/>
+/>;
 ```
 
 ### CSV Format for Metadata Import
+
 ```csv
 filename,device,location,author
 image1.jpg,iPhone 13,New York,John Doe
@@ -45,13 +50,16 @@ image2.png,Canon EOS,Los Angeles,Jane Smith
 ## Feature #212: Certificate History Timeline View
 
 ### Overview
+
 Interactive timeline visualization showing the complete certificate lifecycle with filtering and export capabilities.
 
 ### Location
+
 - Component: `/frontend/components/timeline/CertificateHistoryTimelineView.tsx`
 - Demo Page: `/frontend/app/timeline-view/page.tsx`
 
 ### Features
+
 - Chronological event timeline with icons and colors
 - Event types: minted, transferred, metadata_updated, revoked, renewed, linked, locked
 - Expandable event details
@@ -61,6 +69,7 @@ Interactive timeline visualization showing the complete certificate lifecycle wi
 - Responsive design
 
 ### Usage
+
 ```tsx
 import { CertificateHistoryTimelineView } from "@/components/timeline";
 
@@ -69,10 +78,11 @@ import { CertificateHistoryTimelineView } from "@/components/timeline";
   events={historyEvents}
   onLoadMore={() => {}}
   hasMore={false}
-/>
+/>;
 ```
 
 ### Event Structure
+
 ```typescript
 interface HistoryEvent {
   id: number;
@@ -88,13 +98,16 @@ interface HistoryEvent {
 ## Feature #214: Notification Center
 
 ### Overview
+
 Centralized notification system with categories, settings, and persistent storage.
 
 ### Location
+
 - Component: `/frontend/components/notifications/NotificationCenter.tsx`
 - Integration: Added to `/frontend/app/layout.tsx` and `/frontend/components/Header.tsx`
 
 ### Features
+
 - Notification bell icon with unread badge count
 - Dropdown notification list
 - Notification categories: verification, system, message, alert
@@ -107,35 +120,35 @@ Centralized notification system with categories, settings, and persistent storag
 - Time-relative formatting (e.g., "5m ago", "2h ago")
 
 ### Usage
+
 ```tsx
 // Provider (already added to layout.tsx)
 import { NotificationProvider } from "@/components/notifications";
 
-<NotificationProvider>
-  {children}
-</NotificationProvider>
+<NotificationProvider>{children}</NotificationProvider>;
 
 // Bell component (already added to Header.tsx)
 import { NotificationBell } from "@/components/notifications";
 
-<NotificationBell />
+<NotificationBell />;
 
 // Use notifications programmatically
 import { useNotifications } from "@/components/notifications";
 
 function MyComponent() {
   const { addNotification } = useNotifications();
-  
+
   addNotification({
     type: "verification",
     title: "Verification Complete",
     message: "Your certificate has been verified",
-    actionUrl: "/certificates/123"
+    actionUrl: "/certificates/123",
   });
 }
 ```
 
 ### Notification Types
+
 - `verification`: Green - verification-related updates
 - `system`: Blue - system alerts
 - `message`: Purple - user messages
@@ -146,13 +159,16 @@ function MyComponent() {
 ## Feature #215: Certificate Comparison Tool
 
 ### Overview
+
 Side-by-side comparison tool to analyze differences between 2-3 certificates.
 
 ### Location
+
 - Component: `/frontend/components/comparison/CertificateComparisonTool.tsx`
 - Demo Page: `/frontend/app/comparison/page.tsx`
 
 ### Features
+
 - Search certificates by ID, creator, or content hash
 - Select 2-3 certificates for comparison
 - Two comparison modes:
@@ -164,6 +180,7 @@ Side-by-side comparison tool to analyze differences between 2-3 certificates.
 - Metadata comparison
 
 ### Usage
+
 ```tsx
 import { CertificateComparisonTool } from "@/components/comparison";
 
@@ -173,10 +190,11 @@ import { CertificateComparisonTool } from "@/components/comparison";
     return certificates;
   }}
   certificates={initialCertificates}
-/>
+/>;
 ```
 
 ### Certificate Structure
+
 ```typescript
 interface Certificate {
   id: string;
@@ -207,6 +225,7 @@ All features have dedicated demo pages accessible via these routes:
 ## Styling
 
 All components use:
+
 - Tailwind CSS for styling
 - Dark mode support via `dark:` variants
 - Lucide React icons
@@ -218,18 +237,21 @@ All components use:
 ## Future Enhancements
 
 ### Batch Verification
+
 - Integration with actual verification API
 - Download verification results as PDF
 - Email notification when batch completes
 - Pause/resume batch processing
 
 ### Timeline View
+
 - Advanced filtering (date range, multiple event types)
 - Timeline export with custom branding
 - Integration with blockchain explorer links
 - Real-time updates via WebSocket
 
 ### Notification Center
+
 - WebSocket integration for real-time notifications
 - Notification sound effects
 - Desktop notifications via Web Notifications API
@@ -237,6 +259,7 @@ All components use:
 - Priority levels
 
 ### Comparison Tool
+
 - Visual content comparison (image diff)
 - Historical version comparison
 - Blockchain data verification
@@ -259,6 +282,7 @@ All components include mock data and demo functionality. To integrate with real 
 ## Dependencies
 
 All features use existing dependencies from `package.json`:
+
 - `react` and `react-dom`
 - `lucide-react` for icons
 - `tailwindcss` for styling

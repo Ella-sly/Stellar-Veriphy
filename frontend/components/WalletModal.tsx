@@ -25,8 +25,7 @@ export function WalletModal() {
           <div className="space-y-3">
             <div className="p-3 bg-slate-800 rounded">
               <p className="text-xs text-slate-400 mb-1">
-                Connected via{" "}
-                <span className="capitalize text-slate-300">{walletType}</span>
+                Connected via <span className="capitalize text-slate-300">{walletType}</span>
               </p>
               <p className="text-white font-mono text-sm">{truncate(publicKey)}</p>
             </div>
@@ -55,10 +54,7 @@ export function WalletModal() {
         )}
       </div>
 
-      <WalletSelector
-        open={selectorOpen}
-        onClose={() => setSelectorOpen(false)}
-      />
+      <WalletSelector open={selectorOpen} onClose={() => setSelectorOpen(false)} />
     </>
   );
 }

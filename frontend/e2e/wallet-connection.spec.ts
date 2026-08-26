@@ -42,7 +42,7 @@ async function clickConnectWallet(page: Page): Promise<void> {
     '[data-testid="connect-wallet-btn"]',
     'button:has-text("Connect Wallet")',
     'button:has-text("Connect")',
-    'header button',
+    "header button",
   ];
 
   for (const sel of candidates) {
@@ -72,9 +72,11 @@ async function connectMockWallet(page: Page): Promise<void> {
   await clickConnectWallet(page);
   const modal = await waitForWalletModal(page);
 
-  const option = modal.locator(
-    '[data-testid="wallet-option"], button:has-text("Freighter"), button:has-text("Mock Wallet")'
-  ).first();
+  const option = modal
+    .locator(
+      '[data-testid="wallet-option"], button:has-text("Freighter"), button:has-text("Mock Wallet")'
+    )
+    .first();
   await option.click();
 }
 
@@ -83,9 +85,11 @@ async function connectMockWallet(page: Page): Promise<void> {
  * Stellar public keys start with G and are 56 characters long.
  */
 async function expectWalletConnected(page: Page): Promise<string> {
-  const addressEl = page.locator(
-    '[data-testid="wallet-address"], [aria-label*="wallet address" i], header >> text=/G[A-Z2-7]{4,}/'
-  ).first();
+  const addressEl = page
+    .locator(
+      '[data-testid="wallet-address"], [aria-label*="wallet address" i], header >> text=/G[A-Z2-7]{4,}/'
+    )
+    .first();
   await expect(addressEl).toBeVisible({ timeout: 15_000 });
   return (await addressEl.textContent()) ?? "";
 }
@@ -103,15 +107,19 @@ test.describe("Wallet connection", () => {
   // ── 1. Connect Wallet CTA ────────────────────────────────────────────────
 
   test("landing page has a visible Connect Wallet button", async ({ page }) => {
-    const btn = page.locator(
-      '[data-testid="connect-wallet-btn"], button:has-text("Connect Wallet"), button:has-text("Connect")'
-    ).first();
+    const btn = page
+      .locator(
+        '[data-testid="connect-wallet-btn"], button:has-text("Connect Wallet"), button:has-text("Connect")'
+      )
+      .first();
     await expect(btn).toBeVisible();
   });
 
   // ── 2. Wallet modal opens and lists providers ────────────────────────────
 
-  test("clicking Connect Wallet opens the wallet selection modal with provider options", async ({ page }) => {
+  test("clicking Connect Wallet opens the wallet selection modal with provider options", async ({
+    page,
+  }) => {
     await clickConnectWallet(page);
     const modal = await waitForWalletModal(page);
 
@@ -163,29 +171,33 @@ test.describe("Wallet connection", () => {
 
   // ── 5. Disconnecting wallet returns to disconnected state ────────────────
 
-  test("disconnecting wallet hides the address and shows Connect button again", async ({ page }) => {
+  test("disconnecting wallet hides the address and shows Connect button again", async ({
+    page,
+  }) => {
     await connectMockWallet(page);
     await expectWalletConnected(page);
 
     // Try direct disconnect button first
     let disconnected = false;
-    const directBtn = page.locator(
-      '[data-testid="disconnect-wallet"], button:has-text("Disconnect"), button:has-text("Sign out")'
-    ).first();
+    const directBtn = page
+      .locator(
+        '[data-testid="disconnect-wallet"], button:has-text("Disconnect"), button:has-text("Sign out")'
+      )
+      .first();
 
     if (await directBtn.isVisible({ timeout: 3_000 }).catch(() => false)) {
       await directBtn.click();
       disconnected = true;
     } else {
       // Some UIs hide it behind the address chip — click the chip first
-      const addressChip = page.locator(
-        '[data-testid="wallet-address"], header >> text=/G[A-Z2-7.…]{4,}/'
-      ).first();
+      const addressChip = page
+        .locator('[data-testid="wallet-address"], header >> text=/G[A-Z2-7.…]{4,}/')
+        .first();
       await addressChip.click();
 
-      const menuBtn = page.locator(
-        'button:has-text("Disconnect"), [data-testid="disconnect-wallet"]'
-      ).first();
+      const menuBtn = page
+        .locator('button:has-text("Disconnect"), [data-testid="disconnect-wallet"]')
+        .first();
       if (await menuBtn.isVisible({ timeout: 4_000 }).catch(() => false)) {
         await menuBtn.click();
         disconnected = true;
@@ -195,9 +207,11 @@ test.describe("Wallet connection", () => {
     if (disconnected) {
       // Connect button must reappear
       await expect(
-        page.locator(
-          '[data-testid="connect-wallet-btn"], button:has-text("Connect Wallet"), button:has-text("Connect")'
-        ).first()
+        page
+          .locator(
+            '[data-testid="connect-wallet-btn"], button:has-text("Connect Wallet"), button:has-text("Connect")'
+          )
+          .first()
       ).toBeVisible({ timeout: 10_000 });
     }
   });
@@ -214,17 +228,19 @@ test.describe("Wallet connection", () => {
     const closedByEscape = await modal.isHidden({ timeout: 3_000 }).catch(() => false);
     if (!closedByEscape) {
       // Fall back to an explicit close button
-      const closeBtn = page.locator(
-        'button[aria-label="Close"], button:has-text("Cancel"), [data-testid="modal-close"]'
-      ).first();
+      const closeBtn = page
+        .locator(
+          'button[aria-label="Close"], button:has-text("Cancel"), [data-testid="modal-close"]'
+        )
+        .first();
       await closeBtn.click();
       await expect(modal).toBeHidden({ timeout: 5_000 });
     }
 
     // No address should appear — still disconnected
-    const addressEl = page.locator(
-      '[data-testid="wallet-address"], header >> text=/G[A-Z2-7]{55}/'
-    ).first();
+    const addressEl = page
+      .locator('[data-testid="wallet-address"], header >> text=/G[A-Z2-7]{55}/')
+      .first();
     await expect(addressEl).toBeHidden({ timeout: 3_000 });
   });
 
@@ -251,19 +267,19 @@ test.describe("Wallet connection", () => {
     });
 
     // Some form of error / guidance text must be present
-    const errorText = page.locator(
-      "text=/not installed|install Freighter|extension required/i, [role='alert'], [data-testid='wallet-error']"
-    ).first();
+    const errorText = page
+      .locator(
+        "text=/not installed|install Freighter|extension required/i, [role='alert'], [data-testid='wallet-error']"
+      )
+      .first();
 
     const visible = await errorText.isVisible({ timeout: 8_000 }).catch(() => false);
     if (!visible) {
       // Acceptable alternative: the Connect button itself is disabled / hidden
-      const connectBtn = page.locator(
-        '[data-testid="connect-wallet-btn"], button:has-text("Connect Wallet")'
-      ).first();
-      const btnDisabled = await connectBtn
-        .isDisabled({ timeout: 3_000 })
-        .catch(() => false);
+      const connectBtn = page
+        .locator('[data-testid="connect-wallet-btn"], button:has-text("Connect Wallet")')
+        .first();
+      const btnDisabled = await connectBtn.isDisabled({ timeout: 3_000 }).catch(() => false);
       // At minimum the page should not crash
       await expect(page.locator("text=/something went wrong/i").first()).toBeHidden();
     }
@@ -281,9 +297,7 @@ test.describe("Wallet connection", () => {
     await page.waitForLoadState("networkidle");
 
     await clickConnectWallet(page).catch(() => {});
-    const modal = page
-      .locator('[role="dialog"], [data-testid="wallet-modal"]')
-      .first();
+    const modal = page.locator('[role="dialog"], [data-testid="wallet-modal"]').first();
     const modalVisible = await modal.isVisible({ timeout: 5_000 }).catch(() => false);
 
     if (modalVisible) {
@@ -295,9 +309,11 @@ test.describe("Wallet connection", () => {
         .click();
     }
 
-    const networkError = page.locator(
-      "text=/network mismatch|wrong network|switch.*network/i, [role='alert'], [data-testid='wallet-error']"
-    ).first();
+    const networkError = page
+      .locator(
+        "text=/network mismatch|wrong network|switch.*network/i, [role='alert'], [data-testid='wallet-error']"
+      )
+      .first();
 
     const visible = await networkError.isVisible({ timeout: 8_000 }).catch(() => false);
     if (!visible) {
@@ -317,19 +333,21 @@ test.describe("Wallet connection", () => {
     await page.waitForLoadState("networkidle");
 
     await clickConnectWallet(page).catch(() => {});
-    const modal = page
-      .locator('[role="dialog"], [data-testid="wallet-modal"]')
-      .first();
+    const modal = page.locator('[role="dialog"], [data-testid="wallet-modal"]').first();
     if (await modal.isVisible({ timeout: 5_000 }).catch(() => false)) {
       await modal
-        .locator('[data-testid="wallet-option"], button:has-text("Freighter"), button:has-text("Mock")')
+        .locator(
+          '[data-testid="wallet-option"], button:has-text("Freighter"), button:has-text("Mock")'
+        )
         .first()
         .click();
     }
 
-    const rejectedText = page.locator(
-      "text=/rejected|declined|cancelled|try again/i, [role='alert'], [data-testid='wallet-error']"
-    ).first();
+    const rejectedText = page
+      .locator(
+        "text=/rejected|declined|cancelled|try again/i, [role='alert'], [data-testid='wallet-error']"
+      )
+      .first();
 
     const visible = await rejectedText.isVisible({ timeout: 8_000 }).catch(() => false);
     if (!visible) {

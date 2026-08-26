@@ -6,11 +6,11 @@
 
 Three Next.js route handlers, all under `frontend/app/api/`:
 
-| Route | Method | Behavior |
-|---|---|---|
-| `/api/health` | `GET` | Static `{ status: "ok", service: "stellarveriphy" }` |
+| Route               | Method | Behavior                                                                                                                                                                                                                             |
+| ------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `/api/health`       | `GET`  | Static `{ status: "ok", service: "stellarveriphy" }`                                                                                                                                                                                 |
 | `/api/verification` | `POST` | Rate-limited (`lib/security/rateLimiter`), validates body via `lib/security/inputValidation`, audit-logs via `lib/security/auditLogger`; returns `202` with `{ success, data }` or `400`/`429` with `{ success: false, error, ... }` |
-| `/api/csp-report` | `POST` | CSP violation report sink; always `200`/`400` |
+| `/api/csp-report`   | `POST` | CSP violation report sink; always `200`/`400`                                                                                                                                                                                        |
 
 There's no OpenAPI spec, no request/response schema validation, no
 versioning, and no mock server today — this issue is greenfield, not a
@@ -90,13 +90,13 @@ fixture fails — same guarantee Pact gives, without standing up a broker.
 
 ## Acceptance criteria mapping
 
-| Criterion | Delivered by |
-|---|---|
-| OpenAPI/Swagger spec generation | zod → `zod-to-openapi` → `docs/api/openapi.yaml`, CI-checked for staleness |
-| Contract validation tests | `app/api/**/__tests__/*.contract.test.ts` against the same zod schemas |
-| Version compatibility checks | `X-API-Version` header + per-version response-shape snapshot tests |
-| Mock server for development | `msw` node server in `frontend/mocks/`, schema-driven |
-| Consumer-driven contracts | Shared fixtures in `packages/shared/contracts/fixtures/`, consumed by both service-layer and route-handler tests |
+| Criterion                       | Delivered by                                                                                                     |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| OpenAPI/Swagger spec generation | zod → `zod-to-openapi` → `docs/api/openapi.yaml`, CI-checked for staleness                                       |
+| Contract validation tests       | `app/api/**/__tests__/*.contract.test.ts` against the same zod schemas                                           |
+| Version compatibility checks    | `X-API-Version` header + per-version response-shape snapshot tests                                               |
+| Mock server for development     | `msw` node server in `frontend/mocks/`, schema-driven                                                            |
+| Consumer-driven contracts       | Shared fixtures in `packages/shared/contracts/fixtures/`, consumed by both service-layer and route-handler tests |
 
 ## Rollout
 

@@ -16,6 +16,7 @@ The following environment variables must be set before deployment:
 - `STELLAR_ACCOUNT`: The address of the account that will deploy and initialize the contract
 
 Optionally, you can set:
+
 - `STELLAR_SECRET_KEY`: The secret key of the deployment account (if not using `stellar config`)
 
 ## Deployment Steps
@@ -56,6 +57,7 @@ stellar contract invoke \
 ```
 
 Replace:
+
 - `<CONTRACT_ADDRESS_FROM_STEP_2>` with the address from step 2
 - `<ORACLE_CONTRACT_ADDRESS>` with the address of the deployed Oracle contract
 

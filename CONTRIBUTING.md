@@ -103,20 +103,22 @@ Open a new issue using the **Feature Request** template including:
 
 Ensure you have the following tools installed:
 
-| Tool | Required Version | Purpose |
-|------|------------------|---------|
-| **Node.js** | `>= 20.0.0` | Frontend and shared tooling |
-| **pnpm** | `>= 10.18.2` | Workspace package manager |
-| **Rust** | `stable` (`wasm32-unknown-unknown` target) | Soroban smart contracts |
-| **Stellar CLI** | `latest` | Contract compilation and deployment |
-| **Freighter Wallet** | `latest` | Browser extension for Stellar wallet interactions |
+| Tool                 | Required Version                           | Purpose                                           |
+| -------------------- | ------------------------------------------ | ------------------------------------------------- |
+| **Node.js**          | `>= 20.0.0`                                | Frontend and shared tooling                       |
+| **pnpm**             | `>= 10.18.2`                               | Workspace package manager                         |
+| **Rust**             | `stable` (`wasm32-unknown-unknown` target) | Soroban smart contracts                           |
+| **Stellar CLI**      | `latest`                                   | Contract compilation and deployment               |
+| **Freighter Wallet** | `latest`                                   | Browser extension for Stellar wallet interactions |
 
 Install Rust WASM target:
+
 ```bash
 rustup target add wasm32-unknown-unknown
 ```
 
 Install Stellar CLI:
+
 ```bash
 cargo install --locked stellar-cli --features opt
 ```
@@ -124,17 +126,20 @@ cargo install --locked stellar-cli --features opt
 ### Environment Setup
 
 1. **Clone the repository**:
+
    ```bash
    git clone https://github.com/Stellar-Veriphy/Stellar-Veriphy.git
    cd Stellar-Veriphy
    ```
 
 2. **Install dependencies**:
+
    ```bash
    pnpm install
    ```
 
 3. **Configure environment variables**:
+
    ```bash
    cd frontend
    cp .env.local.example .env.local
@@ -210,19 +215,32 @@ For detailed conventions, please consult [STYLE-GUIDE.md](./STYLE-GUIDE.md).
 
 We enforce automatic formatting and linting via pre-commit hooks (`husky` + `lint-staged`):
 
-- **Frontend**: ESLint with TypeScript rules.
+- **Frontend**: [Prettier](https://prettier.io/) for formatting, then ESLint with TypeScript rules.
 - **Contracts**: `rustfmt --edition 2021` and `cargo clippy`.
 
 **Import sorting**: The frontend ESLint config includes `eslint-plugin-simple-import-sort`, which automatically groups and alphabetizes imports and exports (`simple-import-sort/imports`, `simple-import-sort/exports`). This runs as part of `pnpm --filter frontend exec eslint --fix` and the pre-commit hook, so imports are sorted automatically whenever you commit or run lint with `--fix`.
+Prettier's config lives at the repo root (`.prettierrc.json`, `.prettierignore`) and covers the
+whole workspace — TypeScript/JavaScript, JSON, CSS, and Markdown. Rust contracts are excluded and
+formatted with `rustfmt` instead.
 
 Run manual checks before submitting:
+
 ```bash
-# Check frontend
+# Format the whole repo
+pnpm format
+
+# Check formatting without writing changes (used in CI)
+pnpm format:check
+
+# Check frontend lint
 pnpm check:frontend
 
 # Check Rust formatting
 cd contracts/oracle && cargo fmt -- --check
 ```
+
+Staged files are auto-formatted on commit, so running `pnpm format` manually is mostly useful for
+formatting a whole directory at once or verifying CI will pass.
 
 ---
 
@@ -242,23 +260,24 @@ We follow the [Conventional Commits](https://www.conventionalcommits.org/) speci
 
 ### Commit Types
 
-| Type | Description |
-|------|-------------|
-| `feat` | A new feature or capability |
-| `fix` | A bug fix |
-| `docs` | Documentation changes only |
-| `style` | Code style/formatting changes (no logic change) |
+| Type       | Description                                               |
+| ---------- | --------------------------------------------------------- |
+| `feat`     | A new feature or capability                               |
+| `fix`      | A bug fix                                                 |
+| `docs`     | Documentation changes only                                |
+| `style`    | Code style/formatting changes (no logic change)           |
 | `refactor` | Code refactoring without fixing a bug or adding a feature |
-| `perf` | Performance improvement |
-| `test` | Adding or updating tests |
-| `build` | Changes to build system or dependencies |
-| `ci` | Changes to CI/CD workflows and configuration |
-| `chore` | Routine maintenance tasks |
-| `revert` | Reverting a previous commit |
+| `perf`     | Performance improvement                                   |
+| `test`     | Adding or updating tests                                  |
+| `build`    | Changes to build system or dependencies                   |
+| `ci`       | Changes to CI/CD workflows and configuration              |
+| `chore`    | Routine maintenance tasks                                 |
+| `revert`   | Reverting a previous commit                               |
 
 ### Scopes (Optional)
 
 Common scopes include:
+
 - `frontend`
 - `oracle`
 - `provenance`
@@ -283,13 +302,13 @@ refactor(frontend): enable typescript strict mode and eliminate any types
 
 Prefix branch names with the type of change and reference the relevant issue number:
 
-| Branch Type | Pattern | Example |
-|-------------|---------|---------|
-| Feature | `feature/<issue-number>-<description>` | `feature/364-loading-spinner` |
-| Bugfix | `fix/<issue-number>-<description>` | `fix/367-strict-ts-warnings` |
-| Documentation | `docs/<issue-number>-<description>` | `docs/366-contributing-guidelines` |
-| Refactor | `refactor/<issue-number>-<description>` | `refactor/120-wallet-context` |
-| Hotfix | `hotfix/<issue-number>-<description>` | `hotfix/911-security-patch` |
+| Branch Type   | Pattern                                 | Example                            |
+| ------------- | --------------------------------------- | ---------------------------------- |
+| Feature       | `feature/<issue-number>-<description>`  | `feature/364-loading-spinner`      |
+| Bugfix        | `fix/<issue-number>-<description>`      | `fix/367-strict-ts-warnings`       |
+| Documentation | `docs/<issue-number>-<description>`     | `docs/366-contributing-guidelines` |
+| Refactor      | `refactor/<issue-number>-<description>` | `refactor/120-wallet-context`      |
+| Hotfix        | `hotfix/<issue-number>-<description>`   | `hotfix/911-security-patch`        |
 
 ---
 
@@ -298,6 +317,7 @@ Prefix branch names with the type of change and reference the relevant issue num
 ### 1. Create a Topic Branch
 
 Always create a new branch from an up-to-date `main`:
+
 ```bash
 git checkout main
 git pull origin main
@@ -312,6 +332,7 @@ git checkout -b feature/364-loading-spinner
 ### 3. Pre-PR Checklist
 
 Before opening your pull request, verify:
+
 - [ ] Code builds without errors (`pnpm build:frontend`, `pnpm build:contracts`)
 - [ ] Type checks pass without warnings
 - [ ] Linting checks pass
@@ -346,40 +367,40 @@ We use GitHub labels to categorize issues and pull requests:
 
 ### Type Labels
 
-| Label | Description |
-|-------|-------------|
-| `bug` | Something isn't working as expected |
-| `enhancement` | New feature or improvement proposal |
-| `documentation` | Improvements or additions to documentation |
-| `refactor` | Code restructuring without behavioral changes |
-| `security` | Vulnerabilities or security improvements |
-| `question` | Inquiries regarding setup, architecture, or usage |
+| Label           | Description                                       |
+| --------------- | ------------------------------------------------- |
+| `bug`           | Something isn't working as expected               |
+| `enhancement`   | New feature or improvement proposal               |
+| `documentation` | Improvements or additions to documentation        |
+| `refactor`      | Code restructuring without behavioral changes     |
+| `security`      | Vulnerabilities or security improvements          |
+| `question`      | Inquiries regarding setup, architecture, or usage |
 
 ### Area Labels
 
-| Label | Description |
-|-------|-------------|
-| `frontend` | Web UI, Next.js components, styling |
-| `contracts` | Soroban smart contracts (`oracle`, `provenance`, `registry`) |
-| `shared` | Shared TypeScript library (`@stellarveriphy/shared`) |
-| `UI` | User interface and visual design |
-| `typescript` | TypeScript types, strictness, compiler config |
-| `ci/cd` | GitHub Actions, deployment workflows, scripts |
+| Label        | Description                                                  |
+| ------------ | ------------------------------------------------------------ |
+| `frontend`   | Web UI, Next.js components, styling                          |
+| `contracts`  | Soroban smart contracts (`oracle`, `provenance`, `registry`) |
+| `shared`     | Shared TypeScript library (`@stellarveriphy/shared`)         |
+| `UI`         | User interface and visual design                             |
+| `typescript` | TypeScript types, strictness, compiler config                |
+| `ci/cd`      | GitHub Actions, deployment workflows, scripts                |
 
 ### Contributor Experience
 
-| Label | Description |
-|-------|-------------|
+| Label              | Description                                              |
+| ------------------ | -------------------------------------------------------- |
 | `good-first-issue` | Great for newcomers; well-scoped with clear requirements |
-| `help-wanted` | Tasks where extra community assistance is welcomed |
+| `help-wanted`      | Tasks where extra community assistance is welcomed       |
 
 ### Priority Labels
 
-| Label | Description |
-|-------|-------------|
-| `priority: high` | Critical bugs, security issues, or release blockers |
-| `priority: medium` | Normal priority features and bug fixes |
-| `priority: low` | Minor enhancements, cosmetic fixes, non-urgent tasks |
+| Label              | Description                                          |
+| ------------------ | ---------------------------------------------------- |
+| `priority: high`   | Critical bugs, security issues, or release blockers  |
+| `priority: medium` | Normal priority features and bug fixes               |
+| `priority: low`    | Minor enhancements, cosmetic fixes, non-urgent tasks |
 
 ---
 

@@ -67,20 +67,21 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     localStorage.setItem("stellar-veriphy-notifications", JSON.stringify(notifications));
   }, [notifications]);
 
-  const addNotification = useCallback((notification: Omit<Notification, "id" | "timestamp" | "read">) => {
-    const newNotification: Notification = {
-      ...notification,
-      id: `notif-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      timestamp: Date.now(),
-      read: false,
-    };
-    setNotifications((prev) => [newNotification, ...prev]);
-  }, []);
+  const addNotification = useCallback(
+    (notification: Omit<Notification, "id" | "timestamp" | "read">) => {
+      const newNotification: Notification = {
+        ...notification,
+        id: `notif-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        timestamp: Date.now(),
+        read: false,
+      };
+      setNotifications((prev) => [newNotification, ...prev]);
+    },
+    []
+  );
 
   const markAsRead = useCallback((id: string) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
-    );
+    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
   }, []);
 
   const markAllAsRead = useCallback(() => {
@@ -107,11 +108,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     clearAll,
   };
 
-  return (
-    <NotificationContext.Provider value={value}>
-      {children}
-    </NotificationContext.Provider>
-  );
+  return <NotificationContext.Provider value={value}>{children}</NotificationContext.Provider>;
 }
 
 // ---------------------------------------------------------------------------
@@ -119,7 +116,8 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 // ---------------------------------------------------------------------------
 
 export function NotificationBell() {
-  const { notifications, unreadCount, markAsRead, markAllAsRead, removeNotification, clearAll } = useNotifications();
+  const { notifications, unreadCount, markAsRead, markAllAsRead, removeNotification, clearAll } =
+    useNotifications();
   const [isOpen, setIsOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<NotificationType | "all">("all");
   const [showSettings, setShowSettings] = useState(false);
@@ -148,9 +146,10 @@ export function NotificationBell() {
   };
 
   // Filter notifications
-  const filteredNotifications = selectedCategory === "all"
-    ? notifications
-    : notifications.filter((n) => n.type === selectedCategory);
+  const filteredNotifications =
+    selectedCategory === "all"
+      ? notifications
+      : notifications.filter((n) => n.type === selectedCategory);
 
   // Notification type styles
   const typeStyles: Record<NotificationType, { icon: string; color: string }> = {
@@ -267,12 +266,16 @@ export function NotificationBell() {
                           }}
                         >
                           <div className="flex items-start gap-3">
-                            <div className={`flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700 ${style.color}`}>
+                            <div
+                              className={`flex-shrink-0 w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700 ${style.color}`}
+                            >
                               <span>{style.icon}</span>
                             </div>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-start justify-between gap-2">
-                                <p className={`text-sm font-medium ${!notification.read ? "text-gray-900 dark:text-white" : "text-gray-700 dark:text-gray-300"}`}>
+                                <p
+                                  className={`text-sm font-medium ${!notification.read ? "text-gray-900 dark:text-white" : "text-gray-700 dark:text-gray-300"}`}
+                                >
                                   {notification.title}
                                 </p>
                                 <button
@@ -347,7 +350,9 @@ export function NotificationBell() {
                     </div>
                   </div>
                   <button
-                    onClick={() => updateSettings("emailNotifications", !settings.emailNotifications)}
+                    onClick={() =>
+                      updateSettings("emailNotifications", !settings.emailNotifications)
+                    }
                     className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                       settings.emailNotifications ? "bg-blue-600" : "bg-gray-300 dark:bg-gray-600"
                     }`}

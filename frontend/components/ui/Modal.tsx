@@ -62,7 +62,7 @@ export function Modal({
 
     const handleTabKey = (e: KeyboardEvent) => {
       if (e.key !== "Tab") return;
-      
+
       if (!focusableElements || focusableElements.length === 0) {
         e.preventDefault();
         return;
@@ -82,7 +82,7 @@ export function Modal({
     };
 
     document.addEventListener("keydown", handleTabKey);
-    
+
     // Focus first element or close button
     setTimeout(() => {
       if (firstElement) {
@@ -124,10 +124,7 @@ export function Modal({
       >
         {title && (
           <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-800">
-            <h2 
-              className="text-lg font-semibold text-gray-900 dark:text-white"
-              id="modal-title"
-            >
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white" id="modal-title">
               {title}
             </h2>
             <button
@@ -153,10 +150,7 @@ export function Modal({
             </button>
           </div>
         )}
-        <div 
-          className="p-6"
-          aria-labelledby={title ? "modal-title" : undefined}
-        >
+        <div className="p-6" aria-labelledby={title ? "modal-title" : undefined}>
           {children}
         </div>
       </div>

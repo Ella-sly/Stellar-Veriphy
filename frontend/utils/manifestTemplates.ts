@@ -161,4 +161,3 @@ export function loadTemplate(id: TemplateId): Partial<ContentManifest> {
 export function getTemplate(id: TemplateId): ManifestTemplate | undefined {
   return TEMPLATES_BY_ID[id];
 }
-

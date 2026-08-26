@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 
 import { Header } from "@/components/Header";
 import { type AuditLogEntry,auditLogger } from "@/lib/security/auditLogger";
+import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
+import { auditLogger, type AuditLogEntry } from "@/lib/security/auditLogger";
 
 export default function AuditLogsPage() {
   const [entries, setEntries] = useState<AuditLogEntry[]>([]);
@@ -59,6 +61,9 @@ export default function AuditLogsPage() {
   return (
     <main className="min-h-screen bg-slate-950 text-slate-50">
       <Header />
+      <div className="mx-auto max-w-6xl px-6">
+        <Breadcrumbs variant="dark" />
+      </div>
       <div className="mx-auto flex max-w-6xl flex-col gap-8 px-6 py-12">
         <div className="space-y-3">
           <Link href="/tools" className="text-sm text-blue-400 hover:text-blue-300">
@@ -66,7 +71,8 @@ export default function AuditLogsPage() {
           </Link>
           <h1 className="text-4xl font-semibold">Audit Logging</h1>
           <p className="max-w-3xl text-lg text-slate-300">
-            Review tamper-evident security events, retention rules, and compliance-oriented summaries in one place.
+            Review tamper-evident security events, retention rules, and compliance-oriented
+            summaries in one place.
           </p>
         </div>
 
@@ -94,11 +100,15 @@ export default function AuditLogsPage() {
           </div>
           <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-5">
             <p className="text-sm text-slate-400">Retention</p>
-            <p className="mt-2 text-3xl font-semibold text-white">{auditLogger.getRetentionDays()} days</p>
+            <p className="mt-2 text-3xl font-semibold text-white">
+              {auditLogger.getRetentionDays()} days
+            </p>
           </div>
           <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-5">
             <p className="text-sm text-slate-400">Tamper evidence</p>
-            <p className={`mt-2 text-xl font-semibold ${summary.tamperProof ? "text-emerald-400" : "text-amber-400"}`}>
+            <p
+              className={`mt-2 text-xl font-semibold ${summary.tamperProof ? "text-emerald-400" : "text-amber-400"}`}
+            >
               {summary.tamperProof ? "Chain intact" : "Chain mismatch"}
             </p>
           </div>

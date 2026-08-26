@@ -24,11 +24,7 @@ export function ManifestModalTrigger({
       >
         {label}
       </button>
-      <ManifestModal
-        manifest={manifest}
-        isOpen={isOpen}
-        onClose={() => setIsOpen(false)}
-      />
+      <ManifestModal manifest={manifest} isOpen={isOpen} onClose={() => setIsOpen(false)} />
     </>
   );
 }

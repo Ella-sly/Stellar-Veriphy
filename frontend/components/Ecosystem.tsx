@@ -1,32 +1,32 @@
-'use client';
+"use client";
 
 // import { motion } from 'framer-motion';
 
 const integrations = [
   {
-    name: 'Stellar',
-    description: 'Blockchain network for decentralized transactions',
-    icon: '⭐',
+    name: "Stellar",
+    description: "Blockchain network for decentralized transactions",
+    icon: "⭐",
   },
   {
-    name: 'Soroban',
-    description: 'Smart contracts platform on Stellar',
-    icon: '🔧',
+    name: "Soroban",
+    description: "Smart contracts platform on Stellar",
+    icon: "🔧",
   },
   {
-    name: 'IPFS',
-    description: 'Distributed file storage and retrieval',
-    icon: '📦',
+    name: "IPFS",
+    description: "Distributed file storage and retrieval",
+    icon: "📦",
   },
   {
-    name: 'Freighter',
-    description: 'Stellar wallet for secure key management',
-    icon: '🔐',
+    name: "Freighter",
+    description: "Stellar wallet for secure key management",
+    icon: "🔐",
   },
   {
-    name: 'AWS Nitro',
-    description: 'Trusted Execution Environment for attestation',
-    icon: '☁️',
+    name: "AWS Nitro",
+    description: "Trusted Execution Environment for attestation",
+    icon: "☁️",
   },
 ];
 
@@ -64,9 +64,7 @@ export default function Ecosystem() {
               <h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-white">
                 {integration.name}
               </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-300">
-                {integration.description}
-              </p>
+              <p className="text-sm text-gray-600 dark:text-gray-300">{integration.description}</p>
             </div>
           ))}
         </div>

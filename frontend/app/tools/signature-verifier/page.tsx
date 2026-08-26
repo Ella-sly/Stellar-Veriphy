@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 
 import { Header } from "@/components/Header";
+import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 
 const SUPPORTED_ALGORITHMS = [
   { value: "RSA-SHA256", label: "RSA with SHA-256" },
@@ -50,9 +51,7 @@ function parsePublicKeyInput(value: string): Uint8Array<ArrayBuffer> {
     throw new Error("Public key input is required.");
   }
 
-  const pemMatch = normalized.match(
-    /-----BEGIN ([A-Z ]+KEY)-----([\s\S]+?)-----END \1-----/
-  );
+  const pemMatch = normalized.match(/-----BEGIN ([A-Z ]+KEY)-----([\s\S]+?)-----END \1-----/);
 
   if (pemMatch) {
     return base64ToBytes(pemMatch[2]!.replace(/\s+/g, ""));
@@ -95,13 +94,9 @@ export default function SignatureVerifierPage() {
           ? { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" }
           : { name: "ECDSA", namedCurve: "P-256" };
 
-      const key = await crypto.subtle.importKey(
-        "spki",
-        publicKeyBytes,
-        keyAlgorithm,
-        false,
-        ["verify"]
-      );
+      const key = await crypto.subtle.importKey("spki", publicKeyBytes, keyAlgorithm, false, [
+        "verify",
+      ]);
 
       const verified = await crypto.subtle.verify(
         algorithm === "RSA-SHA256"
@@ -121,15 +116,16 @@ export default function SignatureVerifierPage() {
       setError(null);
     } catch (caughtError) {
       setResult(null);
-      setError(
-        caughtError instanceof Error ? caughtError.message : "Verification failed."
-      );
+      setError(caughtError instanceof Error ? caughtError.message : "Verification failed.");
     }
   };
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-50">
       <Header />
+      <div className="mx-auto max-w-6xl px-6">
+        <Breadcrumbs variant="dark" />
+      </div>
       <div className="mx-auto flex max-w-6xl flex-col gap-8 px-6 py-12">
         <div className="space-y-3">
           <Link href="/tools" className="text-sm text-blue-400 hover:text-blue-300">
@@ -137,7 +133,8 @@ export default function SignatureVerifierPage() {
           </Link>
           <h1 className="text-4xl font-semibold">Signature Verification</h1>
           <p className="max-w-3xl text-lg text-slate-300">
-            Independently validate signatures for attestations and signed payloads before you trust them.
+            Independently validate signatures for attestations and signed payloads before you trust
+            them.
           </p>
         </div>
 
@@ -168,7 +165,8 @@ export default function SignatureVerifierPage() {
                   className="mt-2 min-h-24 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 font-mono text-sm text-slate-100"
                 />
                 <span className="mt-2 block text-xs text-slate-400">
-                  Tooltips: Use a PEM-encoded public key when possible. The verifier accepts DER and hex encodings too.
+                  Tooltips: Use a PEM-encoded public key when possible. The verifier accepts DER and
+                  hex encodings too.
                 </span>
               </label>
 
@@ -216,8 +214,12 @@ export default function SignatureVerifierPage() {
             <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-6">
               <h2 className="text-xl font-semibold text-white">Verification outcome</h2>
               {result ? (
-                <div className={`mt-4 rounded-xl border px-4 py-3 ${result.verified ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-300" : "border-amber-500/40 bg-amber-500/10 text-amber-300"}`}>
-                  <p className="font-semibold">{result.verified ? "Verified" : "Could not verify"}</p>
+                <div
+                  className={`mt-4 rounded-xl border px-4 py-3 ${result.verified ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-300" : "border-amber-500/40 bg-amber-500/10 text-amber-300"}`}
+                >
+                  <p className="font-semibold">
+                    {result.verified ? "Verified" : "Could not verify"}
+                  </p>
                   <p className="mt-2 text-sm">{result.message}</p>
                 </div>
               ) : (
@@ -240,7 +242,8 @@ export default function SignatureVerifierPage() {
             <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-6">
               <h3 className="text-lg font-semibold text-white">Expected format</h3>
               <p className="mt-3 text-sm leading-6 text-slate-400">
-                Use a PEM public key for the best experience, then paste a base64 or hex signature. The tool records the byte-length for quick sanity checking.
+                Use a PEM public key for the best experience, then paste a base64 or hex signature.
+                The tool records the byte-length for quick sanity checking.
               </p>
             </div>
           </aside>

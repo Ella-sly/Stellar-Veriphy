@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Build output
+.next/
+dist/
+target/
+**/build/
+
+# Generated / lock files
+*.tsbuildinfo
+pnpm-lock.yaml
+package-lock.json
+
+# Rust contracts are formatted with rustfmt, not Prettier
+contracts/
+
+# Coverage and test artifacts
+coverage/
+test-results/
+playwright-report/
+reports/
+.stryker-tmp/
+
+# Misc generated assets
+public/
+frontend/public/
+**/*.min.js

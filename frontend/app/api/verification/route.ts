@@ -6,11 +6,11 @@ import {
   buildRateLimitHeaders,
   evaluateRateLimit,
 } from "@/lib/security/rateLimiter";
+import { buildRateLimitHeaders, evaluateRateLimit } from "@/lib/security/rateLimiter";
+import { validateVerificationRequest } from "@/lib/security/inputValidation";
+import { auditLogger } from "@/lib/security/auditLogger";
 
-function resolveAddressForRateLimit(
-  bodyAddress: string | undefined,
-  request: NextRequest
-): string {
+function resolveAddressForRateLimit(bodyAddress: string | undefined, request: NextRequest): string {
   if (bodyAddress && bodyAddress.trim()) return bodyAddress.trim();
 
   const headerAddress = request.headers.get("x-wallet-address");

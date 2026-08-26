@@ -10,15 +10,15 @@ Currently, wizard forms provide no real-time feedback during user input. Errors 
 
 ## Acceptance Criteria
 
-| # | Criterion | Description |
-|---|-----------|-------------|
-| 1 | Real-time field validation | Validate field values as the user types, with a short debounce (300–500ms) to avoid excessive feedback |
-| 2 | Inline error messages | Display error text directly beneath the offending field, in red, with a descriptive message |
-| 3 | Step completion indicators | Each step in the wizard header/sidebar shows a visual state: incomplete, in-progress, complete, or error |
-| 4 | Prevent navigation with errors | The "Next" button is disabled or blocked when the current step contains validation errors |
-| 5 | Error summary | On attempted submission, display a summary panel listing all unresolved errors across all steps |
-| 6 | Field highlighting | Fields with errors receive a red border/outline; fields that pass validation receive a green outline |
-| 7 | Validation on blur and submit | Validate a field when the user leaves it (blur) and re-validate all fields on submit |
+| #   | Criterion                      | Description                                                                                              |
+| --- | ------------------------------ | -------------------------------------------------------------------------------------------------------- |
+| 1   | Real-time field validation     | Validate field values as the user types, with a short debounce (300–500ms) to avoid excessive feedback   |
+| 2   | Inline error messages          | Display error text directly beneath the offending field, in red, with a descriptive message              |
+| 3   | Step completion indicators     | Each step in the wizard header/sidebar shows a visual state: incomplete, in-progress, complete, or error |
+| 4   | Prevent navigation with errors | The "Next" button is disabled or blocked when the current step contains validation errors                |
+| 5   | Error summary                  | On attempted submission, display a summary panel listing all unresolved errors across all steps          |
+| 6   | Field highlighting             | Fields with errors receive a red border/outline; fields that pass validation receive a green outline     |
+| 7   | Validation on blur and submit  | Validate a field when the user leaves it (blur) and re-validate all fields on submit                     |
 
 ## Validation Strategy
 

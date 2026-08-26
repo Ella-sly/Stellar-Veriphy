@@ -7,6 +7,7 @@ This document explains the architecture, storage layout, cross-contract call pat
 Contracts use the `DataKey` enum to define storage keys. There are two main patterns:
 
 1. **Simple variants**: For singleton values or simple mappings.
+
    ```rust
    #[contracttype]
    pub enum DataKey {
@@ -21,12 +22,14 @@ Contracts use the `DataKey` enum to define storage keys. There are two main patt
    - Using composite keys: In the provenance contract, tuples like `(symbol_short!("MANI"), manifest_hash)` are used for reverse lookups.
 
 **Temporary vs Persistent Storage**:
+
 - **Temporary storage**: Used for short-lived data with automatic expiration (TTL). Example: Oracle contract stores requests in temporary storage with a TTL of 100 ledgers.
 - **Persistent storage**: Used for long-lived data (e.g., configuration, balances, certificates). No automatic expiration.
 
 ## TTL Strategy
 
 The Oracle contract implements a TTL strategy for verification requests:
+
 - Constant `REQUEST_TTL_LEDGERS` set to 100 ledgers.
 - When storing a request in temporary storage, `extend_ttl` is called with the same value for both threshold and extension.
 - This ensures requests are automatically removed after 100 ledgers if not processed.
@@ -38,7 +41,9 @@ Other contracts (Registry, Provenance) use persistent storage for their core dat
 Contracts interact via synchronous invocations using `Env::invoke_contract` or generated client stubs.
 
 ### Oracle → Registry
+
 The Oracle contract makes two types of calls to the Registry contract:
+
 1. **Check TEE hash approval**:
    ```rust
    let registry: Address = env.storage().instance().get(&DataKey::Registry)?;
@@ -58,7 +63,9 @@ The Oracle contract makes two types of calls to the Registry contract:
    ```
 
 ### Registry → Provenance
+
 The Registry contract uses a generated client stub for type-safe cross-contract calls:
+
 1. **Client definition** (in registry/src/lib.rs):
    ```rust
    mod provenance {
@@ -86,6 +93,7 @@ The Registry contract uses a generated client stub for type-safe cross-contract 
 ## Error Enum Conventions
 
 All contracts define errors using the `#[contracterror]` attribute on an enum:
+
 - Derive `Copy, Clone, Debug, Eq, PartialEq` for pattern matching and logging.
 - Error discriminants are explicitly numbered (starting from 1) to ensure stability.
 - Example from Oracle contract:
@@ -106,6 +114,7 @@ All contracts define errors using the `#[contracterror]` attribute on an enum:
 ## Event Emission Patterns
 
 Contracts emit events using the `#[contractevent]` attribute:
+
 - Define a struct with fields, marking topics with `#[topic]` (up to 4 topics).
 - Emit using `.emit(&env)`.
 - Example from Provenance contract:
@@ -159,4 +168,3 @@ sequenceDiagram
 ```
 
 Note: The actual flow may vary based on the specific function being called (e.g., `verify_attestation` in Oracle involves both TEE and provider checks before proceeding).
-

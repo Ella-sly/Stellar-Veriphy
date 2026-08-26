@@ -191,7 +191,9 @@ describe("validateManifest - XSS prevention", () => {
       metadata: { location: "<script>steal()</script>" },
     });
     expect(result.valid).toBe(false);
-    expect(result.errors).toContain("metadata.location contains disallowed HTML or script content.");
+    expect(result.errors).toContain(
+      "metadata.location contains disallowed HTML or script content."
+    );
   });
 
   it("rejects manifest with HTML in aiModel field", () => {

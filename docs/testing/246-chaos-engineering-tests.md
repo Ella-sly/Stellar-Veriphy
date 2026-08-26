@@ -26,7 +26,7 @@ Add siblings for the failure modes the acceptance criteria call for:
 - `panicking_registry` — a mock whose functions panic, simulating a
   dependent contract erroring mid-call. Assert the caller's storage is
   unchanged afterward (Soroban transactions are atomic, so this should
-  hold — the test exists to *prove* it, and to catch any future code path
+  hold — the test exists to _prove_ it, and to catch any future code path
   that writes to storage before making the cross-contract call).
 - `malformed_registry` — returns a `bool`/type that's technically valid but
   semantically wrong (e.g. `is_provider` always `true` while
@@ -55,22 +55,22 @@ New `frontend/test/chaos/` harness, plain Jest (no new dependency):
 
 ```ts
 // frontend/test/chaos/network.ts
-export function simulateNetworkFailure() // fetch rejects
-export function simulateTimeout(ms: number) // fetch never resolves; pair with AbortController assertions
-export function simulateFlaky(failCount: number) // fails N times, then succeeds — for retry/recovery tests
-export function simulateMalformedResponse(body: unknown) // 200 OK, invalid JSON shape
+export function simulateNetworkFailure(); // fetch rejects
+export function simulateTimeout(ms: number); // fetch never resolves; pair with AbortController assertions
+export function simulateFlaky(failCount: number); // fails N times, then succeeds — for retry/recovery tests
+export function simulateMalformedResponse(body: unknown); // 200 OK, invalid JSON shape
 ```
 
 Test matrix per acceptance criterion:
 
-| Criterion | Test |
-|---|---|
-| Network failure simulation | `fetch` rejects → service surfaces a typed error, doesn't throw unhandled |
-| Transaction timeout handling | `AbortController` fires past a deadline → in-flight request is cancelled, UI leaves "pending" state rather than hanging forever |
-| Partial system failures | Wallet connects but Soroban RPC is unreachable (and vice versa) → each failure is attributable, not a generic "something went wrong" |
-| Recovery testing | `simulateFlaky(2)` → a retry wrapper succeeds on the 3rd attempt; assert exactly the expected number of calls |
-| Graceful degradation | RPC down → previously-cached verification result (if any) is still shown, clearly marked stale, instead of blanking the UI |
-| Error boundary testing | **Doesn't exist yet** — no `ErrorBoundary`/`componentDidCatch` anywhere in `frontend/`. Add a `VerificationErrorBoundary` around the async verification widgets ([features/verification](../../frontend/features/verification)) and test that a thrown render error shows a fallback instead of a blank page |
+| Criterion                    | Test                                                                                                                                                                                                                                                                                                         |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Network failure simulation   | `fetch` rejects → service surfaces a typed error, doesn't throw unhandled                                                                                                                                                                                                                                    |
+| Transaction timeout handling | `AbortController` fires past a deadline → in-flight request is cancelled, UI leaves "pending" state rather than hanging forever                                                                                                                                                                              |
+| Partial system failures      | Wallet connects but Soroban RPC is unreachable (and vice versa) → each failure is attributable, not a generic "something went wrong"                                                                                                                                                                         |
+| Recovery testing             | `simulateFlaky(2)` → a retry wrapper succeeds on the 3rd attempt; assert exactly the expected number of calls                                                                                                                                                                                                |
+| Graceful degradation         | RPC down → previously-cached verification result (if any) is still shown, clearly marked stale, instead of blanking the UI                                                                                                                                                                                   |
+| Error boundary testing       | **Doesn't exist yet** — no `ErrorBoundary`/`componentDidCatch` anywhere in `frontend/`. Add a `VerificationErrorBoundary` around the async verification widgets ([features/verification](../../frontend/features/verification)) and test that a thrown render error shows a fallback instead of a blank page |
 
 ## Non-goals for a first pass
 

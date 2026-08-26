@@ -152,9 +152,7 @@ function buildVerificationResult(
   const isLocked = false;
 
   const verificationLevel =
-    cert.attestationHash && cert.manifestHash && cert.storageRef
-      ? "Standard"
-      : "Basic";
+    cert.attestationHash && cert.manifestHash && cert.storageRef ? "Standard" : "Basic";
 
   let statusLabel: string;
   if (isRevoked) {
@@ -225,7 +223,7 @@ export async function getCertificateByCode(
     if (!certId) {
       return {
         success: false,
-        error: "No certificate found for code \"".concat(code, "\""),
+        error: 'No certificate found for code "'.concat(code, '"'),
       };
     }
 
@@ -332,9 +330,7 @@ export async function searchCertificates(
 /**
  * Verify the authenticity of a certificate by checking its cryptographic proofs.
  */
-export async function verifyCertificateAuthenticity(
-  certificateId: string
-): Promise<
+export async function verifyCertificateAuthenticity(certificateId: string): Promise<
   ApiResponse<{
     authentic: boolean;
     hashMatch: boolean;
@@ -399,4 +395,3 @@ export async function generateVerificationCode(
     };
   }
 }
-

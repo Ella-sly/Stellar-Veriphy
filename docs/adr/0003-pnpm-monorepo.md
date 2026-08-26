@@ -9,6 +9,7 @@
 StellarVeriphy's TypeScript surface area spans a Next.js frontend and shared types/utilities (content manifest shapes, hashing helpers) that both the frontend and, eventually, backend/oracle services need to consume without drifting out of sync. The Rust contracts live alongside this code but are built with Cargo, not npm tooling.
 
 Options considered for the JS/TS side:
+
 - **Separate repositories** per app/package — clean ownership boundaries, but shared types (`packages/shared`) would need to be published and versioned independently, adding release overhead disproportionate to the project's current size.
 - **npm/yarn workspaces** — similar capability to pnpm, but pnpm's content-addressable store and strict dependency resolution avoid phantom-dependency bugs (a package silently working because a sibling package hoisted a dependency it never declared).
 - **pnpm workspaces** — fast installs, disk-efficient via a shared store, strict-by-default module resolution.

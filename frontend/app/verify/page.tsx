@@ -96,18 +96,14 @@ function VerifyPageContent() {
         );
         return (
           <div className="space-y-4">
-            <p className="text-gray-700 dark:text-gray-300">
-              Configure your verification options.
-            </p>
+            <p className="text-gray-700 dark:text-gray-300">Configure your verification options.</p>
             <label className="flex items-center space-x-2">
               <input
                 type="checkbox"
                 onChange={(e) => setStepComplete(3, e.target.checked)}
                 className="w-4 h-4 rounded"
               />
-              <span className="text-gray-700 dark:text-gray-300">
-                Enable advanced options
-              </span>
+              <span className="text-gray-700 dark:text-gray-300">Enable advanced options</span>
             </label>
           </div>
         );
@@ -118,9 +114,7 @@ function VerifyPageContent() {
               Your verification is complete. Review the results below.
             </p>
             <div className="p-4 bg-green-50 border border-green-200 rounded-lg dark:bg-green-900 dark:border-green-700">
-              <p className="text-green-800 dark:text-green-200">
-                ✓ Verification successful
-              </p>
+              <p className="text-green-800 dark:text-green-200">✓ Verification successful</p>
             </div>
           </div>
         );
