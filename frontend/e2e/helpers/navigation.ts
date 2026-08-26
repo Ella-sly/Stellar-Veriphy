@@ -2,7 +2,7 @@
  * E2E navigation helpers — reusable page-navigation utilities.
  */
 
-import { Page, expect } from "@playwright/test";
+import { expect,Page } from "@playwright/test";
 
 /** Navigate to the home / landing page and wait for it to be ready. */
 export async function gotoHome(page: Page): Promise<void> {

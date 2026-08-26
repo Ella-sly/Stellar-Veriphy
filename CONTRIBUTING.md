@@ -213,6 +213,8 @@ We enforce automatic formatting and linting via pre-commit hooks (`husky` + `lin
 - **Frontend**: ESLint with TypeScript rules.
 - **Contracts**: `rustfmt --edition 2021` and `cargo clippy`.
 
+**Import sorting**: The frontend ESLint config includes `eslint-plugin-simple-import-sort`, which automatically groups and alphabetizes imports and exports (`simple-import-sort/imports`, `simple-import-sort/exports`). This runs as part of `pnpm --filter frontend exec eslint --fix` and the pre-commit hook, so imports are sorted automatically whenever you commit or run lint with `--fix`.
+
 Run manual checks before submitting:
 ```bash
 # Check frontend

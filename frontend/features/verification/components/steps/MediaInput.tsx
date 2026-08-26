@@ -1,9 +1,11 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+import { useCallback, useState } from "react";
+
 import { useWizard } from "@/context/WizardContext";
 import { hashFile } from "@/utils/hashing";
-import { useCallback, useState } from "react";
-import { useRouter } from "next/navigation";
+
 import { MediaPreview } from "./MediaPreview";
 
 export function MediaInput() {

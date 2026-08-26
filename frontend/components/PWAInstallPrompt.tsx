@@ -7,8 +7,10 @@
  * Handles beforeinstallprompt event and provides custom UI.
  */
 
+import { Download, Smartphone,X } from "lucide-react";
 import { useEffect, useState } from "react";
-import { X, Download, Smartphone } from "lucide-react";
+
+import { logger } from "@/lib/logger";
 
 interface BeforeInstallPromptEvent extends Event {
     prompt: () => Promise<void>;
@@ -77,9 +79,9 @@ export function PWAInstallPrompt() {
         const { outcome } = await deferredPrompt.userChoice;
 
         if (outcome === "accepted") {
-            console.log("PWA installed");
+            logger.info("PWA installed");
         } else {
-            console.log("PWA installation dismissed");
+            logger.debug("PWA installation dismissed");
         }
 
         // Clear the prompt

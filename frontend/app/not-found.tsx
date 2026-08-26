@@ -1,16 +1,17 @@
-import Link from "next/link";
 import {
-  Home,
-  ShieldCheck,
+  ArrowRight,
+  BookOpen,
+  Compass,
   FileCode,
+  Home,
   Layers,
   Search,
-  BookOpen,
-  ArrowRight,
-  Compass,
+  ShieldCheck,
 } from "lucide-react";
-import { Header } from "@/components/Header";
+import Link from "next/link";
+
 import { Footer } from "@/components/Footer";
+import { Header } from "@/components/Header";
 
 export default function NotFound() {
   const popularPages = [

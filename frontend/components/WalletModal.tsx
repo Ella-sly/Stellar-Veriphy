@@ -8,8 +8,9 @@
  */
 
 import { useState } from "react";
-import { useWallet } from "@/context/WalletContext";
+
 import { WalletSelector } from "@/components/wallet/WalletSelector";
+import { useWallet } from "@/context/WalletContext";
 
 export function WalletModal() {
   const { connected, publicKey, walletType, disconnect } = useWallet();

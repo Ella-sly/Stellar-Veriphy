@@ -8,8 +8,10 @@
  */
 
 import { useState } from "react";
+
 import type { CertificateVerificationResult } from "@/services/certificateVerificationService";
-import { CertificateStatusBadge, type CertificateStatus } from "./CertificateStatusBadge";
+
+import { type CertificateStatus,CertificateStatusBadge } from "./CertificateStatusBadge";
 
 // ---------------------------------------------------------------------------
 // Types

@@ -22,9 +22,9 @@
  *   npm run test:e2e -- file-upload-verification
  */
 
-import { test, expect, type Page } from "@playwright/test";
-import * as path from "path";
+import { expect, type Page,test } from "@playwright/test";
 import * as fs from "fs";
+import * as path from "path";
 
 // ---------------------------------------------------------------------------
 // Constants

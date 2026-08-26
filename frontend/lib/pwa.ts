@@ -5,10 +5,12 @@
  * and offline support.
  */
 
+import { logger } from "./logger";
+
 // Service Worker Registration
 export async function registerServiceWorker(): Promise<ServiceWorkerRegistration | null> {
     if (typeof window === "undefined" || !("serviceWorker" in navigator)) {
-        console.log("Service Worker not supported");
+        logger.debug("Service Worker not supported");
         return null;
     }
 
@@ -17,7 +19,7 @@ export async function registerServiceWorker(): Promise<ServiceWorkerRegistration
             scope: "/",
         });
 
-        console.log("Service Worker registered:", registration.scope);
+        logger.info("Service Worker registered:", registration.scope);
 
         // Check for updates periodically
         setInterval(() => {
@@ -26,7 +28,7 @@ export async function registerServiceWorker(): Promise<ServiceWorkerRegistration
 
         return registration;
     } catch (error) {
-        console.error("Service Worker registration failed:", error);
+        logger.error("Service Worker registration failed:", error);
         return null;
     }
 }
@@ -40,10 +42,10 @@ export async function unregisterServiceWorker(): Promise<boolean> {
     try {
         const registration = await navigator.serviceWorker.ready;
         const success = await registration.unregister();
-        console.log("Service Worker unregistered:", success);
+        logger.info("Service Worker unregistered:", success);
         return success;
     } catch (error) {
-        console.error("Service Worker unregistration failed:", error);
+        logger.error("Service Worker unregistration failed:", error);
         return false;
     }
 }
@@ -51,7 +53,7 @@ export async function unregisterServiceWorker(): Promise<boolean> {
 // Push Notifications
 export async function requestNotificationPermission(): Promise<NotificationPermission> {
     if (typeof window === "undefined" || !("Notification" in window)) {
-        console.log("Notifications not supported");
+        logger.debug("Notifications not supported");
         return "denied";
     }
 
@@ -75,7 +77,7 @@ export async function subscribeToPushNotifications(
         const permission = await requestNotificationPermission();
 
         if (permission !== "granted") {
-            console.log("Notification permission denied");
+            logger.debug("Notification permission denied");
             return null;
         }
 
@@ -84,10 +86,10 @@ export async function subscribeToPushNotifications(
             applicationServerKey: urlBase64ToUint8Array(vapidPublicKey) as unknown as BufferSource,
         });
 
-        console.log("Push subscription created:", subscription);
+        logger.info("Push subscription created:", subscription);
         return subscription;
     } catch (error) {
-        console.error("Push subscription failed:", error);
+        logger.error("Push subscription failed:", error);
         return null;
     }
 }
@@ -103,10 +105,10 @@ export async function unsubscribeFromPushNotifications(
         }
 
         const success = await subscription.unsubscribe();
-        console.log("Push unsubscribed:", success);
+        logger.info("Push unsubscribed:", success);
         return success;
     } catch (error) {
-        console.error("Push unsubscribe failed:", error);
+        logger.error("Push unsubscribe failed:", error);
         return false;
     }
 }
@@ -139,7 +141,7 @@ export async function clearAllCaches(): Promise<void> {
 
     const cacheNames = await caches.keys();
     await Promise.all(cacheNames.map((name) => caches.delete(name)));
-    console.log("All caches cleared");
+    logger.debug("All caches cleared");
 }
 
 export async function getCacheSize(): Promise<number> {
@@ -212,15 +214,15 @@ export async function registerBackgroundSync(
     tag: string
 ): Promise<void> {
     if (!("sync" in registration)) {
-        console.log("Background Sync not supported");
+        logger.debug("Background Sync not supported");
         return;
     }
 
     try {
         await (registration as unknown as { sync: { register(t: string): Promise<void> } }).sync.register(tag);
-        console.log("Background sync registered:", tag);
+        logger.info("Background sync registered:", tag);
     } catch (error) {
-        console.error("Background sync registration failed:", error);
+        logger.error("Background sync registration failed:", error);
     }
 }
 

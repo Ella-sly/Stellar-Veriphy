@@ -28,7 +28,7 @@
  *   npm run test:e2e -- search-and-filtering
  */
 
-import { test, expect, type Page, type Locator } from "@playwright/test";
+import { expect, type Locator,type Page, test } from "@playwright/test";
 
 // ---------------------------------------------------------------------------
 // Constants — match these to the seeded fixture data in your dev environment

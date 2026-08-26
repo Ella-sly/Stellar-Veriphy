@@ -1,8 +1,9 @@
 "use client";
 
 import { ContentManifest } from "@stellarveriphy/shared/types";
-import { copyToClipboard, downloadJSON } from "@/utils/validation";
 import { useState } from "react";
+
+import { copyToClipboard, downloadJSON } from "@/utils/validation";
 
 interface ManifestGeneratorModalProps {
   manifest: Partial<ContentManifest>;

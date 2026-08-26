@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { useWallet } from "@/context/WalletContext";
+import { useEffect,useRef, useState } from "react";
 import { FiChevronDown, FiCopy, FiExternalLink, FiLogOut } from "react-icons/fi";
+
+import { useWallet } from "@/context/WalletContext";
 
 export function AccountDropdown() {
   const { publicKey, disconnect } = useWallet();

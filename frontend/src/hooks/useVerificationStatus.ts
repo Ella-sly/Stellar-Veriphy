@@ -15,9 +15,10 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
+
 import {
-  verificationStatusService,
   type VerificationStatus,
+  verificationStatusService,
   type WatchOptions,
 } from "@/services/verificationStatusService";
 

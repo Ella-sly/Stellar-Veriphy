@@ -1,7 +1,7 @@
 "use client";
 
 import { useWizard } from "@/context/WizardContext";
-import { MediaInput, AdvancedInput } from "@/features/verification/components/steps";
+import { AdvancedInput,MediaInput } from "@/features/verification/components/steps";
 
 export default function MediaInputPage() {
   const { mode } = useWizard();

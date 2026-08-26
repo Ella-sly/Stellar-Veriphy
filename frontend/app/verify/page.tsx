@@ -1,8 +1,9 @@
 "use client";
 
-import { useWizardStore } from "@/src/features/verification/store/wizard.store";
-import { WizardPageShell } from "@/src/features/verification/components/WizardPageShell";
 import { useState } from "react";
+
+import { WizardPageShell } from "@/src/features/verification/components/WizardPageShell";
+import { useWizardStore } from "@/src/features/verification/store/wizard.store";
 
 const STEP_CONFIGS = [
   {

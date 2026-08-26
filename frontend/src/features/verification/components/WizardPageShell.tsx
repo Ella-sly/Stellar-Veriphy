@@ -1,7 +1,7 @@
 "use client";
 
-import { WizardStepper } from "./WizardStepper";
 import { WizardNavigation } from "./WizardNavigation";
+import { WizardStepper } from "./WizardStepper";
 
 interface WizardPageShellProps {
   title: string;

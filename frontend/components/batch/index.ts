@@ -1,2 +1,2 @@
-export { BatchVerificationPanel } from "./BatchVerificationPanel";
 export type { BatchFile } from "./BatchVerificationPanel";
+export { BatchVerificationPanel } from "./BatchVerificationPanel";

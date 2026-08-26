@@ -7,8 +7,8 @@
  * and prompts them to update.
  */
 
-import { useEffect, useState } from "react";
 import { RefreshCw, X } from "lucide-react";
+import { useEffect, useState } from "react";
 
 export function PWAUpdatePrompt() {
     const [showPrompt, setShowPrompt] = useState(false);

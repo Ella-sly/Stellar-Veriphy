@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
+
+import { auditLogger } from "@/lib/security/auditLogger";
+import { validateVerificationRequest } from "@/lib/security/inputValidation";
 import {
   buildRateLimitHeaders,
   evaluateRateLimit,
 } from "@/lib/security/rateLimiter";
-import { validateVerificationRequest } from "@/lib/security/inputValidation";
-import { auditLogger } from "@/lib/security/auditLogger";
 
 function resolveAddressForRateLimit(
   bodyAddress: string | undefined,

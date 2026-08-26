@@ -8,7 +8,8 @@
  * clipboard, hash comparison, large file chunking, and progress reporting.
  */
 
-import { useState, useRef, useCallback } from "react";
+import { useCallback,useRef, useState } from "react";
+
 import { cn } from "@/utils/cn";
 import { hashFile } from "@/utils/hashing";
 import { copyToClipboard } from "@/utils/validation";

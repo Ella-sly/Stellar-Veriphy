@@ -14,6 +14,7 @@
  */
 
 import { XMLBuilder } from "fast-xml-parser";
+
 import type { ContentManifest } from "../../packages/shared/types";
 
 // ---------------------------------------------------------------------------

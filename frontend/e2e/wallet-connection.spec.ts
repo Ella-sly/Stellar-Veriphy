@@ -26,7 +26,7 @@
  *   npm run test:e2e -- wallet-connection
  */
 
-import { test, expect, type Page } from "@playwright/test";
+import { expect, type Page,test } from "@playwright/test";
 
 // ---------------------------------------------------------------------------
 // Shared helpers

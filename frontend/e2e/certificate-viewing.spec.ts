@@ -25,7 +25,7 @@
  *   npm run test:e2e -- certificate-viewing
  */
 
-import { test, expect, type Page } from "@playwright/test";
+import { expect, type Page,test } from "@playwright/test";
 
 // ---------------------------------------------------------------------------
 // Helpers

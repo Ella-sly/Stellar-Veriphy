@@ -5,10 +5,10 @@
 
 import {
   ALL_TEMPLATES,
-  TEMPLATES_BY_ID,
-  loadTemplate,
   getTemplate,
+  loadTemplate,
   type TemplateId,
+  TEMPLATES_BY_ID,
 } from "../manifestTemplates";
 
 const TEMPLATE_IDS: TemplateId[] = ["image", "video", "audio", "document", "custom"];

@@ -1,6 +1,6 @@
+export type { Notification, NotificationType } from "./NotificationCenter";
 export { 
-  NotificationProvider, 
   NotificationBell, 
+  NotificationProvider, 
   useNotifications 
 } from "./NotificationCenter";
-export type { Notification, NotificationType } from "./NotificationCenter";

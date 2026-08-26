@@ -1,5 +1,5 @@
-import { isValidSHA256, isValidStellarAddress } from "@/utils/validation";
 import { sanitizeManifest, validateManifest } from "@/utils/manifestValidation";
+import { isValidSHA256, isValidStellarAddress } from "@/utils/validation";
 
 const MAX_REQUEST_BYTES = Number(process.env.MAX_VERIFICATION_FILE_SIZE_BYTES ?? 100 * 1024 * 1024);
 const DEFAULT_ALLOWED_FILE_TYPES = [

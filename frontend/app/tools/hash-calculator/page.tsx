@@ -4,8 +4,8 @@
  * Content Hash Calculator Demo Page — Issue #217
  */
 
-import { Header } from "@/components/Header";
 import { ContentHashCalculator } from "@/components/ContentHashCalculator";
+import { Header } from "@/components/Header";
 
 export default function HashCalculatorPage() {
   return (

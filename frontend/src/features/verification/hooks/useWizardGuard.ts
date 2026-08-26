@@ -15,8 +15,9 @@
  * clears a step.
  */
 
-import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+
 import { useWizardStore } from "../store/wizard.store";
 
 /**

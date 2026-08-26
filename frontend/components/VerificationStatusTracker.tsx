@@ -35,8 +35,9 @@ import {
   useRef,
   useState,
 } from "react";
+
+import type { VerificationPhase,VerificationStatus } from "@/services/verificationStatusService";
 import { useVerificationStatus } from "@/src/hooks/useVerificationStatus";
-import type { VerificationStatus, VerificationPhase } from "@/services/verificationStatusService";
 
 // ---------------------------------------------------------------------------
 // Types

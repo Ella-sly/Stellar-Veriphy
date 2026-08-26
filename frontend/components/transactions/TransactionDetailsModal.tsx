@@ -6,9 +6,10 @@
  * Modal component displaying detailed information about a specific transaction.
  */
 
-import { X, ExternalLink, Copy, CheckCircle, AlertCircle, Clock } from "lucide-react";
-import type { Transaction } from "@/types/transaction.types";
+import { AlertCircle, CheckCircle, Clock,Copy, ExternalLink, X } from "lucide-react";
 import { useState } from "react";
+
+import type { Transaction } from "@/types/transaction.types";
 
 interface TransactionDetailsModalProps {
     transaction: Transaction | null;

@@ -23,6 +23,8 @@ import {
   useRef,
   useState,
 } from "react";
+
+import { auditLogger } from "@/lib/security/auditLogger";
 import {
   ALL_ADAPTERS,
   getAdapter,
@@ -30,7 +32,6 @@ import {
   type WalletNetworkDetails,
   type WalletType,
 } from "@/services/walletAdapters";
-import { auditLogger } from "@/lib/security/auditLogger";
 
 // ---------------------------------------------------------------------------
 // Storage keys

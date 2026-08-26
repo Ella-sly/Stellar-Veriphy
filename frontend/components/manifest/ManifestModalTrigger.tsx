@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import { ContentManifest } from "@stellarveriphy/shared/types";
+import { useState } from "react";
+
 import { ManifestModal } from "./ManifestModal";
 
 interface ManifestModalTriggerProps {
