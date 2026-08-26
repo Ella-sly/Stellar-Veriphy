@@ -41,9 +41,7 @@ export function KeyValueBuilder({ value = {}, onChange }: KeyValueBuilderProps) 
   };
 
   const handleUpdatePair = (id: string, field: keyof KeyValuePair, val: string) => {
-    const updated = pairs.map((p) =>
-      p.id === id ? { ...p, [field]: val } : p
-    );
+    const updated = pairs.map((p) => (p.id === id ? { ...p, [field]: val } : p));
     setPairs(updated);
     updateParent(updated);
   };
@@ -83,9 +81,7 @@ export function KeyValueBuilder({ value = {}, onChange }: KeyValueBuilderProps) 
           />
           <select
             value={pair.type}
-            onChange={(e) =>
-              handleUpdatePair(pair.id, "type", e.target.value as any)
-            }
+            onChange={(e) => handleUpdatePair(pair.id, "type", e.target.value as any)}
             className="px-3 py-2 border rounded bg-white dark:bg-gray-800 text-black dark:text-white"
           >
             <option value="string">String</option>

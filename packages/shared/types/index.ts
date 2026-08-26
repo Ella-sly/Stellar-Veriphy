@@ -1,8 +1,8 @@
 export interface ContentManifest {
-  schemaVersion?: string;    // semantic version string (e.g. 1.0.0, 2.0.0)
-  contentHash: string;       // sha256 of the media file
-  creator: string;           // Stellar public key (G...)
-  timestamp: string;         // ISO 8601
+  schemaVersion?: string; // semantic version string (e.g. 1.0.0, 2.0.0)
+  contentHash: string; // sha256 of the media file
+  creator: string; // Stellar public key (G...)
+  timestamp: string; // ISO 8601
   metadata?: {
     device?: string;
     location?: string;
@@ -98,8 +98,7 @@ export interface VerificationJob {
  * On failure: `{ success: false, error: string }`
  */
 export type ApiResponse<T> =
-  | { success: true; data: T; error?: never }
-  | { success: false; error: string; data?: never };
+  { success: true; data: T; error?: never } | { success: false; error: string; data?: never };
 
 // ---------------------------------------------------------------------------
 // SLA tracking  (mirrors oracle ProviderSLA + SLACompliance structs)

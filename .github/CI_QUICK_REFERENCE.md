@@ -95,15 +95,15 @@ Check CI status: [GitHub Actions](https://github.com/your-org/Stellar-Veriphy/ac
 
 ## What CI Checks
 
-| Check | Command | Job |
-|-------|---------|-----|
-| Frontend check | `pnpm check:frontend` | `lint-and-build-frontend` |
-| Frontend build | `pnpm build:frontend` | `lint-and-build-frontend` |
-| Frontend tests | `pnpm --filter frontend test` | `lint-and-build-frontend` |
-| Rust format | `cargo fmt -- --check` | `build-contracts` |
-| Rust lint | `cargo clippy ... -- -D warnings` | `build-contracts` |
-| Contract build | `cargo build --target wasm32-unknown-unknown --release` | `build-contracts` |
-| Contract tests | `cargo test` | `build-contracts` |
+| Check          | Command                                                 | Job                       |
+| -------------- | ------------------------------------------------------- | ------------------------- |
+| Frontend check | `pnpm check:frontend`                                   | `lint-and-build-frontend` |
+| Frontend build | `pnpm build:frontend`                                   | `lint-and-build-frontend` |
+| Frontend tests | `pnpm --filter frontend test`                           | `lint-and-build-frontend` |
+| Rust format    | `cargo fmt -- --check`                                  | `build-contracts`         |
+| Rust lint      | `cargo clippy ... -- -D warnings`                       | `build-contracts`         |
+| Contract build | `cargo build --target wasm32-unknown-unknown --release` | `build-contracts`         |
+| Contract tests | `cargo test`                                            | `build-contracts`         |
 
 ## Pre-commit Hook
 

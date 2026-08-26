@@ -2,9 +2,7 @@ export type TransactionStatus = "PENDING" | "CONFIRMED" | "FAILED";
 
 const HORIZON_URL = "https://horizon.stellar.org";
 
-export async function fetchTransactionStatus(
-  txHash: string
-): Promise<TransactionStatus> {
+export async function fetchTransactionStatus(txHash: string): Promise<TransactionStatus> {
   try {
     const response = await fetch(`${HORIZON_URL}/transactions/${txHash}`);
 

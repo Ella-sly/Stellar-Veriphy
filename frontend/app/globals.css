@@ -123,7 +123,6 @@
 }
 
 @layer utilities {
-
   /* Hide scrollbar but keep functionality */
   .scrollbar-hide {
     -ms-overflow-style: none;
@@ -192,7 +191,6 @@
 
   /* Disable hover effects on touch devices */
   @media (hover: none) and (pointer: coarse) {
-
     .hover\:scale-105,
     .hover\:rotate-3,
     .hover\:-translate-y-0.5 {
@@ -255,7 +253,8 @@
 .theme-transition *,
 .theme-transition *::before,
 .theme-transition *::after {
-  transition: background-color 0.3s ease-in-out,
+  transition:
+    background-color 0.3s ease-in-out,
     border-color 0.3s ease-in-out,
     color 0.3s ease-in-out !important;
 }
@@ -267,7 +266,6 @@
 
 /* Reduce motion for accessibility */
 @media (prefers-reduced-motion: reduce) {
-
   *,
   *::before,
   *::after {

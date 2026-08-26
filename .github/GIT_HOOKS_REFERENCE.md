@@ -15,10 +15,12 @@ Git hooks are scripts that run automatically at specific points in the Git workf
 **Command**: `npx lint-staged`
 
 **What gets checked**:
+
 - `frontend/**/*.{ts,tsx}` → ESLint with auto-fix
 - `contracts/**/*.rs` → Rustfmt formatting
 
 **Example**:
+
 ```bash
 git add frontend/app/page.tsx
 git commit -m "Update homepage"
@@ -35,11 +37,13 @@ git commit -m "Update homepage"
 **Command**: `pnpm build:frontend`
 
 **What gets checked**:
+
 - TypeScript compilation
 - Next.js build
 - All frontend code
 
 **Example**:
+
 ```bash
 git push origin feature/my-feature
 # → Hook runs pnpm build:frontend
@@ -171,12 +175,8 @@ git commit -m "your message"
 ```json
 {
   "lint-staged": {
-    "frontend/**/*.{ts,tsx}": [
-      "eslint --fix"
-    ],
-    "contracts/**/*.rs": [
-      "rustfmt --edition 2021"
-    ]
+    "frontend/**/*.{ts,tsx}": ["eslint --fix"],
+    "contracts/**/*.rs": ["rustfmt --edition 2021"]
   }
 }
 ```
@@ -205,12 +205,14 @@ pnpm build:frontend
 ## Best Practices
 
 ✅ **Do**:
+
 - Let hooks run automatically
 - Fix issues locally before pushing
 - Stage fixed files after auto-fix
 - Test build manually: `pnpm build:frontend`
 
 ❌ **Don't**:
+
 - Skip hooks without good reason
 - Commit broken code
 - Push without testing locally

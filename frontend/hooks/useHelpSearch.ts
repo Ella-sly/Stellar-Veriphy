@@ -53,8 +53,7 @@ const HELP_ARTICLES: HelpArticle[] = [
   {
     id: "api-keys",
     title: "Managing API Keys",
-    content:
-      "Generate and manage API keys for programmatic access to verification services.",
+    content: "Generate and manage API keys for programmatic access to verification services.",
     category: "Development",
     keywords: ["api", "key", "token", "developer", "integration"],
     link: "/docs/api-keys",
@@ -80,8 +79,7 @@ const HELP_ARTICLES: HelpArticle[] = [
   {
     id: "hash-calculator",
     title: "Content Hash Calculator",
-    content:
-      "Calculate SHA-256 hashes for your content to verify integrity before submitting.",
+    content: "Calculate SHA-256 hashes for your content to verify integrity before submitting.",
     category: "Tools",
     keywords: ["hash", "sha256", "checksum", "integrity"],
     link: "/docs/hash-calculator",

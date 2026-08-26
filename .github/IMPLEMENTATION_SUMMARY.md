@@ -15,6 +15,7 @@
 A comprehensive CI pipeline that runs on every push and pull request to `main`.
 
 **Features**:
+
 - ✅ Triggers on push and pull_request to main branch
 - ✅ Three parallel jobs for efficient execution
 - ✅ Comprehensive caching for fast builds
@@ -24,6 +25,7 @@ A comprehensive CI pipeline that runs on every push and pull request to `main`.
 **Jobs**:
 
 #### Job 1: `lint-and-build-frontend`
+
 - Installs Node.js 20
 - Installs pnpm 10.18.2
 - Caches pnpm store
@@ -33,6 +35,7 @@ A comprehensive CI pipeline that runs on every push and pull request to `main`.
 - Runs frontend tests with Jest
 
 #### Job 2: `build-contracts` (Matrix)
+
 - Builds all three contracts in parallel: oracle, provenance, registry
 - Installs Rust stable + wasm32-unknown-unknown target
 - Installs rustfmt and clippy components
@@ -44,6 +47,7 @@ A comprehensive CI pipeline that runs on every push and pull request to `main`.
 - Uploads compiled WASM artifacts (7-day retention)
 
 #### Job 3: `integration-check`
+
 - Runs after frontend and contracts complete
 - Downloads all contract artifacts
 - Verifies all components built successfully
@@ -54,11 +58,13 @@ A comprehensive CI pipeline that runs on every push and pull request to `main`.
 ## Files Created
 
 ### Core Workflow
+
 - **`.github/workflows/ci.yml`** (3,734 bytes)
   - Main CI workflow configuration
   - Production-ready, optimized for performance
 
 ### Documentation
+
 - **`.github/workflows/README.md`** (7,017 bytes)
   - Comprehensive workflow documentation
   - Explains each job, step, and caching strategy
@@ -138,6 +144,7 @@ A comprehensive CI pipeline that runs on every push and pull request to `main`.
 ### For Developers
 
 **Before Pushing**:
+
 ```bash
 # Run the same checks locally
 pnpm install
@@ -154,6 +161,7 @@ cargo test
 ```
 
 **After Pushing**:
+
 1. Go to [Actions tab](https://github.com/your-org/Stellar-Veriphy/actions)
 2. Find your commit/PR
 3. Monitor job progress
@@ -164,12 +172,14 @@ cargo test
 ### For Reviewers
 
 **Checking PR Status**:
+
 1. PR page shows CI status at bottom
 2. Green checkmark = all checks passed
 3. Red X = some checks failed
 4. Click "Details" to see which job failed
 
 **Downloading Artifacts**:
+
 1. Go to Actions → Select workflow run
 2. Scroll to "Artifacts" section
 3. Download `oracle-contract`, `provenance-contract`, or `registry-contract`
@@ -178,11 +188,13 @@ cargo test
 ### For Maintainers
 
 **Managing Caches**:
+
 1. Go to Actions → Caches
 2. View cache sizes and usage
 3. Delete stale caches if needed
 
 **Workflow Modifications**:
+
 - Edit `.github/workflows/ci.yml`
 - Test changes on a branch first
 - Use `act` for local testing (see TROUBLESHOOTING.md)
@@ -193,22 +205,22 @@ cargo test
 
 ### With Warm Cache (Typical)
 
-| Job | Duration | Notes |
-|-----|----------|-------|
-| `lint-and-build-frontend` | ~2 min | Includes lint, build, tests |
-| `build-contracts` (oracle) | ~1.5 min | Parallel execution |
-| `build-contracts` (provenance) | ~1.5 min | Parallel execution |
-| `build-contracts` (registry) | ~1.5 min | Parallel execution |
-| `integration-check` | ~30 sec | Lightweight verification |
-| **Total** | **~2-3 min** | With parallel execution |
+| Job                            | Duration     | Notes                       |
+| ------------------------------ | ------------ | --------------------------- |
+| `lint-and-build-frontend`      | ~2 min       | Includes lint, build, tests |
+| `build-contracts` (oracle)     | ~1.5 min     | Parallel execution          |
+| `build-contracts` (provenance) | ~1.5 min     | Parallel execution          |
+| `build-contracts` (registry)   | ~1.5 min     | Parallel execution          |
+| `integration-check`            | ~30 sec      | Lightweight verification    |
+| **Total**                      | **~2-3 min** | With parallel execution     |
 
 ### With Cold Cache (First Run)
 
-| Job | Duration | Notes |
-|-----|----------|-------|
-| `lint-and-build-frontend` | ~4 min | Full dependency download |
-| `build-contracts` (per contract) | ~5 min | Full Rust compilation |
-| **Total** | **~6-8 min** | One-time cost |
+| Job                              | Duration     | Notes                    |
+| -------------------------------- | ------------ | ------------------------ |
+| `lint-and-build-frontend`        | ~4 min       | Full dependency download |
+| `build-contracts` (per contract) | ~5 min       | Full Rust compilation    |
+| **Total**                        | **~6-8 min** | One-time cost            |
 
 ---
 
@@ -234,10 +246,12 @@ To update versions, edit these values in `ci.yml`.
 **Key**: `${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}`
 
 **Invalidates When**:
+
 - `pnpm-lock.yaml` changes
 - OS changes (unlikely)
 
 **Stores**:
+
 - Global pnpm store directory
 - Shared across all packages in monorepo
 
@@ -246,16 +260,19 @@ To update versions, edit these values in `ci.yml`.
 **Key**: `${{ runner.os }}-cargo-${{ matrix.contract }}-${{ hashFiles('**/Cargo.lock') }}`
 
 **Invalidates When**:
+
 - `Cargo.lock` changes
 - OS changes (unlikely)
 
 **Stores** (per contract):
+
 - Cargo registry index
 - Cargo registry cache
 - Cargo git database
 - Contract-specific build artifacts
 
 **Why Separate Caches?**
+
 - Prevents cache conflicts between contracts
 - Allows independent cache invalidation
 - Optimizes cache hit rate
@@ -267,6 +284,7 @@ To update versions, edit these values in `ci.yml`.
 ### What's Uploaded
 
 For each contract (oracle, provenance, registry):
+
 - Compiled WASM file: `*.wasm`
 - Location: `contracts/{contract}/target/wasm32-unknown-unknown/release/`
 
@@ -280,11 +298,13 @@ For each contract (oracle, provenance, registry):
 ### Downloading Artifacts
 
 **Via GitHub UI**:
+
 1. Actions → Select workflow run
 2. Scroll to "Artifacts"
 3. Click artifact name to download
 
 **Via GitHub CLI**:
+
 ```bash
 gh run download <run-id> -n oracle-contract
 ```
@@ -296,18 +316,21 @@ gh run download <run-id> -n oracle-contract
 Potential improvements for future iterations:
 
 ### Short Term
+
 - [ ] Add code coverage reporting (Codecov/Coveralls)
 - [ ] Add security scanning (Dependabot, Snyk)
 - [ ] Add contract size checks (WASM size limits)
 - [ ] Add status badge to README
 
 ### Medium Term
+
 - [ ] Deploy preview to testnet for PRs
 - [ ] Performance benchmarks for contracts
 - [ ] Auto-generate documentation
 - [ ] Slack/Discord notifications
 
 ### Long Term
+
 - [ ] Automatic releases on version tags
 - [ ] Multi-environment deployments
 - [ ] Integration tests with deployed contracts
@@ -319,23 +342,23 @@ Potential improvements for future iterations:
 
 ### ✅ Issue #117 Requirements
 
-| Requirement | Status | Implementation |
-|-------------|--------|----------------|
-| Create `.github/workflows/ci.yml` | ✅ Done | Main workflow file |
-| Trigger on push to main | ✅ Done | `on.push.branches: [main]` |
-| Trigger on PR to main | ✅ Done | `on.pull_request.branches: [main]` |
-| Checkout code | ✅ Done | `actions/checkout@v4` |
-| Install Rust stable | ✅ Done | `actions-rust-lang/setup-rust-toolchain@v1` |
-| Add wasm32-unknown-unknown target | ✅ Done | `target: wasm32-unknown-unknown` |
-| Install Node.js 20 | ✅ Done | `actions/setup-node@v4` with `node-version: 20` |
-| Install pnpm | ✅ Done | `pnpm/action-setup@v4` with `version: 10.18.2` |
-| Run `pnpm install --no-frozen-lockfile` | ✅ Done | Install dependencies step |
-| Lint frontend | ✅ Done | `pnpm --filter frontend lint` |
-| Build frontend | ✅ Done | `pnpm build:frontend` |
-| Build all three contracts | ✅ Done | Matrix strategy for oracle, provenance, registry |
-| Use `cargo build --target wasm32-unknown-unknown --release` | ✅ Done | Build contract step |
-| Cache Rust build artifacts | ✅ Done | Cargo cache with lock file hash |
-| Cache pnpm store | ✅ Done | pnpm cache with lock file hash |
+| Requirement                                                 | Status  | Implementation                                   |
+| ----------------------------------------------------------- | ------- | ------------------------------------------------ |
+| Create `.github/workflows/ci.yml`                           | ✅ Done | Main workflow file                               |
+| Trigger on push to main                                     | ✅ Done | `on.push.branches: [main]`                       |
+| Trigger on PR to main                                       | ✅ Done | `on.pull_request.branches: [main]`               |
+| Checkout code                                               | ✅ Done | `actions/checkout@v4`                            |
+| Install Rust stable                                         | ✅ Done | `actions-rust-lang/setup-rust-toolchain@v1`      |
+| Add wasm32-unknown-unknown target                           | ✅ Done | `target: wasm32-unknown-unknown`                 |
+| Install Node.js 20                                          | ✅ Done | `actions/setup-node@v4` with `node-version: 20`  |
+| Install pnpm                                                | ✅ Done | `pnpm/action-setup@v4` with `version: 10.18.2`   |
+| Run `pnpm install --no-frozen-lockfile`                     | ✅ Done | Install dependencies step                        |
+| Lint frontend                                               | ✅ Done | `pnpm --filter frontend lint`                    |
+| Build frontend                                              | ✅ Done | `pnpm build:frontend`                            |
+| Build all three contracts                                   | ✅ Done | Matrix strategy for oracle, provenance, registry |
+| Use `cargo build --target wasm32-unknown-unknown --release` | ✅ Done | Build contract step                              |
+| Cache Rust build artifacts                                  | ✅ Done | Cargo cache with lock file hash                  |
+| Cache pnpm store                                            | ✅ Done | pnpm cache with lock file hash                   |
 
 ### ✅ Additional Features (Beyond Requirements)
 
@@ -356,12 +379,14 @@ Potential improvements for future iterations:
 ### Local Testing
 
 **Option 1: Run commands manually**
+
 ```bash
 # See CI_QUICK_REFERENCE.md for commands
 pnpm install && pnpm --filter frontend lint && pnpm build:frontend
 ```
 
 **Option 2: Use act (GitHub Actions local runner)**
+
 ```bash
 # Install act
 brew install act  # macOS
@@ -373,6 +398,7 @@ act push
 ### Testing on GitHub
 
 **Option 1: Push to a branch**
+
 ```bash
 git checkout -b test-ci
 git push origin test-ci
@@ -380,14 +406,16 @@ git push origin test-ci
 ```
 
 **Option 2: Push directly to main** (if you have permissions)
+
 ```bash
 git push origin main
 ```
 
 **Option 3: Use workflow_dispatch** (requires workflow modification)
+
 ```yaml
 on:
-  workflow_dispatch:  # Add this
+  workflow_dispatch: # Add this
   push:
     branches: [main]
 ```
@@ -410,11 +438,13 @@ For detailed troubleshooting, see [TROUBLESHOOTING.md](./TROUBLESHOOTING.md).
 ## Support
 
 **Documentation**:
+
 - [Workflow README](./workflows/README.md) - Detailed workflow documentation
 - [CI Quick Reference](./CI_QUICK_REFERENCE.md) - Quick commands
 - [Troubleshooting Guide](./TROUBLESHOOTING.md) - Common issues and solutions
 
 **Getting Help**:
+
 1. Check documentation above
 2. Search [GitHub Issues](https://github.com/your-org/Stellar-Veriphy/issues)
 3. Open new issue with `ci` label
@@ -433,6 +463,7 @@ The GitHub Actions CI workflow is now fully implemented and operational. It prov
 - ✅ Easy troubleshooting
 
 **Next Steps**:
+
 1. Test the workflow by pushing a commit
 2. Add CI status badge to README (optional)
 3. Set up branch protection rules (optional)

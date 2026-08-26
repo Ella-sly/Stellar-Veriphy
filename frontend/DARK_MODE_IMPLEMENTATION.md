@@ -1,6 +1,7 @@
 # Dark Mode Implementation Guide
 
 ## Overview
+
 The StellarVeriphy application implements a comprehensive dark mode theme system with the following features:
 
 - ✅ Dark color palette design with HSL-based CSS variables
@@ -13,9 +14,11 @@ The StellarVeriphy application implements a comprehensive dark mode theme system
 ## Architecture
 
 ### Theme Provider
+
 **Location:** `/frontend/components/ThemeProvider.tsx`
 
 The `ThemeProvider` component manages the global theme state:
+
 - Detects system color scheme preference
 - Loads saved theme from localStorage
 - Listens for system preference changes
@@ -23,9 +26,11 @@ The `ThemeProvider` component manages the global theme state:
 - Provides theme context to all child components
 
 ### Theme Toggle
+
 **Location:** `/frontend/components/ThemeToggle.tsx`
 
 A reusable toggle button component:
+
 - Displays sun icon in dark mode
 - Displays moon icon in light mode
 - Accessible with ARIA labels
@@ -33,17 +38,20 @@ A reusable toggle button component:
 - Integrated in desktop and mobile navigation
 
 ### Color System
+
 **Location:** `/frontend/app/globals.css`
 
 Uses HSL-based CSS variables for flexible theming:
 
 #### Light Mode Colors
+
 - Background: `hsl(0 0% 100%)` - White
 - Foreground: `hsl(222.2 84% 4.9%)` - Dark blue-gray
 - Primary: `hsl(221.2 83.2% 53.3%)` - Blue
 - Muted: `hsl(210 40% 96.1%)` - Light gray
 
-#### Dark Mode Colors  
+#### Dark Mode Colors
+
 - Background: `hsl(222.2 84% 4.9%)` - Dark blue-gray
 - Foreground: `hsl(210 40% 98%)` - Off-white
 - Primary: `hsl(217.2 91.2% 59.8%)` - Bright blue
@@ -52,12 +60,13 @@ Uses HSL-based CSS variables for flexible theming:
 ## Usage
 
 ### Using the Theme Hook
+
 ```tsx
 import { useTheme } from "@/components/ThemeProvider";
 
 function MyComponent() {
   const { theme, toggleTheme, setTheme } = useTheme();
-  
+
   return (
     <div>
       <p>Current theme: {theme}</p>
@@ -74,9 +83,7 @@ Use Tailwind's `dark:` prefix for dark mode styles:
 
 ```tsx
 <div className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
-  <p className="text-gray-600 dark:text-gray-400">
-    This text adapts to the theme
-  </p>
+  <p className="text-gray-600 dark:text-gray-400">This text adapts to the theme</p>
 </div>
 ```
 
@@ -95,7 +102,9 @@ For custom components, use the CSS variables:
 ## Features
 
 ### 1. System Preference Detection
+
 Automatically detects and applies the user's OS theme preference:
+
 ```javascript
 const systemPreference = window.matchMedia("(prefers-color-scheme: dark)").matches
   ? "dark"
@@ -103,29 +112,38 @@ const systemPreference = window.matchMedia("(prefers-color-scheme: dark)").match
 ```
 
 ### 2. Preference Persistence
+
 Saves user's choice to localStorage:
+
 ```javascript
 localStorage.setItem("theme", "dark");
 ```
 
 ### 3. Dynamic Updates
+
 Listens for system theme changes in real-time:
+
 ```javascript
 mediaQuery.addEventListener("change", handleChange);
 ```
 
 ### 4. Smooth Transitions
+
 CSS transitions applied during theme switches:
+
 ```css
 .theme-transition * {
-  transition: background-color 0.3s ease-in-out,
-              border-color 0.3s ease-in-out,
-              color 0.3s ease-in-out !important;
+  transition:
+    background-color 0.3s ease-in-out,
+    border-color 0.3s ease-in-out,
+    color 0.3s ease-in-out !important;
 }
 ```
 
 ### 5. No Flash Prevention
+
 Script in `layout.tsx` runs before React hydration:
+
 ```javascript
 const themeInitScript = `(function(){
   try{
@@ -141,12 +159,14 @@ const themeInitScript = `(function(){
 All components have been updated to support dark mode:
 
 ### Core Components
+
 - ✅ Header with theme toggle
 - ✅ Footer
 - ✅ Navigation menus
 - ✅ Modals and dialogs
 
 ### Feature Components
+
 - ✅ Transaction history page
 - ✅ Transaction details modal
 - ✅ Certificate verification components
@@ -156,6 +176,7 @@ All components have been updated to support dark mode:
 - ✅ Toast notifications
 
 ### UI Components
+
 - ✅ Buttons
 - ✅ Cards
 - ✅ Tables
@@ -177,13 +198,16 @@ The dark mode implementation follows accessibility best practices:
 ## Testing Dark Mode
 
 ### Manual Testing
+
 1. Toggle using the button in the header
 2. Change OS theme preference and verify automatic switching
 3. Refresh page and verify theme persists
 4. Test in different browsers
 
 ### Browser DevTools
+
 Chrome DevTools can simulate color schemes:
+
 1. Open DevTools (F12)
 2. Open Command Palette (Cmd/Ctrl + Shift + P)
 3. Type "Show Rendering"
@@ -194,6 +218,7 @@ Chrome DevTools can simulate color schemes:
 ### Adding New Colors
 
 1. Add to `globals.css`:
+
 ```css
 :root {
   --my-custom-color: 200 80% 50%;
@@ -205,6 +230,7 @@ Chrome DevTools can simulate color schemes:
 ```
 
 2. Add to `tailwind.config.ts`:
+
 ```typescript
 colors: {
   custom: {
@@ -214,6 +240,7 @@ colors: {
 ```
 
 3. Use in components:
+
 ```tsx
 <div className="bg-custom text-white">Custom themed content</div>
 ```
@@ -221,6 +248,7 @@ colors: {
 ### Modifying Transition Duration
 
 Edit in `globals.css`:
+
 ```css
 .theme-transition * {
   transition-duration: 0.5s; /* Slower transition */
@@ -230,6 +258,7 @@ Edit in `globals.css`:
 ## Browser Support
 
 Dark mode is supported in:
+
 - ✅ Chrome/Edge 76+
 - ✅ Firefox 67+
 - ✅ Safari 12.1+
@@ -246,15 +275,19 @@ Dark mode is supported in:
 ## Troubleshooting
 
 ### Theme Flicker on Page Load
+
 The inline script in `layout.tsx` should prevent this. Verify it's loading before React hydration.
 
 ### Colors Not Updating
+
 Ensure you're using `dark:` prefix in Tailwind classes or CSS variables in custom CSS.
 
 ### localStorage Not Persisting
+
 Check browser privacy settings. Some browsers block localStorage in incognito mode.
 
 ### System Preference Not Detected
+
 Verify the browser supports `prefers-color-scheme` media query. Check compatibility.
 
 ## Future Enhancements

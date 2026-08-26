@@ -111,19 +111,14 @@ function formatFileSize(bytes: number): string {
 // Main component
 // ---------------------------------------------------------------------------
 
-export function ContentHashCalculator({
-  className,
-  onHashCalculated,
-}: ContentHashCalculatorProps) {
+export function ContentHashCalculator({ className, onHashCalculated }: ContentHashCalculatorProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [algorithm, setAlgorithm] = useState<HashAlgorithm>("SHA-256");
   const [isCalculating, setIsCalculating] = useState(false);
   const [progress, setProgress] = useState(0);
   const [result, setResult] = useState<HashResult | null>(null);
   const [compareHash, setCompareHash] = useState("");
-  const [compareResult, setCompareResult] = useState<
-    "match" | "mismatch" | null
-  >(null);
+  const [compareResult, setCompareResult] = useState<"match" | "mismatch" | null>(null);
   const [copiedRecently, setCopiedRecently] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -164,11 +159,7 @@ export function ContentHashCalculator({
       onHashCalculated?.(hashResult);
     } catch (error) {
       console.error("Hash calculation failed:", error);
-      alert(
-        `Failed to calculate hash: ${
-          error instanceof Error ? error.message : String(error)
-        }`
-      );
+      alert(`Failed to calculate hash: ${error instanceof Error ? error.message : String(error)}`);
     } finally {
       setIsCalculating(false);
     }
@@ -217,8 +208,8 @@ export function ContentHashCalculator({
           Content Hash Calculator
         </h2>
         <p className="text-sm text-gray-600 dark:text-gray-400">
-          Calculate cryptographic hashes for your files without submitting to the
-          blockchain. Supports large files with progress tracking.
+          Calculate cryptographic hashes for your files without submitting to the blockchain.
+          Supports large files with progress tracking.
         </p>
       </div>
 

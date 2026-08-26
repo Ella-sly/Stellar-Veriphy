@@ -408,6 +408,7 @@ make help
 ```
 
 Common targets:
+
 - `make build` - Build production image
 - `make run` - Run production container
 - `make dev` - Run development container

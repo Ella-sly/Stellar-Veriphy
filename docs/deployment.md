@@ -79,7 +79,7 @@ Unlike many Soroban contract patterns, none of `oracle`, `provenance`, or `regis
 - `provenance`: `mint(storage_ref, manifest_hash, attestation_hash, creator)`, `get(id)`
 - `registry`: `register(admin, code_hash)`, `is_approved(code_hash)`
 
-**Security note:** `registry.register` takes an `admin: Address` parameter and calls `admin.require_auth()`, but the contract never stores an admin and never checks that the caller *is* a previously-designated admin — it only confirms that whoever signs the call is who they claim to be. In its current form, **any account can call `register` and mark a code hash as approved.** This is fine for local/testnet experimentation but is a real gap to close (e.g. storing an admin address at deploy time and checking it) before deploying `registry` anywhere its output is trusted for real verification decisions. Track this as a prerequisite to a mainnet deployment, not something to work around at deploy time.
+**Security note:** `registry.register` takes an `admin: Address` parameter and calls `admin.require_auth()`, but the contract never stores an admin and never checks that the caller _is_ a previously-designated admin — it only confirms that whoever signs the call is who they claim to be. In its current form, **any account can call `register` and mark a code hash as approved.** This is fine for local/testnet experimentation but is a real gap to close (e.g. storing an admin address at deploy time and checking it) before deploying `registry` anywhere its output is trusted for real verification decisions. Track this as a prerequisite to a mainnet deployment, not something to work around at deploy time.
 
 ## Verification process
 
@@ -135,4 +135,4 @@ If contract upgradeability becomes a real requirement, that's a design decision 
 - [ ] Read + write-then-read verification performed against the new contract ID (see [Verification process](#verification-process)).
 - [ ] Deployment transaction confirmed on a block explorer.
 - [ ] Consumers (frontend, oracle worker) updated to point at the new contract ID.
-- [ ] If replacing a previous deployment: rollback/migration plan for existing on-chain state decided *before* the old contract ID is dropped from any config, per [Rollback procedures](#rollback-procedures).
+- [ ] If replacing a previous deployment: rollback/migration plan for existing on-chain state decided _before_ the old contract ID is dropped from any config, per [Rollback procedures](#rollback-procedures).

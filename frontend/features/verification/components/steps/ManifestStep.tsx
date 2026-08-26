@@ -6,8 +6,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 export function ManifestStep() {
-  const { setManifest, setManifestHash, setHashProgress, hashProgress } =
-    useWizard();
+  const { setManifest, setManifestHash, setHashProgress, hashProgress } = useWizard();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [manifestData, setManifestData] = useState<object | null>(null);
   const [isHashing, setIsHashing] = useState(false);
@@ -31,8 +30,7 @@ export function ManifestStep() {
   };
 
   const processFile = async (file: File) => {
-    const isValidType =
-      file.name.endsWith(".json") || file.name.endsWith(".xml");
+    const isValidType = file.name.endsWith(".json") || file.name.endsWith(".xml");
     if (!isValidType) {
       setError("Please upload a .json or .xml file");
       return;
@@ -61,9 +59,7 @@ export function ManifestStep() {
       setManifestData(parsed);
       setManifest(parsed);
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Error processing manifest file"
-      );
+      setError(err instanceof Error ? err.message : "Error processing manifest file");
     } finally {
       setIsHashing(false);
     }
@@ -93,9 +89,7 @@ export function ManifestStep() {
             id="manifest-input"
           />
           <label htmlFor="manifest-input" className="cursor-pointer">
-            <p className="text-lg font-semibold mb-2">
-              Drag and drop your manifest here
-            </p>
+            <p className="text-lg font-semibold mb-2">Drag and drop your manifest here</p>
             <p className="text-gray-600">or click to select a .json or .xml file</p>
           </label>
         </div>

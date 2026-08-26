@@ -7,14 +7,14 @@ Two workflows cover CI: [`.github/workflows/ci.yml`](../../.github/workflows/ci.
 
 ## `ci.yml` jobs
 
-| Job | What it does |
-|---|---|
-| `frontend-unit-tests` | `pnpm check:frontend` (ESLint), `pnpm build:frontend` (Next.js build), then `jest --coverage` with an enforced 80% branches/functions/lines/statements threshold. Coverage `lcov.info` is uploaded as an artifact. |
-| `build-contracts` | Matrix over `[oracle, provenance, registry]`: `cargo fmt --check`, `cargo clippy --target wasm32-unknown-unknown --release -- -D warnings`, a release Wasm build, `cargo test --lib`, and `cargo test integration_` (only `oracle` has integration tests today). The built `.wasm` is uploaded per contract. |
-| `contract-coverage` | Matrix over the same three contracts: `cargo-llvm-cov` generates `lcov.info` per contract (uploaded as an artifact) and prints a summary; runs after `build-contracts`. |
-| `e2e-tests` | Matrix over `[chromium, firefox, webkit]`: builds the frontend, starts `next start`, and runs Playwright against it. Uploads the HTML report always, and failure-only visual regression snapshots. |
-| `mutation-testing` | **Added for #250.** Runs Stryker against `packages/shared` (see [`docs/testing/MUTATION_TESTING.md`](../testing/MUTATION_TESTING.md)) and uploads the HTML report as a build artifact. Runs after `frontend-unit-tests`; **not** in `ci-complete`'s `needs` list, so it's observability-only for now — see that doc for why. |
-| `ci-complete` | Final gate: depends on `frontend-unit-tests`, `build-contracts`, `contract-coverage`, and `e2e-tests`. Downloads all coverage artifacts and prints a pass summary. |
+| Job                   | What it does                                                                                                                                                                                                                                                                                                                 |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `frontend-unit-tests` | `pnpm check:frontend` (ESLint), `pnpm build:frontend` (Next.js build), then `jest --coverage` with an enforced 80% branches/functions/lines/statements threshold. Coverage `lcov.info` is uploaded as an artifact.                                                                                                           |
+| `build-contracts`     | Matrix over `[oracle, provenance, registry]`: `cargo fmt --check`, `cargo clippy --target wasm32-unknown-unknown --release -- -D warnings`, a release Wasm build, `cargo test --lib`, and `cargo test integration_` (only `oracle` has integration tests today). The built `.wasm` is uploaded per contract.                 |
+| `contract-coverage`   | Matrix over the same three contracts: `cargo-llvm-cov` generates `lcov.info` per contract (uploaded as an artifact) and prints a summary; runs after `build-contracts`.                                                                                                                                                      |
+| `e2e-tests`           | Matrix over `[chromium, firefox, webkit]`: builds the frontend, starts `next start`, and runs Playwright against it. Uploads the HTML report always, and failure-only visual regression snapshots.                                                                                                                           |
+| `mutation-testing`    | **Added for #250.** Runs Stryker against `packages/shared` (see [`docs/testing/MUTATION_TESTING.md`](../testing/MUTATION_TESTING.md)) and uploads the HTML report as a build artifact. Runs after `frontend-unit-tests`; **not** in `ci-complete`'s `needs` list, so it's observability-only for now — see that doc for why. |
+| `ci-complete`         | Final gate: depends on `frontend-unit-tests`, `build-contracts`, `contract-coverage`, and `e2e-tests`. Downloads all coverage artifacts and prints a pass summary.                                                                                                                                                           |
 
 ## `security-scan.yml`
 

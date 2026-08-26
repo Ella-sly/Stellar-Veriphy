@@ -137,10 +137,7 @@ export default function FeaturesShowcasePage() {
                 </ul>
               </div>
             </div>
-            <CertificateHistoryTimelineView
-              certificateId="CERT-DEMO-12345"
-              events={mockEvents}
-            />
+            <CertificateHistoryTimelineView certificateId="CERT-DEMO-12345" events={mockEvents} />
           </div>
         )}
 
@@ -171,7 +168,8 @@ export default function FeaturesShowcasePage() {
           🔔 Notification Center (#214)
         </h3>
         <p className="text-xs text-amber-800 dark:text-amber-200 mb-3">
-          Check the bell icon in the header to see the centralized notification system with categories, settings, and persistence.
+          Check the bell icon in the header to see the centralized notification system with
+          categories, settings, and persistence.
         </p>
         <button
           onClick={handleAddDemoNotification}

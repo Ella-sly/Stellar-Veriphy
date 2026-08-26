@@ -1,6 +1,7 @@
 # Skeleton Loading States Guide
 
 ## Overview
+
 This guide documents the skeleton loading system implemented across the StellarVeriphy application. Skeleton screens provide content-aware loading placeholders that match the dimensions and structure of actual content, improving perceived performance and user experience.
 
 ## Benefits of Skeleton Screens
@@ -14,6 +15,7 @@ This guide documents the skeleton loading system implemented across the StellarV
 ## Available Skeleton Components
 
 ### Base Skeleton
+
 Location: `/frontend/components/ui/Skeleton.tsx`
 
 The foundation component for all skeleton elements.
@@ -27,120 +29,138 @@ import { Skeleton } from "@/components/ui/Skeleton";
 ```
 
 **Props:**
+
 - `className`: Tailwind classes for size and spacing
 - `animate`: Enable/disable pulse animation (default: true)
 - `rounded`: Border radius: "none" | "sm" | "md" | "lg" | "full" (default: "md")
 
 ### Certificate Card Skeleton
+
 Matches the layout of certificate verification cards.
 
 ```tsx
 import { CertificateCardSkeleton } from "@/components/ui/Skeleton";
 
-<CertificateCardSkeleton />
+<CertificateCardSkeleton />;
 ```
 
 **Use Cases:**
+
 - Certificate lookup loading
 - Certificate verification in progress
 - Certificate detail pages
 
 ### Transaction List Skeleton
+
 Mimics transaction table rows with proper column structure.
 
 ```tsx
 import { TransactionListSkeleton } from "@/components/ui/Skeleton";
 
-<TransactionListSkeleton count={10} />
+<TransactionListSkeleton count={10} />;
 ```
 
 **Props:**
+
 - `count`: Number of skeleton rows (default: 5)
 
 **Use Cases:**
+
 - Transaction history loading
 - Transaction search results
 - Blockchain transaction lists
 
 ### Dashboard Widget Skeleton
+
 Statistics card placeholder with icon and value layout.
 
 ```tsx
 import { DashboardWidgetSkeleton } from "@/components/ui/Skeleton";
 
-<DashboardWidgetSkeleton />
+<DashboardWidgetSkeleton />;
 ```
 
 **Use Cases:**
+
 - Dashboard statistics
 - Analytics widgets
 - Summary cards
 
 ### Stats Cards Skeleton
+
 Multiple dashboard widgets in a grid layout.
 
 ```tsx
 import { StatsCardsSkeleton } from "@/components/ui/Skeleton";
 
-<StatsCardsSkeleton count={3} />
+<StatsCardsSkeleton count={3} />;
 ```
 
 **Props:**
+
 - `count`: Number of stat cards (default: 3)
 
 ### Table Skeleton
+
 Full table with headers and rows.
 
 ```tsx
 import { TableSkeleton } from "@/components/ui/Skeleton";
 
-<TableSkeleton rows={8} cols={5} />
+<TableSkeleton rows={8} cols={5} />;
 ```
 
 **Props:**
+
 - `rows`: Number of data rows (default: 5)
 - `cols`: Number of columns (default: 4)
 
 ### Card Grid Skeleton
+
 Grid of card-style content placeholders.
 
 ```tsx
 import { CardGridSkeleton } from "@/components/ui/Skeleton";
 
-<CardGridSkeleton count={6} />
+<CardGridSkeleton count={6} />;
 ```
 
 **Props:**
+
 - `count`: Number of cards (default: 6)
 
 ### List Item Skeleton
+
 Single list item with avatar and text.
 
 ```tsx
 import { ListItemSkeleton } from "@/components/ui/Skeleton";
 
-<ListItemSkeleton />
+<ListItemSkeleton />;
 ```
 
 ### Form Skeleton
+
 Form fields with labels and inputs.
 
 ```tsx
 import { FormSkeleton } from "@/components/ui/Skeleton";
 
-<FormSkeleton />
+<FormSkeleton />;
 ```
 
 ### Page Header Skeleton
+
 Page title and description placeholder.
 
 ```tsx
 import { PageHeaderSkeleton } from "@/components/ui/Skeleton";
 
-<PageHeaderSkeleton />
+<PageHeaderSkeleton />;
 ```
 
 ### Text Line Skeleton
+
 Single line of text placeholder.
 
 ```tsx
@@ -151,6 +171,7 @@ import { TextLineSkeleton } from "@/components/ui/Skeleton";
 ```
 
 **Props:**
+
 - `width`: String (Tailwind width class) or number (pixels)
 
 ## Implementation Examples
@@ -169,17 +190,11 @@ export default function TransactionsPage() {
       {!stats ? (
         <StatsCardsSkeleton count={3} />
       ) : (
-        <div className="grid grid-cols-3 gap-4">
-          {/* Stats content */}
-        </div>
+        <div className="grid grid-cols-3 gap-4">{/* Stats content */}</div>
       )}
 
       {/* Transactions with skeleton */}
-      {loading ? (
-        <TransactionListSkeleton count={10} />
-      ) : (
-        <table>{/* Transaction rows */}</table>
-      )}
+      {loading ? <TransactionListSkeleton count={10} /> : <table>{/* Transaction rows */}</table>}
     </div>
   );
 }
@@ -193,9 +208,7 @@ export function CertificatePanel() {
 
   return (
     <div>
-      {lookupState.status === "loading" && (
-        <CertificateCardSkeleton />
-      )}
+      {lookupState.status === "loading" && <CertificateCardSkeleton />}
 
       {lookupState.status === "loaded" && (
         <CertificateResultCard certificate={lookupState.result} />
@@ -237,20 +250,17 @@ function CustomSkeleton() {
 ## Accessibility Features
 
 ### ARIA Attributes
+
 All skeleton components include proper ARIA attributes:
 
 ```tsx
-<div
-  role="status"
-  aria-live="polite"
-  aria-busy="true"
-  aria-label="Loading content"
->
+<div role="status" aria-live="polite" aria-busy="true" aria-label="Loading content">
   <span className="sr-only">Loading...</span>
 </div>
 ```
 
 ### Screen Reader Announcements
+
 Use the `useLoadingAnnouncement` hook for dynamic announcements:
 
 ```tsx
@@ -274,6 +284,7 @@ function MyComponent() {
 ```
 
 ### Reduced Motion Support
+
 Skeleton animations respect `prefers-reduced-motion`:
 
 ```css
@@ -287,6 +298,7 @@ Skeleton animations respect `prefers-reduced-motion`:
 ## Styling Guidelines
 
 ### Match Content Dimensions
+
 Skeleton elements should match the size of actual content:
 
 ```tsx
@@ -300,6 +312,7 @@ Skeleton elements should match the size of actual content:
 ```
 
 ### Use Consistent Spacing
+
 Maintain the same gaps and padding:
 
 ```tsx
@@ -321,30 +334,37 @@ Maintain the same gaps and padding:
 ```
 
 ### Preserve Layout Structure
+
 Keep the same container structure:
 
 ```tsx
-{loading ? (
-  <div className="grid grid-cols-3 gap-4">
-    <CardSkeleton />
-    <CardSkeleton />
-    <CardSkeleton />
-  </div>
-) : (
-  <div className="grid grid-cols-3 gap-4">
-    {cards.map(card => <Card key={card.id} {...card} />)}
-  </div>
-)}
+{
+  loading ? (
+    <div className="grid grid-cols-3 gap-4">
+      <CardSkeleton />
+      <CardSkeleton />
+      <CardSkeleton />
+    </div>
+  ) : (
+    <div className="grid grid-cols-3 gap-4">
+      {cards.map((card) => (
+        <Card key={card.id} {...card} />
+      ))}
+    </div>
+  );
+}
 ```
 
 ## Animation
 
 ### Pulse Animation
+
 Default pulse animation defined in Tailwind:
 
 ```css
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
   }
   50% {
@@ -354,6 +374,7 @@ Default pulse animation defined in Tailwind:
 ```
 
 ### Custom Animation Speed
+
 Adjust animation speed with Tailwind config:
 
 ```typescript
@@ -362,8 +383,8 @@ module.exports = {
   theme: {
     extend: {
       animation: {
-        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-        'pulse-fast': 'pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        "pulse-slow": "pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+        "pulse-fast": "pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite",
       },
     },
   },
@@ -371,6 +392,7 @@ module.exports = {
 ```
 
 ### Disable Animation
+
 ```tsx
 <Skeleton animate={false} className="h-4 w-32" />
 ```
@@ -396,6 +418,7 @@ Custom dark mode colors:
 ## Performance Considerations
 
 ### Use Appropriate Count
+
 Don't render too many skeleton elements:
 
 ```tsx
@@ -407,6 +430,7 @@ Don't render too many skeleton elements:
 ```
 
 ### Lazy Load Skeletons
+
 For off-screen content, use intersection observer:
 
 ```tsx
@@ -428,17 +452,14 @@ function LazyList() {
     return () => observer.disconnect();
   }, []);
 
-  return (
-    <div ref={ref}>
-      {visible && <ListSkeleton count={20} />}
-    </div>
-  );
+  return <div ref={ref}>{visible && <ListSkeleton count={20} />}</div>;
 }
 ```
 
 ## Best Practices
 
 ### 1. Show Skeletons Immediately
+
 Don't delay skeleton display:
 
 ```tsx
@@ -452,28 +473,37 @@ const [loading, setLoading] = useState(true);
 ```
 
 ### 2. Match Visual Hierarchy
+
 Skeleton should reflect content importance:
 
 ```tsx
 <div>
   <Skeleton className="h-8 w-2/3 mb-2" /> {/* Title */}
   <Skeleton className="h-4 w-1/2 mb-6" /> {/* Subtitle */}
-  <Skeleton className="h-4 w-full" />     {/* Body */}
+  <Skeleton className="h-4 w-full" /> {/* Body */}
 </div>
 ```
 
 ### 3. Use Semantic HTML
+
 Even for skeletons:
 
 ```tsx
 <article className="skeleton-card">
-  <header><Skeleton className="h-6 w-32" /></header>
-  <main><Skeleton className="h-24 w-full" /></main>
-  <footer><Skeleton className="h-10 w-20" /></footer>
+  <header>
+    <Skeleton className="h-6 w-32" />
+  </header>
+  <main>
+    <Skeleton className="h-24 w-full" />
+  </main>
+  <footer>
+    <Skeleton className="h-10 w-20" />
+  </footer>
 </article>
 ```
 
 ### 4. Progressive Enhancement
+
 Show skeletons for initial load only:
 
 ```tsx
@@ -486,14 +516,13 @@ useEffect(() => {
 }, []);
 
 // Subsequent loads can use different indicators
-{loading ? (
-  isInitialLoad ? <Skeleton /> : <SpinnerOverlay />
-) : (
-  <Content />
-)}
+{
+  loading ? isInitialLoad ? <Skeleton /> : <SpinnerOverlay /> : <Content />;
+}
 ```
 
 ### 5. Consistent Timing
+
 Don't show skeleton for very short loads:
 
 ```tsx
@@ -507,33 +536,37 @@ useEffect(() => {
   return () => clearTimeout(timer);
 }, []);
 
-{loading && showSkeleton && <Skeleton />}
+{
+  loading && showSkeleton && <Skeleton />;
+}
 ```
 
 ## Testing
 
 ### Visual Regression Tests
+
 Test that skeletons match content layout:
 
 ```typescript
 test('skeleton matches content dimensions', () => {
   const { container } = render(<CardSkeleton />);
   const skeleton = container.querySelector('.skeleton-card');
-  
+
   const { container: contentContainer } = render(<Card {...mockData} />);
   const content = contentContainer.querySelector('.card');
-  
+
   expect(skeleton.offsetHeight).toBeCloseTo(content.offsetHeight, 10);
 });
 ```
 
 ### Accessibility Tests
+
 Ensure proper ARIA attributes:
 
 ```typescript
 test('skeleton has accessibility attributes', () => {
   render(<Skeleton />);
-  
+
   expect(screen.getByRole('status')).toBeInTheDocument();
   expect(screen.getByLabelText(/loading/i)).toBeInTheDocument();
   expect(screen.getByText(/loading/i)).toHaveClass('sr-only');
@@ -543,22 +576,29 @@ test('skeleton has accessibility attributes', () => {
 ## Migration from Spinners
 
 ### Before (Spinner)
+
 ```tsx
-{loading && (
-  <div className="flex justify-center py-12">
-    <Loader2 className="w-8 h-8 animate-spin" />
-  </div>
-)}
+{
+  loading && (
+    <div className="flex justify-center py-12">
+      <Loader2 className="w-8 h-8 animate-spin" />
+    </div>
+  );
+}
 ```
 
 ### After (Skeleton)
+
 ```tsx
-{loading && <CertificateCardSkeleton />}
+{
+  loading && <CertificateCardSkeleton />;
+}
 ```
 
 ## Browser Support
 
 Skeleton loading states work in all modern browsers:
+
 - ✅ Chrome 90+
 - ✅ Firefox 88+
 - ✅ Safari 14+

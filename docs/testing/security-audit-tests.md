@@ -67,11 +67,11 @@ process in [docs/security/smart-contract-audit-runbook.md](../security/smart-con
 
 ## Privileged Roles Matrix (fill in per contract)
 
-| Contract | Role | Gated Functions | Negative Test Present |
-|---|---|---|---|
-| registry | admin | TBD | ☐ |
-| oracle | admin | TBD | ☐ |
-| provenance | admin | TBD | ☐ |
+| Contract   | Role  | Gated Functions | Negative Test Present |
+| ---------- | ----- | --------------- | --------------------- |
+| registry   | admin | TBD             | ☐                     |
+| oracle     | admin | TBD             | ☐                     |
+| provenance | admin | TBD             | ☐                     |
 
 ## Automated Runs in CI
 

@@ -13,13 +13,7 @@ import type { VerificationStatus } from "@/services/verificationStatusService";
 // Types
 // ---------------------------------------------------------------------------
 
-export type CertificateStatus =
-  | "Active"
-  | "Revoked"
-  | "Expired"
-  | "Locked"
-  | "Pending"
-  | "Failed";
+export type CertificateStatus = "Active" | "Revoked" | "Expired" | "Locked" | "Pending" | "Failed";
 
 interface CertificateStatusBadgeProps {
   status: CertificateStatus;
@@ -116,4 +110,3 @@ export function CertificateStatusBadge({
     </span>
   );
 }
-

@@ -14,9 +14,7 @@ const EXPLORER_BASE = "https://stellar.expert/explorer/public/tx";
  * FAILED when `successful` is false, and CONFIRMED otherwise.
  * Falls back to PENDING on network errors.
  */
-export async function fetchTransactionStatus(
-  txHash: string
-): Promise<TransactionStatus> {
+export async function fetchTransactionStatus(txHash: string): Promise<TransactionStatus> {
   try {
     const response = await fetch(`${HORIZON_URL}/transactions/${txHash}`);
 

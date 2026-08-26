@@ -22,49 +22,49 @@
 // ---------------------------------------------------------------------------
 
 export type VerificationPhase =
-  | "submitted"    // tx sent, not yet on ledger
-  | "pending"      // oracle request is Pending
-  | "processing"   // picked up by a provider
-  | "verified"     // oracle state → Verified
-  | "rejected"     // oracle state → Rejected
-  | "cancelled"    // request was cancelled
-  | "failed"       // unrecoverable error (network, timeout, etc.)
-  | "expired";     // TTL elapsed before resolution
+  | "submitted" // tx sent, not yet on ledger
+  | "pending" // oracle request is Pending
+  | "processing" // picked up by a provider
+  | "verified" // oracle state → Verified
+  | "rejected" // oracle state → Rejected
+  | "cancelled" // request was cancelled
+  | "failed" // unrecoverable error (network, timeout, etc.)
+  | "expired"; // TTL elapsed before resolution
 
 export interface VerificationStatus {
-  jobId:         string;
-  phase:         VerificationPhase;
+  jobId: string;
+  phase: VerificationPhase;
   /** 0-100 progress estimate based on phase. */
-  progress:      number;
+  progress: number;
   /** Human-readable description for the current phase. */
-  message:       string;
+  message: string;
   /** Stellar transaction hash, if known. */
-  txHash?:       string | undefined;
+  txHash?: string | undefined;
   /** Oracle request ID (u64 as string), if known. */
-  requestId?:    string | undefined;
+  requestId?: string | undefined;
   /** ISO timestamp of the last status change. */
-  updatedAt:     string;
+  updatedAt: string;
   /** Whether the status is terminal (polling should stop). */
-  terminal:      boolean;
+  terminal: boolean;
 }
 
 export interface WatchOptions {
   /** Stellar transaction hash to follow (optional if requestId is supplied). */
-  txHash?:         string | undefined;
+  txHash?: string | undefined;
   /** Oracle request ID to poll (optional if txHash is supplied). */
-  requestId?:      string | undefined;
+  requestId?: string | undefined;
   /** Horizon base URL.  Defaults to testnet. */
-  horizonUrl?:     string | undefined;
+  horizonUrl?: string | undefined;
   /** How often to poll, in ms.  Default 3 000. */
-  intervalMs?:     number | undefined;
+  intervalMs?: number | undefined;
   /** Stop polling after this many ms.  Default 5 min. */
-  timeoutMs?:      number | undefined;
+  timeoutMs?: number | undefined;
   /** Called on every status update. */
-  onUpdate:        (status: VerificationStatus) => void;
+  onUpdate: (status: VerificationStatus) => void;
   /** Called once when a terminal status is reached. */
-  onTerminal?:     ((status: VerificationStatus) => void) | undefined;
+  onTerminal?: ((status: VerificationStatus) => void) | undefined;
   /** Called when polling fails (network error, etc.). */
-  onError?:        ((err: Error, jobId: string) => void) | undefined;
+  onError?: ((err: Error, jobId: string) => void) | undefined;
 }
 
 // ---------------------------------------------------------------------------
@@ -72,34 +72,38 @@ export interface WatchOptions {
 // ---------------------------------------------------------------------------
 
 const PHASE_PROGRESS: Record<VerificationPhase, number> = {
-  submitted:  10,
-  pending:    25,
+  submitted: 10,
+  pending: 25,
   processing: 55,
-  verified:  100,
-  rejected:  100,
+  verified: 100,
+  rejected: 100,
   cancelled: 100,
-  failed:    100,
-  expired:   100,
+  failed: 100,
+  expired: 100,
 };
 
 const PHASE_MESSAGE: Record<VerificationPhase, string> = {
-  submitted:  "Transaction submitted — waiting for ledger confirmation…",
-  pending:    "Request received — awaiting provider assignment…",
+  submitted: "Transaction submitted — waiting for ledger confirmation…",
+  pending: "Request received — awaiting provider assignment…",
   processing: "Provider is processing your verification request…",
-  verified:   "Verification complete — certificate issued.",
-  rejected:   "Verification rejected by provider.",
-  cancelled:  "Request was cancelled.",
-  failed:     "An error occurred. Please try again.",
-  expired:    "Request expired before it could be processed.",
+  verified: "Verification complete — certificate issued.",
+  rejected: "Verification rejected by provider.",
+  cancelled: "Request was cancelled.",
+  failed: "An error occurred. Please try again.",
+  expired: "Request expired before it could be processed.",
 };
 
 const TERMINAL_PHASES = new Set<VerificationPhase>([
-  "verified", "rejected", "cancelled", "failed", "expired",
+  "verified",
+  "rejected",
+  "cancelled",
+  "failed",
+  "expired",
 ]);
 
 function makeStatus(
-  jobId:   string,
-  phase:   VerificationPhase,
+  jobId: string,
+  phase: VerificationPhase,
   extras?: {
     txHash?: string | undefined;
     requestId?: string | undefined;
@@ -109,12 +113,12 @@ function makeStatus(
   return {
     jobId,
     phase,
-    progress:  PHASE_PROGRESS[phase],
-    message:   extras?.message ?? PHASE_MESSAGE[phase],
-    txHash:    extras?.txHash,
+    progress: PHASE_PROGRESS[phase],
+    message: extras?.message ?? PHASE_MESSAGE[phase],
+    txHash: extras?.txHash,
     requestId: extras?.requestId,
     updatedAt: new Date().toISOString(),
-    terminal:  TERMINAL_PHASES.has(phase),
+    terminal: TERMINAL_PHASES.has(phase),
   };
 }
 
@@ -126,15 +130,9 @@ const DEFAULT_HORIZON = "https://horizon-testnet.stellar.org";
 
 type HorizonTxStatus = "SUCCESS" | "FAILED" | "NOT_FOUND" | "PENDING";
 
-async function fetchTxStatus(
-  txHash:     string,
-  horizonUrl: string
-): Promise<HorizonTxStatus> {
+async function fetchTxStatus(txHash: string, horizonUrl: string): Promise<HorizonTxStatus> {
   try {
-    const res = await fetch(
-      `${horizonUrl}/transactions/${txHash}`,
-      { cache: "no-store" }
-    );
+    const res = await fetch(`${horizonUrl}/transactions/${txHash}`, { cache: "no-store" });
     if (res.status === 404) return "NOT_FOUND";
     if (!res.ok) return "PENDING";
     const data = await res.json();
@@ -149,12 +147,12 @@ async function fetchTxStatus(
 // ---------------------------------------------------------------------------
 
 interface PollRecord {
-  jobId:      string;
-  opts:       Required<WatchOptions>;
-  timerId:    ReturnType<typeof setInterval>;
-  timeoutId:  ReturnType<typeof setTimeout>;
-  lastPhase:  VerificationPhase;
-  cancelled:  boolean;
+  jobId: string;
+  opts: Required<WatchOptions>;
+  timerId: ReturnType<typeof setInterval>;
+  timeoutId: ReturnType<typeof setTimeout>;
+  lastPhase: VerificationPhase;
+  cancelled: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -173,44 +171,47 @@ class VerificationStatusService {
     this.unwatch(jobId);
 
     const fullOpts = {
-      txHash:      opts.txHash      ?? "",
-      requestId:   opts.requestId   ?? "",
-      horizonUrl:  opts.horizonUrl  ?? DEFAULT_HORIZON,
-      intervalMs:  opts.intervalMs  ?? 3_000,
-      timeoutMs:   opts.timeoutMs   ?? 5 * 60 * 1_000,
-      onUpdate:    opts.onUpdate,
-      onTerminal:  opts.onTerminal,
-      onError:     opts.onError,
+      txHash: opts.txHash ?? "",
+      requestId: opts.requestId ?? "",
+      horizonUrl: opts.horizonUrl ?? DEFAULT_HORIZON,
+      intervalMs: opts.intervalMs ?? 3_000,
+      timeoutMs: opts.timeoutMs ?? 5 * 60 * 1_000,
+      onUpdate: opts.onUpdate,
+      onTerminal: opts.onTerminal,
+      onError: opts.onError,
     };
 
     // Emit the initial "submitted" status immediately
     const initial = makeStatus(jobId, "submitted", {
-      txHash:    fullOpts.txHash    || undefined,
+      txHash: fullOpts.txHash || undefined,
       requestId: fullOpts.requestId || undefined,
     });
     fullOpts.onUpdate(initial);
 
     const record: PollRecord = {
       jobId,
-      opts:      fullOpts as Required<WatchOptions>,
-      timerId:   0 as unknown as ReturnType<typeof setInterval>,
+      opts: fullOpts as Required<WatchOptions>,
+      timerId: 0 as unknown as ReturnType<typeof setInterval>,
       timeoutId: 0 as unknown as ReturnType<typeof setTimeout>,
       lastPhase: "submitted",
       cancelled: false,
     };
 
-    const emit = (phase: VerificationPhase, extras?: {
-      txHash?: string | undefined;
-      requestId?: string | undefined;
-      message?: string | undefined;
-    }) => {
+    const emit = (
+      phase: VerificationPhase,
+      extras?: {
+        txHash?: string | undefined;
+        requestId?: string | undefined;
+        message?: string | undefined;
+      }
+    ) => {
       if (record.cancelled) return;
       if (phase === record.lastPhase) return; // debounce identical updates
       record.lastPhase = phase;
       const status = makeStatus(jobId, phase, {
-        txHash:    fullOpts.txHash    || extras?.txHash    || undefined,
+        txHash: fullOpts.txHash || extras?.txHash || undefined,
         requestId: fullOpts.requestId || extras?.requestId || undefined,
-        message:   extras?.message,
+        message: extras?.message,
       });
       fullOpts.onUpdate(status);
       if (status.terminal) {
@@ -225,7 +226,10 @@ class VerificationStatusService {
         // Step 1 — confirm the transaction landed on the ledger
         if (record.lastPhase === "submitted" && fullOpts.txHash) {
           const txStatus = await fetchTxStatus(fullOpts.txHash, fullOpts.horizonUrl);
-          if (txStatus === "FAILED") { emit("failed"); return; }
+          if (txStatus === "FAILED") {
+            emit("failed");
+            return;
+          }
           if (txStatus === "SUCCESS") emit("pending");
           // NOT_FOUND / PENDING → stay in "submitted"
           return;
@@ -248,10 +252,7 @@ class VerificationStatusService {
           return;
         }
       } catch (err) {
-        fullOpts.onError?.(
-          err instanceof Error ? err : new Error(String(err)),
-          jobId
-        );
+        fullOpts.onError?.(err instanceof Error ? err : new Error(String(err)), jobId);
       }
     };
 

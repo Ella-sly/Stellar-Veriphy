@@ -49,9 +49,9 @@ export function ConsentBanner() {
     >
       <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-6">
         <p className="text-sm flex-1">
-          StellarVeriphy stores data such as your theme preference, in-progress form
-          drafts, and admin audit log entries in your browser&apos;s local storage.
-          It doesn&apos;t use tracking cookies or send this data to a server. See our{" "}
+          StellarVeriphy stores data such as your theme preference, in-progress form drafts, and
+          admin audit log entries in your browser&apos;s local storage. It doesn&apos;t use tracking
+          cookies or send this data to a server. See our{" "}
           <Link href="/privacy" className="underline hover:text-white">
             Privacy Policy
           </Link>{" "}

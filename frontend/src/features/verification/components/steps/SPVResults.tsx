@@ -11,9 +11,7 @@ export function SPVResults() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold mb-4 text-black dark:text-white">
-          Verification Result
-        </h2>
+        <h2 className="text-2xl font-bold mb-4 text-black dark:text-white">Verification Result</h2>
       </div>
 
       {success ? (

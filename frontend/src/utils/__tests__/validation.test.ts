@@ -20,8 +20,7 @@ import {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("isValidSHA256", () => {
-  const VALID_HASH =
-    "a3f5c2e1b4d6789012345678901234567890abcdef1234567890abcdef123456";
+  const VALID_HASH = "a3f5c2e1b4d6789012345678901234567890abcdef1234567890abcdef123456";
 
   it("returns true for a valid 64-character lowercase hex string", () => {
     expect(isValidSHA256(VALID_HASH)).toBe(true);
@@ -32,8 +31,7 @@ describe("isValidSHA256", () => {
   });
 
   it("returns true for a mixed-case valid hex string", () => {
-    const mixed =
-      "A3F5C2E1b4d6789012345678901234567890ABCDEF1234567890abcdef123456";
+    const mixed = "A3F5C2E1b4d6789012345678901234567890ABCDEF1234567890abcdef123456";
     expect(isValidSHA256(mixed)).toBe(true);
   });
 
@@ -46,8 +44,7 @@ describe("isValidSHA256", () => {
   });
 
   it("returns false when the string contains non-hex characters", () => {
-    const withNonHex =
-      "g3f5c2e1b4d6789012345678901234567890abcdef1234567890abcdef123456";
+    const withNonHex = "g3f5c2e1b4d6789012345678901234567890abcdef1234567890abcdef123456";
     expect(isValidSHA256(withNonHex)).toBe(false);
   });
 
@@ -71,8 +68,7 @@ describe("isValidSHA256", () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("validateSHA256", () => {
-  const VALID_HASH =
-    "a3f5c2e1b4d6789012345678901234567890abcdef1234567890abcdef123456";
+  const VALID_HASH = "a3f5c2e1b4d6789012345678901234567890abcdef1234567890abcdef123456";
 
   it("returns null for a valid SHA-256 hash", () => {
     expect(validateSHA256(VALID_HASH)).toBeNull();

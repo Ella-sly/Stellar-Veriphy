@@ -18,10 +18,7 @@ import { auditLogger, hashValue } from "@/lib/security/auditLogger";
 // ---------------------------------------------------------------------------
 
 export type ApiKeyScope =
-  | "read:certificates"
-  | "write:verifications"
-  | "read:analytics"
-  | "admin:registry";
+  "read:certificates" | "write:verifications" | "read:analytics" | "admin:registry";
 
 export interface ApiKey {
   id: string;
@@ -49,10 +46,7 @@ interface ApiKeyManagementProps {
 // Scope definitions
 // ---------------------------------------------------------------------------
 
-const SCOPE_DEFINITIONS: Record<
-  ApiKeyScope,
-  { label: string; description: string }
-> = {
+const SCOPE_DEFINITIONS: Record<ApiKeyScope, { label: string; description: string }> = {
   "read:certificates": {
     label: "Read Certificates",
     description: "View and retrieve provenance certificates",
@@ -94,8 +88,7 @@ function saveKeys(userAddress: string, keys: ApiKey[]): void {
 }
 
 function generateRandomKey(): string {
-  const chars =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   let result = "sv_";
   for (let i = 0; i < 48; i++) {
     result += chars.charAt(Math.floor(Math.random() * chars.length));
@@ -148,9 +141,7 @@ export function APIKeyManagement({ userAddress, className }: ApiKeyManagementPro
     const now = new Date();
     const expiresAt = newKeyNeverExpires
       ? null
-      : new Date(
-          now.getTime() + newKeyExpiration * 24 * 60 * 60 * 1000
-        ).toISOString();
+      : new Date(now.getTime() + newKeyExpiration * 24 * 60 * 60 * 1000).toISOString();
 
     const rawKey = generateRandomKey();
 
@@ -196,9 +187,7 @@ export function APIKeyManagement({ userAddress, className }: ApiKeyManagementPro
       return;
     }
     const target = keys.find((k) => k.id === id);
-    const updated = keys.map((k) =>
-      k.id === id ? { ...k, status: "revoked" as const } : k
-    );
+    const updated = keys.map((k) => (k.id === id ? { ...k, status: "revoked" as const } : k));
     persistKeys(updated);
 
     void auditLogger.logEvent({
@@ -258,8 +247,7 @@ export function APIKeyManagement({ userAddress, className }: ApiKeyManagementPro
             API Key Management
           </h2>
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            Generate and manage API keys for programmatic access to verification
-            services.
+            Generate and manage API keys for programmatic access to verification services.
           </p>
         </div>
         {!isCreating && (
@@ -405,9 +393,7 @@ export function APIKeyManagement({ userAddress, className }: ApiKeyManagementPro
                   onChange={(e) => setNewKeyNeverExpires(e.target.checked)}
                   className="w-4 h-4 rounded"
                 />
-                <span className="text-sm text-gray-700 dark:text-gray-300">
-                  Never expires
-                </span>
+                <span className="text-sm text-gray-700 dark:text-gray-300">Never expires</span>
               </label>
             </div>
             {!newKeyNeverExpires && (
@@ -417,14 +403,10 @@ export function APIKeyManagement({ userAddress, className }: ApiKeyManagementPro
                   min="1"
                   max="3650"
                   value={newKeyExpiration}
-                  onChange={(e) =>
-                    setNewKeyExpiration(parseInt(e.target.value, 10) || 30)
-                  }
+                  onChange={(e) => setNewKeyExpiration(parseInt(e.target.value, 10) || 30)}
                   className="w-24 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
-                <span className="text-sm text-gray-600 dark:text-gray-400">
-                  days from now
-                </span>
+                <span className="text-sm text-gray-600 dark:text-gray-400">days from now</span>
               </div>
             )}
           </div>
@@ -492,23 +474,18 @@ export function APIKeyManagement({ userAddress, className }: ApiKeyManagementPro
                   </div>
                   <div>
                     <span className="font-medium">Expires:</span>{" "}
-                    {key.expiresAt
-                      ? new Date(key.expiresAt).toLocaleDateString()
-                      : "Never"}
+                    {key.expiresAt ? new Date(key.expiresAt).toLocaleDateString() : "Never"}
                   </div>
                   <div>
-                    <span className="font-medium">Rate Limit:</span>{" "}
-                    {key.rateLimitPerMinute} req/min
+                    <span className="font-medium">Rate Limit:</span> {key.rateLimitPerMinute}{" "}
+                    req/min
                   </div>
                   <div>
-                    <span className="font-medium">Usage:</span> {key.usageCount}{" "}
-                    requests
+                    <span className="font-medium">Usage:</span> {key.usageCount} requests
                   </div>
                   <div>
                     <span className="font-medium">Last Used:</span>{" "}
-                    {key.lastUsedAt
-                      ? new Date(key.lastUsedAt).toLocaleString()
-                      : "Never"}
+                    {key.lastUsedAt ? new Date(key.lastUsedAt).toLocaleString() : "Never"}
                   </div>
                 </div>
 

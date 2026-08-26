@@ -10,14 +10,14 @@ Printing a certificate page currently outputs the full application UI — naviga
 
 ## Acceptance Criteria
 
-| # | Criterion | Description |
-|---|-----------|-------------|
-| 1 | Print CSS stylesheet | A dedicated `print.css` (or `@media print` block) hides UI chrome and applies print-safe styles |
-| 2 | Hide navigation and UI chrome | Nav bars, sidebars, action buttons, toasts, and modals are hidden via `display: none` in print context |
-| 3 | High-res certificate badge | The certificate logo/badge renders at sufficient resolution (vector SVG preferred, or `@2x` raster fallback) |
-| 4 | QR code for verification | A QR code encoding the public verification URL is printed on the certificate for offline scanning |
-| 5 | Print preview mode | A "Print Preview" button in the UI shows a modal or dedicated route with the print-ready certificate view |
-| 6 | Page break handling | Long certificates do not break mid-section; `page-break-inside: avoid` is applied to key blocks |
+| #   | Criterion                     | Description                                                                                                  |
+| --- | ----------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| 1   | Print CSS stylesheet          | A dedicated `print.css` (or `@media print` block) hides UI chrome and applies print-safe styles              |
+| 2   | Hide navigation and UI chrome | Nav bars, sidebars, action buttons, toasts, and modals are hidden via `display: none` in print context       |
+| 3   | High-res certificate badge    | The certificate logo/badge renders at sufficient resolution (vector SVG preferred, or `@2x` raster fallback) |
+| 4   | QR code for verification      | A QR code encoding the public verification URL is printed on the certificate for offline scanning            |
+| 5   | Print preview mode            | A "Print Preview" button in the UI shows a modal or dedicated route with the print-ready certificate view    |
+| 6   | Page break handling           | Long certificates do not break mid-section; `page-break-inside: avoid` is applied to key blocks              |
 
 ## Print Stylesheet Specification
 
@@ -104,11 +104,24 @@ Apply the following CSS to prevent awkward mid-content breaks:
 
 ```css
 @media print {
-  .certificate-header   { page-break-inside: avoid; }
-  .certificate-body     { page-break-inside: avoid; }
-  .certificate-footer   { page-break-inside: avoid; page-break-before: avoid; }
-  .signature-block      { page-break-inside: avoid; }
-  h1, h2, h3            { page-break-after: avoid; }
+  .certificate-header {
+    page-break-inside: avoid;
+  }
+  .certificate-body {
+    page-break-inside: avoid;
+  }
+  .certificate-footer {
+    page-break-inside: avoid;
+    page-break-before: avoid;
+  }
+  .signature-block {
+    page-break-inside: avoid;
+  }
+  h1,
+  h2,
+  h3 {
+    page-break-after: avoid;
+  }
 }
 ```
 

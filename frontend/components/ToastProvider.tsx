@@ -18,13 +18,8 @@ interface Toast {
   duration?: number;
 }
 
-type ToastPosition = 
-  | "top-left"
-  | "top-center"
-  | "top-right"
-  | "bottom-left"
-  | "bottom-center"
-  | "bottom-right";
+type ToastPosition =
+  "top-left" | "top-center" | "top-right" | "bottom-left" | "bottom-center" | "bottom-right";
 
 interface ToastOptions {
   type?: ToastType;
@@ -41,7 +36,7 @@ const ToastContext = createContext<{
   toast: (message: string, options?: ToastOptions) => number;
   dismiss: (id: number) => void;
   dismissAll: () => void;
-}>({ 
+}>({
   toast: () => 0,
   dismiss: () => {},
   dismissAll: () => {},
@@ -83,48 +78,51 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [position, setPosition] = useState<ToastPosition>("bottom-right");
 
-  const toast = useCallback((message: string, options: ToastOptions = {}) => {
-    const id = ++nextId;
-    const { 
-      type = "info", 
-      title, 
-      action, 
-      duration = 4000,
-      position: toastPosition = "bottom-right"
-    } = options;
+  const toast = useCallback(
+    (message: string, options: ToastOptions = {}) => {
+      const id = ++nextId;
+      const {
+        type = "info",
+        title,
+        action,
+        duration = 4000,
+        position: toastPosition = "bottom-right",
+      } = options;
 
-    if (toastPosition !== position) {
-      setPosition(toastPosition);
-    }
+      if (toastPosition !== position) {
+        setPosition(toastPosition);
+      }
 
-    const newToast: Toast = {
-      id,
-      message,
-      type,
-      duration,
-      ...(title !== undefined ? { title } : {}),
-      ...(action !== undefined ? { action } : {}),
-    };
+      const newToast: Toast = {
+        id,
+        message,
+        type,
+        duration,
+        ...(title !== undefined ? { title } : {}),
+        ...(action !== undefined ? { action } : {}),
+      };
 
-    setToasts((prev) => [...prev, newToast]);
+      setToasts((prev) => [...prev, newToast]);
 
-    if (duration > 0) {
-      setTimeout(() => {
-        setToasts((prev) => prev.filter((t) => t.id !== id));
-      }, duration);
-    }
+      if (duration > 0) {
+        setTimeout(() => {
+          setToasts((prev) => prev.filter((t) => t.id !== id));
+        }, duration);
+      }
 
-    // Announce to screen readers
-    const announcement = document.createElement("div");
-    announcement.setAttribute("aria-live", type === "error" ? "assertive" : "polite");
-    announcement.setAttribute("aria-atomic", "true");
-    announcement.className = "sr-only";
-    announcement.textContent = `${type}: ${title ? `${title} - ` : ""}${message}`;
-    document.body.appendChild(announcement);
-    setTimeout(() => document.body.removeChild(announcement), 100);
+      // Announce to screen readers
+      const announcement = document.createElement("div");
+      announcement.setAttribute("aria-live", type === "error" ? "assertive" : "polite");
+      announcement.setAttribute("aria-atomic", "true");
+      announcement.className = "sr-only";
+      announcement.textContent = `${type}: ${title ? `${title} - ` : ""}${message}`;
+      document.body.appendChild(announcement);
+      setTimeout(() => document.body.removeChild(announcement), 100);
 
-    return id;
-  }, [position]);
+      return id;
+    },
+    [position]
+  );
 
   const dismiss = useCallback((id: number) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
@@ -144,7 +142,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   return (
     <ToastContext.Provider value={{ toast, dismiss, dismissAll }}>
       {children}
-      
+
       {/* Toast container */}
       <div
         className={cn(
@@ -183,10 +181,8 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                     {toast.title}
                   </h4>
                 )}
-                <p className="text-sm text-gray-700 dark:text-gray-300">
-                  {toast.message}
-                </p>
-                
+                <p className="text-sm text-gray-700 dark:text-gray-300">{toast.message}</p>
+
                 {/* Action button */}
                 {toast.action && (
                   <div className="mt-3">
@@ -198,10 +194,14 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                       className={cn(
                         "px-3 py-1 text-xs font-medium rounded-md transition-colors",
                         "focus:outline-none focus:ring-2 focus:ring-offset-2",
-                        toast.type === "success" && "bg-green-100 text-green-700 hover:bg-green-200 focus:ring-green-500",
-                        toast.type === "error" && "bg-red-100 text-red-700 hover:bg-red-200 focus:ring-red-500",
-                        toast.type === "info" && "bg-blue-100 text-blue-700 hover:bg-blue-200 focus:ring-blue-500",
-                        toast.type === "warning" && "bg-yellow-100 text-yellow-700 hover:bg-yellow-200 focus:ring-yellow-500"
+                        toast.type === "success" &&
+                          "bg-green-100 text-green-700 hover:bg-green-200 focus:ring-green-500",
+                        toast.type === "error" &&
+                          "bg-red-100 text-red-700 hover:bg-red-200 focus:ring-red-500",
+                        toast.type === "info" &&
+                          "bg-blue-100 text-blue-700 hover:bg-blue-200 focus:ring-blue-500",
+                        toast.type === "warning" &&
+                          "bg-yellow-100 text-yellow-700 hover:bg-yellow-200 focus:ring-yellow-500"
                       )}
                       aria-label={`Perform action: ${toast.action.label}`}
                     >
@@ -260,20 +260,20 @@ export const useToast = () => useContext(ToastContext);
 // Create a separate hook for toast helpers
 export const useToastHelpers = () => {
   const { toast, dismiss, dismissAll } = useToast();
-  
+
   return {
-    success: (message: string, options?: Omit<ToastOptions, "type">) => 
+    success: (message: string, options?: Omit<ToastOptions, "type">) =>
       toast(message, { ...options, type: "success" }),
-    
-    error: (message: string, options?: Omit<ToastOptions, "type">) => 
+
+    error: (message: string, options?: Omit<ToastOptions, "type">) =>
       toast(message, { ...options, type: "error" }),
-    
-    info: (message: string, options?: Omit<ToastOptions, "type">) => 
+
+    info: (message: string, options?: Omit<ToastOptions, "type">) =>
       toast(message, { ...options, type: "info" }),
-    
-    warning: (message: string, options?: Omit<ToastOptions, "type">) => 
+
+    warning: (message: string, options?: Omit<ToastOptions, "type">) =>
       toast(message, { ...options, type: "warning" }),
-    
+
     dismiss,
     dismissAll,
   };
@@ -282,18 +282,18 @@ export const useToastHelpers = () => {
 // For global access - this creates a toast instance that can be imported
 // but should be initialized with the toast context from useToast()
 export const createToastHelpers = (toastContext: ReturnType<typeof useToast>) => ({
-  success: (message: string, options?: Omit<ToastOptions, "type">) => 
+  success: (message: string, options?: Omit<ToastOptions, "type">) =>
     toastContext.toast(message, { ...options, type: "success" }),
-  
-  error: (message: string, options?: Omit<ToastOptions, "type">) => 
+
+  error: (message: string, options?: Omit<ToastOptions, "type">) =>
     toastContext.toast(message, { ...options, type: "error" }),
-  
-  info: (message: string, options?: Omit<ToastOptions, "type">) => 
+
+  info: (message: string, options?: Omit<ToastOptions, "type">) =>
     toastContext.toast(message, { ...options, type: "info" }),
-  
-  warning: (message: string, options?: Omit<ToastOptions, "type">) => 
+
+  warning: (message: string, options?: Omit<ToastOptions, "type">) =>
     toastContext.toast(message, { ...options, type: "warning" }),
-  
+
   dismiss: (id: number) => toastContext.dismiss(id),
   dismissAll: () => toastContext.dismissAll(),
 });

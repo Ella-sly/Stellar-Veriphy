@@ -23,10 +23,7 @@ export default defineConfig({
   workers: process.env.CI ? 1 : 4,
 
   // Rich HTML report
-  reporter: [
-    ["html", { outputFolder: "playwright-report", open: "never" }],
-    ["list"],
-  ],
+  reporter: [["html", { outputFolder: "playwright-report", open: "never" }], ["list"]],
 
   use: {
     // The Next.js dev server (started separately before running E2E tests)

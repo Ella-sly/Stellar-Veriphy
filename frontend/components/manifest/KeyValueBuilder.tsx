@@ -13,10 +13,7 @@ interface KeyValueBuilderProps {
   initialPairs?: KeyValuePair[];
 }
 
-export function KeyValueBuilder({
-  onChange,
-  initialPairs = [],
-}: KeyValueBuilderProps) {
+export function KeyValueBuilder({ onChange, initialPairs = [] }: KeyValueBuilderProps) {
   const [pairs, setPairs] = useState<KeyValuePair[]>(initialPairs);
   const [draggedId, setDraggedId] = useState<string | null>(null);
 
@@ -38,9 +35,7 @@ export function KeyValueBuilder({
   };
 
   const updatePair = (id: string, key: string, value: string) => {
-    const updated = pairs.map((p) =>
-      p.id === id ? { ...p, key, value } : p
-    );
+    const updated = pairs.map((p) => (p.id === id ? { ...p, key, value } : p));
     setPairs(updated);
     onChange(updated);
   };

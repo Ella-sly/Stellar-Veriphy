@@ -38,8 +38,7 @@ export function AdvancedInput() {
     }
   };
 
-  const isValid =
-    isValidSHA256(contentHashInput) && isValidSHA256(manifestHashInput);
+  const isValid = isValidSHA256(contentHashInput) && isValidSHA256(manifestHashInput);
 
   const handleContinue = () => {
     if (isValid) {
@@ -53,9 +52,7 @@ export function AdvancedInput() {
 
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-semibold mb-2">
-            Content Hash (SHA-256)
-          </label>
+          <label className="block text-sm font-semibold mb-2">Content Hash (SHA-256)</label>
           <input
             type="text"
             value={contentHashInput}
@@ -65,15 +62,11 @@ export function AdvancedInput() {
               contentHashError ? "border-red-500" : "border-gray-300"
             }`}
           />
-          {contentHashError && (
-            <p className="text-red-500 text-sm mt-1">{contentHashError}</p>
-          )}
+          {contentHashError && <p className="text-red-500 text-sm mt-1">{contentHashError}</p>}
         </div>
 
         <div>
-          <label className="block text-sm font-semibold mb-2">
-            Manifest Hash (SHA-256)
-          </label>
+          <label className="block text-sm font-semibold mb-2">Manifest Hash (SHA-256)</label>
           <input
             type="text"
             value={manifestHashInput}
@@ -83,9 +76,7 @@ export function AdvancedInput() {
               manifestHashError ? "border-red-500" : "border-gray-300"
             }`}
           />
-          {manifestHashError && (
-            <p className="text-red-500 text-sm mt-1">{manifestHashError}</p>
-          )}
+          {manifestHashError && <p className="text-red-500 text-sm mt-1">{manifestHashError}</p>}
         </div>
 
         <button

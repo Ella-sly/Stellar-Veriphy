@@ -10,15 +10,15 @@ The current UI responds to user actions statically — buttons depress without f
 
 ## Acceptance Criteria
 
-| # | Criterion | Description |
-|---|-----------|-------------|
-| 1 | Button hover effects | Buttons respond visually on hover with a subtle color shift and/or lift effect |
-| 2 | Card entrance animations | Cards and list items fade or slide in when first rendered |
-| 3 | Loading spinners | Consistent spinner component used across all async operations |
-| 4 | Success checkmark animations | A brief animated checkmark confirms successful actions |
-| 5 | Error shake animations | Invalid form submissions or blocked actions trigger a horizontal shake |
-| 6 | Smooth page transitions | Route changes fade or slide between views instead of cutting abruptly |
-| 7 | Respect `prefers-reduced-motion` | All animations are disabled or reduced when the OS setting is active |
+| #   | Criterion                        | Description                                                                    |
+| --- | -------------------------------- | ------------------------------------------------------------------------------ |
+| 1   | Button hover effects             | Buttons respond visually on hover with a subtle color shift and/or lift effect |
+| 2   | Card entrance animations         | Cards and list items fade or slide in when first rendered                      |
+| 3   | Loading spinners                 | Consistent spinner component used across all async operations                  |
+| 4   | Success checkmark animations     | A brief animated checkmark confirms successful actions                         |
+| 5   | Error shake animations           | Invalid form submissions or blocked actions trigger a horizontal shake         |
+| 6   | Smooth page transitions          | Route changes fade or slide between views instead of cutting abruptly          |
+| 7   | Respect `prefers-reduced-motion` | All animations are disabled or reduced when the OS setting is active           |
 
 ---
 
@@ -36,9 +36,10 @@ The current UI responds to user actions statically — buttons depress without f
 
 ```css
 .btn {
-  transition: background-color 150ms ease-out,
-              transform 150ms ease-out,
-              box-shadow 150ms ease-out;
+  transition:
+    background-color 150ms ease-out,
+    transform 150ms ease-out,
+    box-shadow 150ms ease-out;
 }
 .btn:hover {
   transform: translateY(-1px);
@@ -84,8 +85,9 @@ Cards fade in from slight opacity (0 → 1) and a small vertical offset (transla
 ```
 
 For React, use `animation-delay` set as an inline style with the item's index:
+
 ```tsx
-<Card style={{ '--card-index': index } as React.CSSProperties} />
+<Card style={{ "--card-index": index } as React.CSSProperties} />
 ```
 
 ---
@@ -109,7 +111,9 @@ A single `<Spinner>` component covers all use cases:
 
 ```css
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .spinner {
@@ -126,14 +130,19 @@ A single `<Spinner>` component covers all use cases:
 **Display:** Replaces the submit button or appears as a brief overlay on the action that succeeded
 
 Two-phase animation:
+
 1. **Draw phase (0–400ms):** An SVG checkmark path is drawn using `stroke-dashoffset` animation from full offset to 0, giving the appearance of being drawn in real time.
 2. **Hold phase (400–600ms):** The checkmark holds at full opacity.
 3. **Fade or transition:** The UI transitions to the success state (e.g., redirects, shows a success banner).
 
 ```css
 @keyframes draw-check {
-  from { stroke-dashoffset: 50; }
-  to   { stroke-dashoffset: 0; }
+  from {
+    stroke-dashoffset: 50;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
 }
 
 .checkmark-path {
@@ -157,14 +166,30 @@ A rapid horizontal oscillation that communicates "no" without being alarming:
 
 ```css
 @keyframes shake {
-  0%   { transform: translateX(0); }
-  15%  { transform: translateX(-6px); }
-  30%  { transform: translateX(6px); }
-  45%  { transform: translateX(-4px); }
-  60%  { transform: translateX(4px); }
-  75%  { transform: translateX(-2px); }
-  90%  { transform: translateX(2px); }
-  100% { transform: translateX(0); }
+  0% {
+    transform: translateX(0);
+  }
+  15% {
+    transform: translateX(-6px);
+  }
+  30% {
+    transform: translateX(6px);
+  }
+  45% {
+    transform: translateX(-4px);
+  }
+  60% {
+    transform: translateX(4px);
+  }
+  75% {
+    transform: translateX(-2px);
+  }
+  90% {
+    transform: translateX(2px);
+  }
+  100% {
+    transform: translateX(0);
+  }
 }
 
 .shake {
@@ -218,11 +243,11 @@ All animations must be suppressed when the user's OS has reduced motion enabled.
 ### In JavaScript / React:
 
 ```ts
-const prefersReducedMotion =
-  window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 ```
 
 Use this boolean to:
+
 - Skip stagger delays on card lists.
 - Skip the draw animation on the checkmark (show it fully drawn immediately).
 - Replace page slide transitions with an instant swap.
@@ -235,12 +260,12 @@ Define animation values as CSS custom properties for consistency:
 
 ```css
 :root {
-  --duration-fast:    150ms;
-  --duration-normal:  300ms;
-  --duration-slow:    600ms;
-  --easing-default:   ease-out;
-  --easing-spring:    cubic-bezier(0.34, 1.56, 0.64, 1);
-  --easing-smooth:    cubic-bezier(0.4, 0, 0.2, 1);
+  --duration-fast: 150ms;
+  --duration-normal: 300ms;
+  --duration-slow: 600ms;
+  --easing-default: ease-out;
+  --easing-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --easing-smooth: cubic-bezier(0.4, 0, 0.2, 1);
 }
 ```
 

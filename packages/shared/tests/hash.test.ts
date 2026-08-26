@@ -15,7 +15,11 @@ describe("sha256", () => {
 
 describe("buildManifestHash", () => {
   it("is deterministic for the same object", () => {
-    const manifest = { contentHash: "sha256:abc", creator: "G123", timestamp: "2026-01-01T00:00:00Z" };
+    const manifest = {
+      contentHash: "sha256:abc",
+      creator: "G123",
+      timestamp: "2026-01-01T00:00:00Z",
+    };
     expect(buildManifestHash(manifest)).toBe(buildManifestHash({ ...manifest }));
   });
 

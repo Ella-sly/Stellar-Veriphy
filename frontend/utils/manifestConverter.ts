@@ -16,9 +16,7 @@ export function jsonToXml(obj: any, rootName = "manifest"): string {
     }
 
     if (Array.isArray(obj)) {
-      return obj
-        .map((item) => convert(item, name.replace(/s$/, "")))
-        .join("\n");
+      return obj.map((item) => convert(item, name.replace(/s$/, ""))).join("\n");
     }
 
     const children = Object.entries(obj)

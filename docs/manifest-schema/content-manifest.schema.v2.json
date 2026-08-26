@@ -5,12 +5,7 @@
   "description": "Extended manifest including media-level validation metadata.",
   "type": "object",
   "additionalProperties": false,
-  "required": [
-    "schemaVersion",
-    "contentHash",
-    "creator",
-    "timestamp"
-  ],
+  "required": ["schemaVersion", "contentHash", "creator", "timestamp"],
   "properties": {
     "schemaVersion": {
       "type": "string",

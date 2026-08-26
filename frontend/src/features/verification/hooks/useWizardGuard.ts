@@ -26,19 +26,15 @@ import { useWizardStore } from "../store/wizard.store";
  * @param redirectTo - Optional override for the redirect destination.
  *   Defaults to "/verify".
  */
-export function useWizardGuard(
-  minimumStep: number,
-  redirectTo = "/verify"
-): void {
+export function useWizardGuard(minimumStep: number, redirectTo = "/verify"): void {
   const router = useRouter();
   const completedSteps = useWizardStore((s) => s.completedSteps);
 
   useEffect(() => {
     // Check that every step before minimumStep has been completed.
-    const prerequisitesMet = Array.from(
-      { length: minimumStep },
-      (_, i) => i
-    ).every((i) => completedSteps[i]);
+    const prerequisitesMet = Array.from({ length: minimumStep }, (_, i) => i).every(
+      (i) => completedSteps[i]
+    );
 
     if (!prerequisitesMet) {
       router.replace(redirectTo);

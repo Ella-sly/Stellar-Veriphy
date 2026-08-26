@@ -23,7 +23,8 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     // Freighter wallet integration point
     if (typeof window === "undefined") return;
     try {
-      const freighter = (window as Window & { freighter?: { getPublicKey: () => Promise<string> } }).freighter;
+      const freighter = (window as Window & { freighter?: { getPublicKey: () => Promise<string> } })
+        .freighter;
       if (!freighter) throw new Error("Freighter wallet not found");
       const key = await freighter.getPublicKey();
       setPublicKey(key);
@@ -35,9 +36,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   const disconnect = useCallback(() => setPublicKey(null), []);
 
   return (
-    <WalletContext.Provider
-      value={{ publicKey, connected: !!publicKey, connect, disconnect }}
-    >
+    <WalletContext.Provider value={{ publicKey, connected: !!publicKey, connect, disconnect }}>
       {children}
     </WalletContext.Provider>
   );

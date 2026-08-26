@@ -65,9 +65,9 @@ Add to `.github/workflows/ci.yml`:
 
 ## Suggested Tooling
 
-| Purpose | Tool |
-|---|---|
-| Component-level a11y assertions | `jest-axe` |
-| Full-page a11y scans (E2E) | `@axe-core/playwright` |
-| Dev-time console warnings | `@axe-core/react` |
-| Manual screen reader testing | VoiceOver (macOS), NVDA (Windows) |
+| Purpose                         | Tool                              |
+| ------------------------------- | --------------------------------- |
+| Component-level a11y assertions | `jest-axe`                        |
+| Full-page a11y scans (E2E)      | `@axe-core/playwright`            |
+| Dev-time console warnings       | `@axe-core/react`                 |
+| Manual screen reader testing    | VoiceOver (macOS), NVDA (Windows) |

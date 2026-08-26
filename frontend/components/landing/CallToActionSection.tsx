@@ -9,9 +9,7 @@ export function CallToActionSection() {
   return (
     <section className="py-20 px-4 bg-gradient-to-r from-blue-600 to-blue-800">
       <div className="max-w-4xl mx-auto text-center">
-        <h2 className="text-4xl font-bold text-white mb-6">
-          Ready to Verify Your Content?
-        </h2>
+        <h2 className="text-4xl font-bold text-white mb-6">Ready to Verify Your Content?</h2>
         <p className="text-xl text-blue-100 mb-8">
           Join the decentralized verification revolution on Stellar
         </p>

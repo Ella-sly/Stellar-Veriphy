@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { cn } from "@/utils/cn";
 
@@ -74,9 +68,7 @@ export function CommandPalette({
         setSelectedIndex((prev) => (prev + 1) % filtered.length);
       } else if (e.key === "ArrowUp") {
         e.preventDefault();
-        setSelectedIndex(
-          (prev) => (prev - 1 + filtered.length) % filtered.length
-        );
+        setSelectedIndex((prev) => (prev - 1 + filtered.length) % filtered.length);
       } else if (e.key === "Enter") {
         e.preventDefault();
         executeSelected();
@@ -135,15 +127,9 @@ export function CommandPalette({
             ESC
           </kbd>
         </div>
-        <div
-          ref={listRef}
-          className="max-h-72 overflow-y-auto p-2"
-          role="listbox"
-        >
+        <div ref={listRef} className="max-h-72 overflow-y-auto p-2" role="listbox">
           {filtered.length === 0 ? (
-            <div className="text-center py-8 text-sm text-gray-500">
-              {emptyMessage}
-            </div>
+            <div className="text-center py-8 text-sm text-gray-500">{emptyMessage}</div>
           ) : (
             filtered.map((cmd, index) => (
               <button
@@ -164,13 +150,9 @@ export function CommandPalette({
               >
                 {cmd.icon && <span className="text-lg">{cmd.icon}</span>}
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium truncate">
-                    {cmd.label}
-                  </div>
+                  <div className="text-sm font-medium truncate">{cmd.label}</div>
                   {cmd.description && (
-                    <div className="text-xs text-gray-500 truncate">
-                      {cmd.description}
-                    </div>
+                    <div className="text-xs text-gray-500 truncate">{cmd.description}</div>
                   )}
                 </div>
                 <div className="flex items-center gap-1">

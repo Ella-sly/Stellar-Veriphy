@@ -26,6 +26,7 @@ shortcut-builder.png
 ```
 
 **Easy way**: Use PWA Asset Generator
+
 ```bash
 npx pwa-asset-generator logo.svg public/icons --background "#0a0a0a"
 ```
@@ -33,11 +34,13 @@ npx pwa-asset-generator logo.svg public/icons --background "#0a0a0a"
 ### 2. Set Up Push Notifications (Optional)
 
 Generate VAPID keys:
+
 ```bash
 npx web-push generate-vapid-keys
 ```
 
 Add to `.env.local`:
+
 ```
 NEXT_PUBLIC_VAPID_PUBLIC_KEY=your_public_key
 VAPID_PRIVATE_KEY=your_private_key
@@ -46,6 +49,7 @@ VAPID_PRIVATE_KEY=your_private_key
 ### 3. Deploy with HTTPS
 
 PWAs require HTTPS. Deploy to:
+
 - Vercel (automatic HTTPS)
 - Netlify (automatic HTTPS)
 - Your own server with SSL certificate
@@ -58,18 +62,21 @@ npm run start
 ### 4. Test PWA Features
 
 **Chrome DevTools**:
+
 1. Open DevTools → Application tab
 2. Check "Service Workers" - should show registered
 3. Check "Manifest" - should load without errors
 4. Run Lighthouse audit → PWA category
 
 **Install Test**:
+
 1. Visit site in Chrome/Edge
 2. Look for install icon in address bar
 3. Click to install
 4. App should open in standalone window
 
 **Offline Test**:
+
 1. Load a few pages
 2. Open DevTools → Network tab
 3. Check "Offline"
@@ -103,26 +110,31 @@ frontend/
 ## Features
 
 ### ✅ Offline Support
+
 - Cached pages load offline
 - Custom offline fallback page
 - Smart caching strategies
 
 ### ✅ Installable
+
 - Custom install prompts
 - Desktop & mobile support
 - App shortcuts
 
 ### ✅ Fast Performance
+
 - Instant loading from cache
 - Network-first for fresh data
 - Optimized bundle
 
 ### ✅ Push Notifications
+
 - Service worker ready
 - VAPID key support
 - Custom actions
 
 ### ✅ Native-like
+
 - Standalone window
 - Themed UI
 - Splash screens
@@ -130,22 +142,26 @@ frontend/
 ## Troubleshooting
 
 **Service Worker not registering?**
+
 - Check HTTPS (required except localhost)
 - Check browser console for errors
 - Clear site data and retry
 
 **Install prompt not showing?**
+
 - Manifest must be valid
 - Icons must exist
 - Must not be installed already
 - Chrome/Edge only (Firefox unsupported)
 
 **Offline not working?**
+
 - Visit pages first to cache them
 - Check service worker is active
 - Check Network tab in DevTools
 
 **Icons not showing?**
+
 - Verify files exist in `/public/icons/`
 - Check manifest.json paths
 - Try different sizes
@@ -173,6 +189,7 @@ frontend/
 ## Support
 
 PWA works best in:
+
 - ✅ Chrome/Edge (all features)
 - ✅ Safari (install manually)
 - ⚠️ Firefox (no install prompt)

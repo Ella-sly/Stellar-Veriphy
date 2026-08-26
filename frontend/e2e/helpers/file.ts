@@ -39,7 +39,7 @@ export async function dropFixtureFile(
 
   // Try finding a hidden file input inside / near the drop zone first
   const hiddenInput = dropZone.locator('input[type="file"]');
-  if (await hiddenInput.count() > 0) {
+  if ((await hiddenInput.count()) > 0) {
     await hiddenInput.setInputFiles(filePath);
     return;
   }
@@ -51,7 +51,17 @@ export async function dropFixtureFile(
   await dropZone.dispatchEvent("dragenter");
   await dropZone.dispatchEvent("dragover");
   await page.evaluate(
-    ({ selector, base64, name, type }: { selector: string; base64: string; name: string; type: string }) => {
+    ({
+      selector,
+      base64,
+      name,
+      type,
+    }: {
+      selector: string;
+      base64: string;
+      name: string;
+      type: string;
+    }) => {
       const el = document.querySelector(selector);
       if (!el) return;
       const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
@@ -60,6 +70,11 @@ export async function dropFixtureFile(
       dt.items.add(file);
       el.dispatchEvent(new DragEvent("drop", { dataTransfer: dt, bubbles: true }));
     },
-    { selector: dropZoneSelector, base64: buffer.toString("base64"), name: fileName, type: mimeType }
+    {
+      selector: dropZoneSelector,
+      base64: buffer.toString("base64"),
+      name: fileName,
+      type: mimeType,
+    }
   );
 }

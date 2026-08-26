@@ -83,11 +83,7 @@ function ImagePreview({ objectUrl }: { objectUrl: string }) {
   return (
     <div className="relative rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 bg-checkerboard">
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={objectUrl}
-        alt="Preview"
-        className="max-h-64 w-full object-contain"
-      />
+      <img src={objectUrl} alt="Preview" className="max-h-64 w-full object-contain" />
       {dims && (
         <span className="absolute bottom-2 right-2 text-xs bg-black/60 text-white px-2 py-0.5 rounded">
           {dims.w} × {dims.h}
@@ -139,8 +135,7 @@ function AudioPreview({
         // AudioContext is not available during SSR — guard accordingly.
         const AudioCtx =
           window.AudioContext ||
-          (window as unknown as { webkitAudioContext: typeof AudioContext })
-            .webkitAudioContext;
+          (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
         if (!AudioCtx) return;
         const ctx = new AudioCtx();
         const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
@@ -182,7 +177,9 @@ function AudioPreview({
     }
 
     drawWaveform();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [file, onDuration]);
 
   return (
@@ -194,11 +191,7 @@ function AudioPreview({
         className="w-full rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700"
         aria-label="Audio waveform visualisation"
       />
-      <audio
-        src={objectUrl}
-        controls
-        className="w-full"
-      >
+      <audio src={objectUrl} controls className="w-full">
         Your browser does not support audio playback.
       </audio>
     </div>
@@ -253,22 +246,12 @@ function MetadataPanel({ meta }: { meta: FileMetadata }) {
       {meta.width != null && meta.height != null && (
         <MetaItem label="Dimensions" value={`${meta.width} × ${meta.height} px`} />
       )}
-      {meta.duration != null && (
-        <MetaItem label="Duration" value={formatDuration(meta.duration)} />
-      )}
+      {meta.duration != null && <MetaItem label="Duration" value={formatDuration(meta.duration)} />}
     </div>
   );
 }
 
-function MetaItem({
-  label,
-  value,
-  mono = true,
-}: {
-  label: string;
-  value: string;
-  mono?: boolean;
-}) {
+function MetaItem({ label, value, mono = true }: { label: string; value: string; mono?: boolean }) {
   return (
     <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
       <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">{label}</p>
@@ -324,15 +307,9 @@ export function MediaPreview({ file }: MediaPreviewProps) {
       {/* ── Media preview area ── */}
       <div>
         {category === "image" && <ImagePreview objectUrl={objectUrl} />}
-        {category === "video" && (
-          <VideoPreview objectUrl={objectUrl} onDuration={handleDuration} />
-        )}
+        {category === "video" && <VideoPreview objectUrl={objectUrl} onDuration={handleDuration} />}
         {category === "audio" && (
-          <AudioPreview
-            file={file}
-            objectUrl={objectUrl}
-            onDuration={handleDuration}
-          />
+          <AudioPreview file={file} objectUrl={objectUrl} onDuration={handleDuration} />
         )}
         {category === "pdf" && <PdfPreview objectUrl={objectUrl} />}
         {category === "other" && <GenericPreview mimeType={file.type} />}

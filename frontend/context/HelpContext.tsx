@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useState,
-  type ReactNode,
-} from "react";
+import { createContext, useCallback, useContext, useState, type ReactNode } from "react";
 import { useHelpSearch, type HelpArticle } from "@/hooks/useHelpSearch";
 
 interface TutorialStep {
@@ -58,36 +52,31 @@ const ONBOARDING_TUTORIAL: TutorialStep[] = [
   {
     target: "[data-tutorial='header']",
     title: "Welcome to StellarVeriphy",
-    content:
-      "Your decentralized content verification platform on the Stellar blockchain.",
+    content: "Your decentralized content verification platform on the Stellar blockchain.",
     position: "bottom",
   },
   {
     target: "[data-tutorial='wallet']",
     title: "Connect Your Wallet",
-    content:
-      "Connect your Stellar wallet to start verifying and managing certificates.",
+    content: "Connect your Stellar wallet to start verifying and managing certificates.",
     position: "bottom",
   },
   {
     target: "[data-tutorial='nav-verify']",
     title: "Verify Content",
-    content:
-      "Upload content and generate cryptographic proofs of authenticity.",
+    content: "Upload content and generate cryptographic proofs of authenticity.",
     position: "bottom",
   },
   {
     target: "[data-tutorial='nav-manifest']",
     title: "Create Manifests",
-    content:
-      "Generate structured metadata manifests for your verified content.",
+    content: "Generate structured metadata manifests for your verified content.",
     position: "bottom",
   },
   {
     target: "[data-tutorial='nav-tools']",
     title: "Explore Tools",
-    content:
-      "Access additional tools like batch verification, comparison, and hash calculation.",
+    content: "Access additional tools like batch verification, comparison, and hash calculation.",
     position: "bottom",
   },
 ];
@@ -109,18 +98,13 @@ export function HelpProvider({ children }: { children: ReactNode }) {
     return localStorage.getItem(TUTORIAL_SEEN_KEY) === "true";
   });
 
-  const startTutorial = useCallback(
-    (steps: TutorialStep[] = ONBOARDING_TUTORIAL) => {
-      setTutorialSteps(steps);
-      setCurrentTutorialStep(0);
-    },
-    []
-  );
+  const startTutorial = useCallback((steps: TutorialStep[] = ONBOARDING_TUTORIAL) => {
+    setTutorialSteps(steps);
+    setCurrentTutorialStep(0);
+  }, []);
 
   const nextTutorialStep = useCallback(() => {
-    setCurrentTutorialStep((prev) =>
-      prev < tutorialSteps.length - 1 ? prev + 1 : prev
-    );
+    setCurrentTutorialStep((prev) => (prev < tutorialSteps.length - 1 ? prev + 1 : prev));
   }, [tutorialSteps.length]);
 
   const prevTutorialStep = useCallback(() => {
